@@ -1,0 +1,53 @@
+$itemWidth: 28px;
+$itemWidthPlusGap: 36px;
+$perView: 3;
+
+.seat-slider {
+    margin-left: $itemWidth;
+    width: calc($itemWidthPlusGap * $perView - 8px);
+
+    & ul {
+        margin: 0;
+        color: rgb(0, 0, 0, 0.5);
+    }
+
+    & ul li {
+        font-size: 10px;
+    }
+
+    &__button {
+        position: absolute;
+        width: $itemWidth;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        top: 0;
+        border: none;
+        background-color: transparent;
+
+        &-left {
+            left: -$itemWidthPlusGap;
+            transform: rotate(180deg);
+        }
+
+        &-right {
+            right: -$itemWidthPlusGap;
+        }
+    }
+
+    &__slide {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: $itemWidth;
+        height: $itemWidth;
+
+        &__active {
+            border: 1px solid;
+            border-color: rgb(255, 36, 0, 0.2);
+            border-radius: 50%;
+        }
+    }
+
+}

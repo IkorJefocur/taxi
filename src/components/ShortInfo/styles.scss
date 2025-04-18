@@ -1,0 +1,26 @@
+.short-info {
+    height: 16px;
+    display: flex;
+    align-items: center;
+    column-gap: 8px;
+
+    &__item {
+        display: flex;
+        align-items: center;
+        column-gap: 4px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    &__line {
+        width: 1px;
+        height: 12px;
+        border-radius: 0.5px;
+        background-color: #E7E7E7;
+    }
+
+    &__text {
+        font-size: 10px;
+        font-weight: 500;
+    }
+}

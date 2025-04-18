@@ -1,0 +1,47 @@
+.checkbox {
+  margin-bottom: 10px;
+
+  label {
+    cursor: pointer;
+  }
+
+  &.disabled {
+    label {
+      cursor: auto;
+    }
+  }
+
+  input {
+    visibility: hidden;
+    position: absolute;
+  }
+
+  input + label:before {
+    content: "\00a0";
+    display: inline-block;
+    font: 22px/1em sans-serif;
+    height: 25px;
+    margin: 0 0.5em 0 0;
+    padding: 0;
+    width: 25px;
+
+    box-sizing: border-box;
+    border-radius: 4px;
+  }
+
+  input:checked + label:before {
+    background: #1fdc00;
+    color: #ffffff;
+    border: 2px solid #1c8c00;
+    content: "\2713";
+    text-align: center;
+  }
+
+  input:checked + label:after {
+    font-weight: bold;
+  }
+
+  input:focus + label::before {
+    outline: rgb(59, 153, 252) auto 5px;
+  }
+}
