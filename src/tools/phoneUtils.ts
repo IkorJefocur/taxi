@@ -88,12 +88,16 @@ export const formatPhoneNumber = (phone: string): string => {
   let result = mask
   let digitIndex = 0
   
+  // Заменяем все символы подчеркивания на цифры из номера
   for (let i = 0; i < mask.length && digitIndex < digits.length; i++) {
-    if (mask[i] === '#') {
+    if (mask[i] === '_') {
       result = result.slice(0, i) + digits[digitIndex] + result.slice(i + 1)
       digitIndex++
     }
   }
+  
+  // Если в результате остались символы подчеркивания, заменяем их на пустую строку
+  result = result.replace(/_/g, '')
   
   return result
 } 

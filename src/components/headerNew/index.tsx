@@ -164,7 +164,10 @@ const Header: React.FC<IProps> = ({
                   animationDuration={0.5}
                 /> */}
                   <Burger onClick={toggleMenuOpened} isOpen={menuOpened} />
-                  <ul className={cn('menu__list', { 'menu__list--active': menuOpened })}>
+                  <ul className={cn('menu__list', { 
+                    'menu__list--active': menuOpened,
+                    'menu__list--expanded': languagesOpened 
+                  })}>
                     {menuItems.map((item, index) => (
                       <li key={index} className="menu__item">
                         <button
@@ -177,25 +180,26 @@ const Header: React.FC<IProps> = ({
                         >
                           {item.label}
                         </button>
+                        {item.label === t('language') && languagesOpened && (
+                          <div className="menu__languages">
+                            {SITE_CONSTANTS.LANGUAGES
+                              .filter(lang => lang.iso !== 'ru')
+                              .map((item: ILanguage) => (
+                                <img
+                                  key={item.id}
+                                  src={item.logo}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLanguageChange(item);
+                                  }}
+                                  alt={item.native}
+                                  className="menu__language-flag"
+                                />
+                            ))}
+                          </div>
+                        )}
                       </li>
                     ))}
-                    {languagesOpened && (
-                      <li className="menu__item">
-                        <div className="menu__languages">
-                          {SITE_CONSTANTS.LANGUAGES
-                            .filter(lang => lang.iso !== 'ru')
-                            .map((item: ILanguage) => (
-                              <img
-                                key={item.id}
-                                src={item.logo}
-                                onClick={() => handleLanguageChange(item)}
-                                alt={item.native}
-                                className="menu__language-flag"
-                              />
-                          ))}
-                        </div>
-                      </li>
-                    )}
                   </ul>
                 </div>
               )

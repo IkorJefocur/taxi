@@ -92,6 +92,7 @@ const JSONForm: React.FC<IProps> = ({
     {}), [fields],
   )
   const [ values, setValues ] = useState(mergeDeep(defaultValues, initialValues))
+  const [ formErrors, setFormErrors ] = useState(errors)
 
   const validationSchema = form.reduce((res: any, item: TFormElement) => {
     const { name, type, validation } = item
@@ -173,7 +174,35 @@ const JSONForm: React.FC<IProps> = ({
       [name]: value,
     })
     onChange && onChange(name, value)
-  }, [values])
+    
+    // Добавляем дополнительную валидацию для номера телефона
+    if (name === 'u_phone' && value) {
+      // Получаем маску телефона из констант
+      const phoneMask = (window as any).data?.site_constants?.def_maska_tel?.value;
+      if (phoneMask) {
+        // Извлекаем префикс из маски
+        const prefixMatch = phoneMask.match(/^\+?(\d+)/);
+        const prefix = prefixMatch ? prefixMatch[1] : '';
+        
+        // Проверяем, начинается ли номер с правильного префикса
+        const digits = value.replace(/\D/g, '');
+        const prefixWithoutPlus = prefix.replace('+', '');
+        
+        // Если номер не пустой и не начинается с правильного префикса, устанавливаем ошибку
+        if (digits.length > 0 && !digits.startsWith(prefixWithoutPlus)) {
+          setFormErrors({
+            ...formErrors,
+            [name]: t(TRANSLATION.PHONE_PATTERN_ERROR) + ' ' + phoneMask
+          });
+        } else {
+          // Если префикс правильный или номер пустой, удаляем ошибку
+          const newErrors = { ...formErrors };
+          delete newErrors[name];
+          setFormErrors(newErrors);
+        }
+      }
+    }
+  }, [values, formErrors])
 
   console.log('point1:' + state.errorMessage)
 
@@ -205,7 +234,7 @@ const JSONForm: React.FC<IProps> = ({
     }
     onSubmit && onSubmit(submitValues)
   }, [values])
-  console.log(errors,form)
+  console.log(formErrors,form)
   return configStatus === EStatuses.Success && (
     <div style={{ position: 'relative', zIndex: 500 }}>
       <form onSubmit={handleSubmit}>
@@ -218,7 +247,7 @@ const JSONForm: React.FC<IProps> = ({
             onChange={handleChange}
             validationSchema={validationSchema[formElement.name]}
             language={language}
-            errors={errors}
+            errors={formErrors}
           /> :
           <CustomComponent
             {...formElement}

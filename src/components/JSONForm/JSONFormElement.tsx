@@ -273,6 +273,9 @@ const JSONFormElement = (props: {
       {!!errorMessage && <div className='element__field_error'>
         {errorMessage}
       </div>}
+      {!!errors[name] && !errorMessage && <div className='element__field_error'>
+        {errors[name]}
+      </div>}
     </Wrap>
   )
 }

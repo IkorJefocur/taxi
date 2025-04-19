@@ -322,15 +322,16 @@ export const fieldsProfile: TForm = [
         // Get the phone mask from site constants
         const phoneMask = (window as any).data?.site_constants?.def_maska_tel?.value;
         
-        // If mask is available, convert it to regex pattern
+        // If mask is available, extract prefix and create regex pattern
         if (phoneMask) {
-          // Convert mask like +34(___)-___-___ to regex pattern
-          const regexPattern = phoneMask
-            .replace(/\+/g, '\\+') // Escape plus sign
-            .replace(/\(/g, '\\(') // Escape parentheses
-            .replace(/\)/g, '\\)')
-            .replace(/_/g, '[0-9]') // Replace underscores with digit pattern
-            .replace(/-/g, '\\-'); // Escape hyphens
+          // Extract prefix from mask like +34(___)-___-___
+          const prefixMatch = phoneMask.match(/^\+?(\d+)/);
+          const prefix = prefixMatch ? prefixMatch[1] : '';
+          
+          // Create regex pattern that strictly requires the correct prefix
+          // This pattern will match if the number starts with the exact prefix from the mask
+          // We use a positive lookahead to ensure the prefix is correct even if the number is incomplete
+          const regexPattern = `^(?=\\+?${prefix})[\\+]?${prefix}[0-9]{0,}$`;
           
           return [regexPattern, 'i']; // Return regex pattern with case-insensitive flag
         }
