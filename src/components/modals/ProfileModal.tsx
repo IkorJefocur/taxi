@@ -15,6 +15,7 @@ import { configSelectors, configActionCreators } from '../../state/config'
 import * as API from '../../API'
 import JSONForm from '../JSONForm'
 import SITE_CONSTANTS from '../../siteConstants'
+import { formatPhoneNumber, normalizePhoneNumber } from '../../tools/phoneUtils'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
@@ -71,7 +72,7 @@ const CardDetailsModal: React.FC<IProps> = ({
     ]).then(res => ({
       u_name: user?.u_name,
       u_email: user?.u_email,
-      u_phone: user?.u_phone,
+      u_phone: user?.u_phone ? formatPhoneNumber(user.u_phone) : '',
       u_city: user?.u_city,
       u_details: {
         state: user?.u_details?.state,
@@ -105,9 +106,15 @@ const CardDetailsModal: React.FC<IProps> = ({
     console.log('VALUES: ',values)
     const isChangeRefCode = values.ref_code !== user?.ref_code
 
+    const apiValues = { ...values };
+    
+    if (apiValues.u_phone) {
+      apiValues.u_phone = normalizePhoneNumber(apiValues.u_phone, false, user?.u_role === EUserRoles.Driver);
+    }
+
     let beforeSave = Promise.resolve(true)
     if (isChangeRefCode) {
-      beforeSave = API.checkRefCode(values.ref_code)
+      beforeSave = API.checkRefCode(apiValues.ref_code)
         .then(res => {
           if (!res) {
             setErrors({
@@ -124,7 +131,7 @@ const CardDetailsModal: React.FC<IProps> = ({
       setIsSubmittingForm(true)
 
       if (user?.u_role === EUserRoles.Client) {
-        return API.editUser(values)
+        return API.editUser(apiValues)
           .then(res => {
             setMessageModal({ isOpen: true, status: EStatuses.Success, message: t(TRANSLATION.SUCCESS_PROFILE_UPDATE_MESSAGE) })
           })
@@ -136,7 +143,7 @@ const CardDetailsModal: React.FC<IProps> = ({
           })
       }
 
-      const { u_details, u_car } = values
+      const { u_details, u_car } = apiValues
 
       API.editCar(u_car)
         .then(res => {
@@ -175,7 +182,7 @@ const CardDetailsModal: React.FC<IProps> = ({
                 ),
             )
           })).then(() => {
-            const { u_car, ...payload } = values
+            const { u_car, ...payload } = apiValues
             payload.u_details = {
               ...u_details,
               ...imagesMap,

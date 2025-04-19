@@ -6,6 +6,7 @@ import { getCalculation, getTranslation, parseVariable } from './utils'
 import { TFormElement, TOption, TFormValues } from './types'
 import './styles.scss'
 import { t } from '../../localization'
+import { formatPhoneNumber, getPhoneMask } from '../../tools/phoneUtils'
 
 const JSONFormElement = (props: {
     element: TFormElement,
@@ -189,7 +190,17 @@ const JSONFormElement = (props: {
     )
   }
 
-  if (type === 'file') {
+  if (type === 'phone') {
+    element = (
+      <input
+        {...commonProperties}
+        value={value || ''}
+        type="tel"
+        className='element__text_input'
+        placeholder={getPhoneMask()}
+      />
+    )
+  } else if (type === 'file') {
     element = (
       <div className='element__file'>
         {!!files && files.map((file: [any, File], key: number) => (

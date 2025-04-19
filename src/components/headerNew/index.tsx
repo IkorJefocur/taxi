@@ -234,7 +234,7 @@ const Header: React.FC<IProps> = ({
             </div> */}
       <div className='header-avatar-wrapper'>
         <span className='header-user-name'>{user?.u_city ? `${( (window as any).data.cities[user?.u_city][ language.iso ??  (window as any).data.langs[(window as any).default_lang].iso ])},` : ''}</span>
-        <span className='header-user-lng'>{language.iso}</span>
+        <span className='header-user-lng'>{language.iso.toUpperCase()}</span>
         <div
           className="avatar"
           onClick={e => setLoginModal(true)}

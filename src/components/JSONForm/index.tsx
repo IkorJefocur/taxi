@@ -138,7 +138,13 @@ const JSONForm: React.FC<IProps> = ({
         const pattern: [string, string] = getCalculation(validation.pattern, values)
         if (Array.isArray(pattern)) {
           const regexp = new RegExp(...pattern)
-          obj = obj.matches(getCalculation(regexp, values), t(TRANSLATION.PHONE_PATTERN_ERROR))
+          // Get phone mask from site constants
+          const phoneMask = (window as any).data?.site_constants?.def_maska_tel?.value;
+          // Add phone mask as postfix to error message if it's a phone field
+          const errorMessage = name === 'u_phone' && phoneMask 
+            ? `${t(TRANSLATION.PHONE_PATTERN_ERROR)} ${phoneMask}`
+            : t(TRANSLATION.PHONE_PATTERN_ERROR);
+          obj = obj.matches(getCalculation(regexp, values), errorMessage)
         }
       }
     }
