@@ -182,19 +182,17 @@ const Header: React.FC<IProps> = ({
                         </button>
                         {item.label === t('language') && languagesOpened && (
                           <div className="menu__languages">
-                            {SITE_CONSTANTS.LANGUAGES
-                              .filter(lang => lang.iso !== 'ru')
-                              .map((item: ILanguage) => (
-                                <img
-                                  key={item.id}
-                                  src={item.logo}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLanguageChange(item);
-                                  }}
-                                  alt={item.native}
-                                  className="menu__language-flag"
-                                />
+                            {SITE_CONSTANTS.LANGUAGES.map((item: ILanguage) => (
+                              <img
+                                key={item.id}
+                                src={item.logo}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleLanguageChange(item);
+                                }}
+                                alt={item.native}
+                                className="menu__language-flag"
+                              />
                             ))}
                           </div>
                         )}

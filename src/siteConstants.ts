@@ -147,6 +147,7 @@ class Constants {
       parseEntries,
     )
     this.LANGUAGES = parseLanguages((window as any).data?.langs || defaultValues.LANGUAGES)
+    console.log('XXX LANGS:'+JSON.stringify(this.LANGUAGES))
   }
 
   calc_ENABLE_CUSTOMER_PRICE() {
