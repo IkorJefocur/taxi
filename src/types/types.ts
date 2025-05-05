@@ -193,7 +193,8 @@ export interface IOptions {
   carsCount?: number
   bigTruckCarTypes?: string[]
   bigTruckCarLogic?: ELogic
-  bigTruckServices?: IBigTruckService['id'][]
+  bigTruckServices?: IBigTruckService['id'][],
+  createdBy: string
 }
 
 export interface IOrder extends IBookingCoordinates, IBookingAddresses {
@@ -296,7 +297,8 @@ export interface IOrder extends IBookingCoordinates, IBookingAddresses {
   /** Дата предложения поездки клиентом поездки */
   b_offer_datetime: Moment
   /** Дата приема поездки на исполнение */
-  b_select_datetime: Moment
+  b_select_datetime: Moment,
+  user?: IUser
 }
 
 export interface ITrip {

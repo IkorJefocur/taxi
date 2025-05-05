@@ -57,8 +57,6 @@ const LoginModal: React.FC<IProps> = ({
   }))
 
   const RegisterComponent = location.pathname.includes('/driver-order') ? RegisterJSON : RegisterForm
-  console.log("register component", RegisterComponent===RegisterJSON, location.pathname.includes('/driver-order'))
-
   return (
     <Overlay
       isOpen={isOpen}

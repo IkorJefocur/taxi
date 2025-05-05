@@ -1,47 +1,46 @@
 import {
-  EBookingDriverState,
-  EOrderTypes,
-  EPaymentWays,
-  ESuggestionType,
-  EUserRoles,
-  IAddressPoint,
-  IBookingAddresses,
-  IBookingCoordinates,
-  IBookingCoordinatesLatitude,
-  IBookingCoordinatesLongitude,
-  ICar,
-  IOrder,
-  IPlaceResponse,
-  IRouteInfo,
-  ISuggestion,
-  ITokens,
-  ITrip,
-  IUser,
+    EBookingDriverState,
+    EOrderTypes,
+    EPaymentWays,
+    ESuggestionType,
+    EUserRoles,
+    IAddressPoint,
+    IBookingAddresses,
+    IBookingCoordinates,
+    IBookingCoordinatesLatitude,
+    IBookingCoordinatesLongitude,
+    ICar,
+    IOrder,
+    IPlaceResponse,
+    IRouteInfo,
+    ISuggestion,
+    ITokens,
+    ITrip,
+    IUser,
 } from '../types/types'
-import { Stringify, ValueOf } from '../types/index'
-import { addToFormData, apiMethod, IApiMethodArguments, IResponseFields } from '../tools/api'
-import { getBase64 } from '../tools/utils'
+import {Stringify, ValueOf} from '../types/index'
+import {addToFormData, apiMethod, IApiMethodArguments, IResponseFields} from '../tools/api'
+import {
+    convertCar,
+    convertOrder,
+    convertTrip,
+    convertUser,
+    getBase64,
+    getHints,
+    reverseConvertOrder,
+    reverseConvertTrip,
+    reverseConvertUser
+} from '../tools/utils'
 import axios from 'axios'
 import Config from '../config'
-import {
-  convertCar,
-  convertOrder,
-  convertTrip,
-  convertUser,
-  getHints,
-  reverseConvertOrder,
-  reverseConvertTrip,
-  reverseConvertUser,
-} from '../tools/utils'
-import { t, TRANSLATION } from '../localization'
-import { ERegistrationType } from '../state/user/constants'
-import { userSelectors } from '../state/user'
+import {t, TRANSLATION} from '../localization'
+import {ERegistrationType} from '../state/user/constants'
+import {userSelectors} from '../state/user'
 import store from '../state'
-import { configSelectors } from '../state/config'
+import {configSelectors} from '../state/config'
 import SITE_CONSTANTS from '../siteConstants'
 import getCountryISO3 from '../tools/countryISO2To3'
-import { to } from '../state/clientOrder/selectors'
-import { getCacheVersion } from './cacheVersion'
+import {getCacheVersion} from './cacheVersion'
 
 export { getCacheVersion }
 
@@ -404,7 +403,7 @@ const _getOrders = (
   let URLAdditionalPath
   switch (type) {
     case EOrderTypes.Active:
-      URLAdditionalPath = ''
+      URLAdditionalPath = '' + '?fields=00000000u1'
       break
     case EOrderTypes.Ready:
       URLAdditionalPath = '/now'
@@ -418,6 +417,15 @@ const _getOrders = (
 
   return axios.post(`${Config.API_URL}/drive${URLAdditionalPath}`, formData)
     .then(res => res.data)
+      .then(res => {
+          if(type === EOrderTypes.Active){
+              res.data.booking.forEach( (item: IOrder) => {
+                  item.user = res.data.user[item.u_id]
+              })
+              return res
+          }
+          return res
+      })
     .then(res =>
       (res.data.booking && res.data.booking.filter(
         (item: IOrder) => !(userHiddenOrders && userHiddenOrders.includes(item.b_id)),
@@ -481,7 +489,7 @@ const _getOrder = (
   { formData }: IApiMethodArguments,
   id: IOrder['b_id'],
 ): Promise<IOrder | null> => {
-  return axios.post(`${Config.API_URL}/drive/get/${id}`, formData)
+  return axios.post(`${Config.API_URL}/drive/get/${id}?fields=00000000u1`, formData)
     .then(res => res.data.data)
     .then(res => (res.booking && res.booking[id] && convertOrder(res.booking[id])) || null)
 }
@@ -535,7 +543,9 @@ const _takeOrder = (
     b_state?: '1->2' | null
 }> => {
   const userID = userSelectors.user(store.getState())?.u_id
-  if (!userID) Promise.reject(t(TRANSLATION.WRONG_USER_ROLE))
+  if (!userID) {
+      Promise.reject(t(TRANSLATION.WRONG_USER_ROLE))
+  }
 
   return getUserCar(userID as string)
     .then(car => {

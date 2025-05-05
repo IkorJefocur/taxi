@@ -48,25 +48,6 @@ const JSONForm: React.FC<IProps> = ({
 }) => {
   const data = (window as any).data || {}
 
-  const form = useMemo(() => {
-    return fields.map(field => {
-      if (field.type === 'select' && !Array.isArray(field.options) && field.options?.path) {
-        const path = field.options.path.split('.')
-        const map = path.reduce((res, key) => res[key], data)
-        field.options = Object.keys(map).map(num => ({
-          value: num,
-          labelLang: map[num],
-        }))
-        if (field.name === 'u_car.cc_id') {
-          field.options = field.options.slice(1)
-        }
-        field.defaultValue = field.options[0].value
-      }
-
-      return field
-    })
-  }, [fields])
-
   const getDefaultValue = useCallback((item: TFormElement) => {
     if (!item.name) return null
     const path = item.name.split('.')
@@ -93,6 +74,75 @@ const JSONForm: React.FC<IProps> = ({
   )
   const [ values, setValues ] = useState(mergeDeep(defaultValues, initialValues))
   const [ formErrors, setFormErrors ] = useState(errors)
+
+  const form = useMemo(() => {
+    return fields.map(field => {
+      if (field.type === 'select' && !Array.isArray(field.options) && field.options?.path) {
+        const path = field.options.path.split('.')
+        const map = path.reduce((res, key) => res[key], data)
+        
+        // Если есть фильтр, применяем его
+        if (field.options.filter) {
+          const filterBy = field.options.filter.by;
+          const filterField = field.options.filter.field;
+          const selectedValue = values[filterBy];
+
+          
+          // Проверяем, что map существует и является объектом
+          if (!map || typeof map !== 'object') {
+            field.options = [];
+            field.defaultValue = undefined;
+            field.disabled = true;
+            return field;
+          }
+
+          
+          // Фильтруем опции по выбранному значению
+          const filteredOptions = Object.entries(map)
+            .filter(([_, value]: [string, any]) => {
+              if (!selectedValue) return true; // Если родительское значение не выбрано, показываем все опции
+              if (!value || typeof value !== 'object') return false;
+              return value[filterField] === selectedValue;
+            })
+            .map(([num, value]: [string, any]) => ({
+              value: num,
+              labelLang: value,
+            }));
+
+          
+          // Если после фильтрации нет опций, показываем пустой список
+          if (filteredOptions.length === 0) {
+            field.options = [{
+              value: '',
+              labelLang: { ru: '', en: '' }
+            }];
+            field.defaultValue = '';
+            field.disabled = true;
+          } else {
+            field.options = filteredOptions;
+            field.defaultValue = field.options[0]?.value;
+            field.disabled = false;
+          }
+        } else {
+          // Стандартная обработка без фильтрации
+          if (!map || typeof map !== 'object') {
+            field.options = [];
+            field.defaultValue = undefined;
+            field.disabled = true;
+          } else {
+            field.options = Object.keys(map).map(num => ({
+              value: num,
+              labelLang: map[num],
+            }));
+            field.defaultValue = field.options[0]?.value;
+            field.disabled = false;
+          }
+        }
+      }
+
+      return field
+    })
+  }, [fields, values])
 
   const validationSchema = form.reduce((res: any, item: TFormElement) => {
     const { name, type, validation } = item

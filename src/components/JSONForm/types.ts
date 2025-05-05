@@ -20,7 +20,11 @@ type TOption = {
 }
 
 type TOptionData = {
-    path: string
+    path: string,
+    filter?: {
+        by: string,
+        field: string
+    }
 }
 
 type TCondition = [string, TOperation, any]

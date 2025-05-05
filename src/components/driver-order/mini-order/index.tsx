@@ -30,7 +30,6 @@ const MiniOrder: React.FC<IProps> = ({
   const [address, setAddress] = useState<IAddressPoint|null>(context?.ordersAddressRef.current[order.b_id] || null)
 
   const payment = getPayment(order)
-
   const _onClick = (event: React.PointerEvent<HTMLDivElement>) => {
     if (onClick) {
       onClick(event, order.b_id)

@@ -54,7 +54,6 @@ const Header: React.FC<IProps> = ({
   setLoginModal,
   setProfileModal,
 }) => {
-  console.log('HEADER langs: ', language,user?.u_lang)
   const [languagesOpened, setLanguagesOpened] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [menuOpened, setMenuOpened] = useState(false)
@@ -132,7 +131,6 @@ const Header: React.FC<IProps> = ({
     avatar = user.u_photo || images.noImgAvatar
     avatarSize = user.u_photo ? 'cover' : '24px'
   }
-  console.log('MENU ITEMS: ', menuItems)
 
   const handleLanguageChange = (lang: ILanguage) => {
     setCookie('user_lang', lang.iso)

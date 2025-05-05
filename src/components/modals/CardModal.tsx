@@ -117,17 +117,6 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
     mode: 'onSubmit',
   })
 
-  // useEffect(() => {
-  //   getOrder(orderId)
-  //   return () => {
-  //     setOrder(null)
-  //   }
-  // }, [])
-
-  // useInterval(() => {
-  //   getOrder(orderId)
-  // }, 3000)
-
   useEffect(() => {
     if ( !order?.b_start_latitude || !order.b_start_longitude || context?.ordersAddressRef.current[order.b_id] || loadedAddress !== null ) return
     API.reverseGeocode(order.b_start_latitude?.toString(), order.b_start_longitude?.toString())
@@ -204,10 +193,34 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
       setRatingModal({ isOpen: true })
 
     const openChatModal = () => {
-      const from = `${user?.u_id}_${orderId}`
-      const to = `${order?.u_id}_${orderId}`
-      const chatID = `${from};${to}`
-      setActiveChat(activeChat === chatID ? null : chatID)
+      // Если клиент на сайте, используем стандартный чат
+      if (!order?.b_options?.createdBy) {
+        const from = `${user?.u_id}_${orderId}`
+        const to = `${order?.u_id}_${orderId}`
+        const chatID = `${from};${to}`
+        setActiveChat(activeChat === chatID ? null : chatID)
+        return
+      }
+
+      // Ищем профиль клиента
+      if (!order.user) return;
+
+      // В зависимости от типа контакта формируем соответствующую ссылку
+      switch (order.b_options.createdBy) {
+        case 'sms':
+          // Ссылка на приложение для звонков
+          window.location.href = `tel:${order.user?.u_phone}`
+          break
+        case 'whatsapp':
+          window.location.href = `https://wa.me/${order.user?.u_phone}`
+          break
+        default:
+          // Для неизвестных типов используем стандартный чат
+          const from = `${user?.u_id}_${orderId}`
+          const to = `${order?.u_id}_${orderId}`
+          const chatID = `${from};${to}`
+          setActiveChat(activeChat === chatID ? null : chatID)
+      }
     }
 
     const getButtons = () => {
@@ -297,7 +310,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           status={status}
         />
         <Button
-          svg={<svg width="20" height="20" viewBox="0 0 20 20" fill="none" ><path fillRule="evenodd" clipRule="evenodd" d="M2.5 4.16675C2.5 2.78604 3.61929 1.66675 5 1.66675H10.8333C12.214 1.66675 13.3333 2.78604 13.3333 4.16675V6.71883C13.3333 7.17907 12.9602 7.55216 12.5 7.55216C12.0398 7.55216 11.6667 7.17907 11.6667 6.71883V4.16675C11.6667 3.70651 11.2936 3.33341 10.8333 3.33341H5C4.53976 3.33341 4.16667 3.70651 4.16667 4.16675V15.8334C4.16667 16.2937 4.53976 16.6667 5 16.6667H10.8333C11.2936 16.6667 11.6667 16.2937 11.6667 15.8334V13.7501C11.6667 13.2898 12.0398 12.9167 12.5 12.9167C12.9602 12.9167 13.3333 13.2898 13.3333 13.7501V15.8334C13.3333 17.2141 12.214 18.3334 10.8333 18.3334H5C3.61929 18.3334 2.5 17.2141 2.5 15.8334V4.16675ZM14.8274 7.32749C15.1528 7.00206 15.6805 7.00206 16.0059 7.32749L18.0893 9.41083C18.4147 9.73626 18.4147 10.2639 18.0893 10.5893L16.0059 12.6727C15.6805 12.9981 15.1528 12.9981 14.8274 12.6727C14.502 12.3472 14.502 11.8196 14.8274 11.4942L15.4882 10.8334H9.16667C8.70643 10.8334 8.33333 10.4603 8.33333 10.0001C8.33333 9.53984 8.70643 9.16675 9.16667 9.16675H15.4882L14.8274 8.506C14.502 8.18057 14.502 7.65293 14.8274 7.32749Z" fill="white"/></svg>}
+          svg={<svg width="20" height="20" viewBox="0 0 20 20" fill="none" ><path d="M18.0703 6.60938C17.6289 5.56055 16.9961 4.61914 16.1894 3.81055C15.3828 3.00391 14.4414 2.36914 13.3906 1.92969C12.3164 1.47852 11.1758 1.25 9.99999 1.25H9.96093C8.77733 1.25586 7.63085 1.49023 6.55272 1.95117C5.51171 2.39648 4.57811 3.0293 3.77929 3.83594C2.98046 4.64258 2.3535 5.58008 1.91991 6.625C1.47069 7.70703 1.24413 8.85742 1.24999 10.041C1.25585 11.3965 1.58007 12.7422 2.18749 13.9453V16.9141C2.18749 17.4102 2.58983 17.8125 3.08593 17.8125H6.05663C7.25975 18.4199 8.60546 18.7441 9.96093 18.75H10.0019C11.1719 18.75 12.3066 18.5234 13.375 18.0801C14.4199 17.6445 15.3594 17.0195 16.1641 16.2207C16.9707 15.4219 17.6055 14.4883 18.0488 13.4473C18.5098 12.3691 18.7441 11.2227 18.75 10.0391C18.7558 8.84961 18.5254 7.69531 18.0703 6.60938ZM15.1191 15.1641C13.75 16.5195 11.9336 17.2656 9.99999 17.2656H9.96679C8.78905 17.2598 7.61913 16.9668 6.58593 16.416L6.42186 16.3281H3.67186V13.5781L3.58397 13.4141C3.03319 12.3809 2.74022 11.2109 2.73436 10.0332C2.72655 8.08594 3.47069 6.25781 4.83593 4.88086C6.19921 3.50391 8.02147 2.74219 9.96874 2.73438H10.0019C10.9785 2.73438 11.9258 2.92383 12.8183 3.29883C13.6894 3.66406 14.4707 4.18945 15.1426 4.86133C15.8125 5.53125 16.3398 6.31445 16.7051 7.18555C17.084 8.08789 17.2734 9.04492 17.2695 10.0332C17.2578 11.9785 16.4941 13.8008 15.1191 15.1641Z" fill="white"/></svg>}
           className="order_hide-order-btn"
           onClick={() => setCancelDriverOrderModal(true)}
           label={message}
@@ -385,7 +398,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
   const _type = order?.b_payment_way === EPaymentWays.Credit ? TRANSLATION.CARD : TRANSLATION.CASH
   const _value = (order && order.b_options && order.b_options.customer_price) ?
     t(_type) + '. ' + t(TRANSLATION.WHAT_WE_DELIVERING) + ` ${order.b_options.customer_price} ${CURRENCY.SIGN}` :
-    t(_type) + '. ' + t(TRANSLATION.FIXED) + ` ${getPayment(order).text} ${CURRENCY.SIGN}`
+    t(_type) + '. ' + t(TRANSLATION.FIXED) + ` ${order?.b_options?.pricingModel?.price || getPayment(order).text} ${CURRENCY.SIGN}`
 
   return (
     <div className='status-card__modal' data-active={active} onClick={outsideClick} >
@@ -400,8 +413,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
             }}
           />
           <div className="name" >
-            <p>{client?.u_family?.trimStart()} {client?.u_name?.trimStart()} {client?.u_middle?.trimStart()} <span> ({order?.u_id}) ({bookingStates[order?.b_state as any]})</span></p>
-            {/* <p>{t(TRANSLATION.CLIENT)}: {client?.u_name} ({order?.u_id})</p> */}
+            <p>{order.user?.u_family?.trimStart()} {order.user?.u_name?.trimStart()} {order.user?.u_middle?.trimStart()} <span> ({order?.u_id}) ({bookingStates[order?.b_state as any]})</span></p>
           </div>
           <div className='stars' >
             {[1,2,3,4].map(num => (
@@ -420,7 +432,6 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           <p>
             Departure and Arrival Address
             <span className="from_address">
-            {/* {t(TRANSLATION.FROM)}: <span>{order?.b_start_address || `${order?.b_start_latitude}, ${order?.b_start_longitude}`}</span> */}
             {t(TRANSLATION.FROM)}: 
               {address?.shortAddress
               ? <>
@@ -497,10 +508,6 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           {
             !(order?.b_comments?.includes('97') || order?.b_comments?.includes('98')) &&
               <span className='status-card__seats'>
-                {/* <img
-                  src={getOrderIcon(order)}
-                  alt={t(TRANSLATION.SEATS)}
-                /> */}
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" ><circle cx="6.00004" cy="4.00001" r="2.66667" stroke="#FF2400"/><path d="M10 6C11.1046 6 12 5.10457 12 4C12 2.89543 11.1046 2 10 2" stroke="#FF2400" strokeLinecap="round"/><ellipse cx="6.00004" cy="11.3333" rx="4.66667" ry="2.66667" stroke="#FF2400"/><path d="M12 9.33334C13.1695 9.58981 14 10.2393 14 11C14 11.6862 13.3242 12.282 12.3333 12.5803" stroke="#FF2400" strokeLinecap="round"/></svg>
                 <label>{getOrderCount(order as any)}</label>
               </span>
@@ -509,8 +516,6 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           <form onSubmit={formHandleSubmit(handleSubmit)} >
             <div className="btns" >
               {getButtons()}
-              {/* <button><svg width="24" height="25" viewBox="0 0 24 25" fill="none" ><path d="M12 2.5C6.48 2.5 2 6.98 2 12.5C2 18.02 6.48 22.5 12 22.5C17.52 22.5 22 18.02 22 12.5C22 6.98 17.52 2.5 12 2.5ZM16.64 9.3C16.49 10.88 15.84 14.72 15.51 16.49C15.37 17.24 15.09 17.49 14.83 17.52C14.25 17.57 13.81 17.14 13.25 16.77C12.37 16.19 11.87 15.83 11.02 15.27C10.03 14.62 10.67 14.26 11.24 13.68C11.39 13.53 13.95 11.2 14 10.99C14.0069 10.9582 14.006 10.9252 13.9973 10.8938C13.9886 10.8624 13.9724 10.8337 13.95 10.81C13.89 10.76 13.81 10.78 13.74 10.79C13.65 10.81 12.25 11.74 9.52 13.58C9.12 13.85 8.76 13.99 8.44 13.98C8.08 13.97 7.4 13.78 6.89 13.61C6.26 13.41 5.77 13.3 5.81 12.95C5.83 12.77 6.08 12.59 6.55 12.4C9.47 11.13 11.41 10.29 12.38 9.89C15.16 8.73 15.73 8.53 16.11 8.53C16.19 8.53 16.38 8.55 16.5 8.65C16.6 8.73 16.63 8.84 16.64 8.92C16.63 8.98 16.65 9.16 16.64 9.3Z" fill="white"/></svg></button> */}
-              {/* <button onClick={closeModal} >Exit</button> */}
             </div>
           </form>
         </div>

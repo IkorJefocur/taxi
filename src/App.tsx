@@ -114,10 +114,6 @@ const App: React.FC<IProps> = ({
     )
   }
 
-  console.log(
-    `/assets/images/${SITE_CONSTANTS.ICONS_PALLETE_FOLDER && `${SITE_CONSTANTS.ICONS_PALLETE_FOLDER}/`}`
-  );
-
   return (
     <React.Fragment key={`${language.id}_${configStatus}`}>
       {getMetaTags()}

@@ -219,15 +219,12 @@ export const getPayment = (
   if (order?.b_options?.customer_price && SITE_CONSTANTS.ENABLE_CUSTOMER_PRICE) {
     return { value: order.b_options.customer_price, text: '', type: EPaymentType.Customer }
   }
-
-  const _distance = distance || calcOrderDistance(points, order)
+  const _distance = distance || calcOrderDistance(points, order) || order?.b_options?.pricingModel?.options?.distance
   if (!_distance) return { value: 0, text: '0', type: EPaymentType.Calculated }
-
   let _orderTime = startDatetime,
     _startOfNightTime = moment(SITE_CONSTANTS.START_OF_NIGHT_TIME, 'h:mm'),
     _endOfNightTime = moment(SITE_CONSTANTS.END_OF_NIGHT_TIME, 'h:mm'),
     _midTime = moment('12:00', 'h:mm')
-
   if (_orderTime?.isAfter(_midTime)) {
     _endOfNightTime = _endOfNightTime.add(1, 'days')
   } else {
@@ -238,17 +235,17 @@ export const getPayment = (
   const callRate = +(window as any).data.car_classes[order?.b_car_class || carClass || ECarClasses.Any]?.courier_call_rate ?? SITE_CONSTANTS.COURIER_CALL_RATE
   // @ts-ignore
   const farePer1Km = +(window as any).data.car_classes[order?.b_car_class || carClass || ECarClasses.Any]?.courier_fare_per_1_km ?? SITE_CONSTANTS.COURIER_FARE_PER_1_KM
-
   let _value = 0,
     _text = ''
   if (_orderTime?.isAfter(_startOfNightTime) && _orderTime.isBefore(_endOfNightTime)) {
-    _value = SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME * (callRate + (farePer1Km * _distance))
+    //_value = SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME * (callRate + (farePer1Km * _distance))
     _text =  `${SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME} * \
     ( ${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} ) = ${_value}`
   } else {
-    _value = callRate + (farePer1Km * _distance)
+    //_value = callRate + (farePer1Km * _distance)
     _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = ${_value}`
   }
+  _value = order?.b_options?.pricingModel?.price || _value
 
   return { value: _value, text: _text, type: EPaymentType.Calculated }
 }

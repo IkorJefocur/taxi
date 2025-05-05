@@ -221,7 +221,6 @@ const CardDetailsModal: React.FC<IProps> = ({
   }
 
   const toggleLanguagesOpened = () => setLanguagesOpened(prev => !prev)
-  console.log('LANG:' +user?.u_lang,language)
   return isOpen && (
     <Overlay
       isOpen={isOpen}
