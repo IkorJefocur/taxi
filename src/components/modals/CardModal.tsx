@@ -20,6 +20,8 @@ import { Loader } from "../loader/Loader"
 import Payment from "../order/orderInfo/Payment"
 import { CURRENCY } from "../../siteConstants"
 import { OrderAddressContext } from "../../pages/Driver"
+import { useDispatch } from 'react-redux'
+import { setSelectedOrderId } from '../../state/order/actionCreators'
 
 
 const bookingStates: Record<number, keyof typeof EBookingStates> = {
@@ -116,6 +118,14 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
     criteriaMode: 'all',
     mode: 'onSubmit',
   })
+
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    if (active && orderId) {
+      dispatch(setSelectedOrderId(orderId))
+    }
+  }, [active, orderId])
 
   useEffect(() => {
     if ( !order?.b_start_latitude || !order.b_start_longitude || context?.ordersAddressRef.current[order.b_id] || loadedAddress !== null ) return
@@ -413,7 +423,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
             }}
           />
           <div className="name" >
-            <p>{order.user?.u_family?.trimStart()} {order.user?.u_name?.trimStart()} {order.user?.u_middle?.trimStart()} <span> ({order?.u_id}) ({bookingStates[order?.b_state as any]})</span></p>
+            <p>{order?.user?.u_family?.trimStart()} {order?.user?.u_name?.trimStart()} {order?.user?.u_middle?.trimStart()} <span> ({order?.u_id}) ({bookingStates[order?.b_state as any]})</span></p>
           </div>
           <div className='stars' >
             {[1,2,3,4].map(num => (

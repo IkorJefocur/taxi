@@ -19,11 +19,13 @@ import cn from 'classnames'
 import { gradient } from '../../tools/theme'
 import { Burger } from '../Burger/Burger'
 import { setCookie } from '../../utils/cookies'
+import config from "../../config";
 
 interface IMenuItem {
   label: string
   action?: (index: number) => any
-  href?: string
+  href?: string,
+  type?: string
 }
 
 const mapStateToProps = (state: IRootState) => ({
@@ -54,6 +56,7 @@ const Header: React.FC<IProps> = ({
   setLoginModal,
   setProfileModal,
 }) => {
+  console.log('HeaderNew received language:', language)
   const [languagesOpened, setLanguagesOpened] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [menuOpened, setMenuOpened] = useState(false)
@@ -77,6 +80,7 @@ const Header: React.FC<IProps> = ({
 
   menuItems.push({
     label: t('language'),
+    type: 'language',
     action: () => {
       setMenuOpened(languagesOpened ? false : true)
       setLanguagesOpened(!languagesOpened)
@@ -178,9 +182,9 @@ const Header: React.FC<IProps> = ({
                         >
                           {item.label}
                         </button>
-                        {item.label === t('language') && languagesOpened && (
+                        {item.type === 'language' && languagesOpened && (
                           <div className="menu__languages">
-                            {SITE_CONSTANTS.LANGUAGES.map((item: ILanguage) => (
+                            {SITE_CONSTANTS.LANGUAGES.filter(x => x.iso !== (config.SavedConfig !== 'children' ? ' ' : 'ru')).map((item: ILanguage) => (
                               <img
                                 key={item.id}
                                 src={item.logo}

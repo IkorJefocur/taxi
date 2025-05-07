@@ -33,6 +33,7 @@ export default function reducer(state = new record(), action: TAction) {
         .set('status', EStatuses.Fail)
 
     case ActionTypes.SET_LANGUAGE:
+      console.log('Setting language in reducer:', payload)
       return state
         .set('language', payload)
 

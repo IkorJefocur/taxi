@@ -147,6 +147,7 @@ class Constants {
       parseEntries,
     )
     this.LANGUAGES = parseLanguages((window as any).data?.langs || defaultValues.LANGUAGES)
+    console.log('CONSTANTS LANGUAGES', this.LANGUAGES)
   }
 
   calc_ENABLE_CUSTOMER_PRICE() {
@@ -203,3 +204,14 @@ export const getConstantValue = <T = any>(key: string | number, defaultValue: T,
 
 const SITE_CONSTANTS = new Constants()
 export default SITE_CONSTANTS
+export function getApiConstants():{
+  langs: {
+    [key: string]: {
+      iso: string,
+      [key: string]: string
+    }
+  },
+  [key: string]: any
+} {
+  return (window as any).data
+}

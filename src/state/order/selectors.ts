@@ -9,3 +9,7 @@ export const destination = createSelector(moduleSelector, state => state.destina
 export const status = createSelector(moduleSelector, state => state.status)
 export const message = createSelector(moduleSelector, state => state.message)
 export const client = createSelector(moduleSelector, state => state.client)
+export const selectedOrderId = createSelector(
+  moduleSelector,
+  state => state.get('selectedOrderId'),
+)

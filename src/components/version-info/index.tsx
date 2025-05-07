@@ -4,8 +4,23 @@ import './version-info.scss'
 import Config from '../../config'
 import { connect } from 'react-redux'
 import { configActionCreators } from '../../state/config'
-import SITE_CONSTANTS from '../../siteConstants'
+import SITE_CONSTANTS, {getApiConstants} from '../../siteConstants'
 import { setCookie } from '../../utils/cookies'
+import { ILanguage } from '../../types/types'
+
+interface Language {
+  native: string;
+  ru: string;
+  en: string;
+  es: string | null;
+  iso: string;
+  logo: string;
+  tr_code: string;
+}
+
+interface Languages {
+  [key: string]: Language;
+}
 
 const mapDispatchToProps = {
   setLanguage: configActionCreators.setLanguage,
@@ -23,6 +38,7 @@ const VersionInfo: React.FC<IProps> = ({ setLanguage }) => {
   const [lastClickTime, setLastClickTime] = useState(0)
 
   const handleClick = () => {
+    console.log('Handling click')
     const currentTime = new Date().getTime()
     const timeDiff = currentTime - lastClickTime
     
@@ -35,10 +51,23 @@ const VersionInfo: React.FC<IProps> = ({ setLanguage }) => {
     setLastClickTime(currentTime)
 
     if (clickCount === 2) {
-      const russianLang = SITE_CONSTANTS.LANGUAGES.find(lang => lang.iso === 'ru')
+      console.log(getApiConstants()?.langs)
+      const langs = getApiConstants()?.langs
+      const russianLang = langs ? Object.entries(langs).find(([id, lang]) => lang.tr_code === 'ru') : undefined
       if (russianLang && setLanguage) {
+        const [id, lang] = russianLang
+        const language: ILanguage = {
+          id: parseInt(id),
+          iso: lang.iso,
+          logo: lang.logo,
+          native: lang.native,
+          ru: lang.ru,
+          en: lang.en,
+          es: lang.es,
+          tr_code: lang.tr_code
+        }
         setCookie('user_lang', 'ru')
-        setLanguage(russianLang)
+        setLanguage(language)
       }
       setClickCount(0)
     }

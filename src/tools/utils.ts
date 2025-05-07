@@ -819,15 +819,14 @@ export function parseEntries(entries: string) {
 
 export function parseLanguages(languages: any) {
   const configName = localStorage.getItem('config');
+  console.log('langs to parse', languages);
   const languagesList = Object.entries(languages).map(([key, value]: [string, any]) => ({
     ...value, id: key, logo: `/assets/images/default/flag-${value.logo}.svg`,
   }));
 
   // Удаляем русский язык только если конфиг имеет имя "children"
   // Для всех остальных конфигов (включая grzuvill) оставляем русский язык
-  if (configName === 'children') {
-    return languagesList.filter(lang => lang.iso !== 'ru');
-  }
+
 
   // Для всех остальных конфигов возвращаем полный список языков
   return languagesList;

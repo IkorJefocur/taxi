@@ -194,7 +194,14 @@ export interface IOptions {
   bigTruckCarTypes?: string[]
   bigTruckCarLogic?: ELogic
   bigTruckServices?: IBigTruckService['id'][],
-  createdBy: string
+  createdBy?: string,
+  pricingModel?: {
+    price: number,
+    formula: string,
+    options: {
+        [key: string]: any
+    }
+  }
 }
 
 export interface IOrder extends IBookingCoordinates, IBookingAddresses {

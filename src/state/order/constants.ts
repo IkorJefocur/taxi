@@ -18,6 +18,7 @@ export const ActionTypes = {
   SET_CLIENT: `${prefix}/SET_CLIENT`,
 
   CLEAR_ORDER: `${prefix}/CLEAR_ORDER`,
+  SET_SELECTED_ORDER_ID: `${prefix}/SET_SELECTED_ORDER_ID`,
 } as const
 
 export interface IOrderState {
@@ -27,4 +28,5 @@ export interface IOrderState {
   start: IAddressPoint | null,
   destination: IAddressPoint | null,
   client: IUser | null,
+  selectedOrderId: string | null,
 }

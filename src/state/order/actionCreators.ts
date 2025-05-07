@@ -13,3 +13,7 @@ export const setOrder = (payload: IOrder | null): TAction => {
 export const clearOrder = (): TAction => {
   return { type: ActionTypes.CLEAR_ORDER }
 }
+
+export const setSelectedOrderId = (id: string) => {
+  return { type: ActionTypes.SET_SELECTED_ORDER_ID, payload: id }
+}

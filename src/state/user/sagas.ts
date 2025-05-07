@@ -188,6 +188,7 @@ function* initUserSaga() {
       if (savedLang) {
         const language = SITE_CONSTANTS.LANGUAGES.find(i => i.iso === savedLang)
         if (language) {
+          console.log('Setting language from cookie:', language)
           yield put({
             type: ConfigActionTypes.SET_LANGUAGE,
             payload: language,
@@ -204,9 +205,18 @@ function* initUserSaga() {
       return
     }
 
+    console.log('User from API:', user)
+    console.log('User language from API:', user?.u_lang)
+    console.log('Available languages:', SITE_CONSTANTS.LANGUAGES)
+
     // Устанавливаем язык из пользователя или из куки
     if (user?.u_lang) {
-      const language = SITE_CONSTANTS.LANGUAGES.find(i => i.id.toString() === user.u_lang)
+      console.log('Looking for language with id:', user.u_lang)
+      const language = SITE_CONSTANTS.LANGUAGES.find(i => {
+        console.log('Comparing:', i.id, user.u_lang, typeof i.id, typeof user.u_lang)
+        return i.id.toString() === user.u_lang.toString()
+      })
+      console.log('Found language from user.u_lang:', language)
       if (language) {
         setCookie('user_lang', language.iso)
         yield put({
@@ -218,6 +228,7 @@ function* initUserSaga() {
       const savedLang = getCookie('user_lang')
       if (savedLang) {
         const language = SITE_CONSTANTS.LANGUAGES.find(i => i.iso === savedLang)
+        console.log('Found language from cookie:', language)
         if (language) {
           yield put({
             type: ConfigActionTypes.SET_LANGUAGE,
