@@ -214,7 +214,7 @@ function* initUserSaga() {
       console.log('Looking for language with id:', user.u_lang)
       const language = SITE_CONSTANTS.LANGUAGES.find(i => {
         console.log('Comparing:', i.id, user.u_lang, typeof i.id, typeof user.u_lang)
-        return i.id.toString() === user.u_lang.toString()
+        return i.id.toString() === user.u_lang?.toString()
       })
       console.log('Found language from user.u_lang:', language)
       if (language) {
