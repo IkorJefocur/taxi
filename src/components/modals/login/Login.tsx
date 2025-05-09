@@ -167,6 +167,7 @@ const LoginForm: React.FC<IProps> = ({
 
   useEffect(() => {
     if (((status === EStatuses.Fail || status === EStatuses.Success && user)) && type !== ERegistrationType.Whatsapp && !isVisible) {
+      console.log('togglin, prev: ', isVisible)
       toggleVisibility()
     } else if (status === EStatuses.Whatsapp) {
       setLoginModal(false)
@@ -177,6 +178,14 @@ const LoginForm: React.FC<IProps> = ({
       })
     }
   }, [status])
+  useEffect(() => {
+    if(status === EStatuses.Success && message==='remind_password_success') {
+        toggleVisibility()
+      if(!isVisible) {
+          toggleVisibility()
+      }
+    }
+  }, [status]);
 
   if (tab !== LOGIN_TABS_IDS[0]) return null
 
@@ -208,6 +217,7 @@ const LoginForm: React.FC<IProps> = ({
       return decodeURIComponent(results[1]) || 0
     }
   }
+  console.log('isVisible', isVisible, 'status', status, 'message', message, 'user', user)
 
   return <form className="sign-in-subform" onSubmit={handleSubmit(onSubmit)}>
     <Input
@@ -272,7 +282,7 @@ const LoginForm: React.FC<IProps> = ({
           <div className="alert-container">
             <Alert
               intent={status === EStatuses.Fail ? Intent.ERROR : Intent.SUCCESS}
-              message={(status === EStatuses.Fail ? t(TRANSLATION.LOGIN_FAIL) + ': ' + message : t(TRANSLATION.LOGIN_SUCCESS))}
+              message={(status === EStatuses.Fail ? t(TRANSLATION.LOGIN_FAIL) + ': ' + message : ( message === 'remind_password_success' ? t(TRANSLATION.REMIND_PASSWORD_SUCCESS) : t(TRANSLATION.LOGIN_SUCCESS)))}
               onClose={toggleVisibility}
             />
           </div>

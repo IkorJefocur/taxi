@@ -80,7 +80,6 @@ const JSONForm: React.FC<IProps> = ({
       if (field.type === 'select' && !Array.isArray(field.options) && field.options?.path) {
         const path = field.options.path.split('.')
         const map = path.reduce((res, key) => res[key], data)
-        
         // Если есть фильтр, применяем его
         if (field.options.filter) {
           const filterBy = field.options.filter.by;
@@ -100,7 +99,6 @@ const JSONForm: React.FC<IProps> = ({
           // Фильтруем опции по выбранному значению
           const filteredOptions = Object.entries(map)
             .filter(([_, value]: [string, any]) => {
-              if (!selectedValue) return true; // Если родительское значение не выбрано, показываем все опции
               if (!value || typeof value !== 'object') return false;
               return value[filterField] === selectedValue;
             })
@@ -108,7 +106,6 @@ const JSONForm: React.FC<IProps> = ({
               value: num,
               labelLang: value,
             }));
-
           
           // Если после фильтрации нет опций, показываем пустой список
           if (filteredOptions.length === 0) {
@@ -253,8 +250,6 @@ const JSONForm: React.FC<IProps> = ({
       }
     }
   }, [values, formErrors])
-
-  console.log('point1:' + state.errorMessage)
 
   const variables = useMemo(() => ({
     form: {

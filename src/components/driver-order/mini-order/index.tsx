@@ -62,6 +62,7 @@ const MiniOrder: React.FC<IProps> = ({
       })
   }, [])
 
+
   return (<>
     <div
       className={cn('mini-order', { 'mini-order--history': order.b_canceled || order.b_completed })}

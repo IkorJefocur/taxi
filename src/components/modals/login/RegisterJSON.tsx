@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { IRootState } from '../../../state'
 import { userSelectors, userActionCreators } from '../../../state/user'
 import { connect, ConnectedProps } from 'react-redux'
@@ -41,6 +41,8 @@ const RegisterForm: ({status, message, register}: {
   message,
   register,
 }) => {
+  const [formValues, setFormValues] = useState({})
+
   const handleSubmit = (values: any) => {
     console.log('Phone number from form:', values.u_phone)
     const isDriver = values.u_role === EUserRoles.Driver
@@ -54,6 +56,14 @@ const RegisterForm: ({status, message, register}: {
     
     values.st = 1
     register(values)
+  }
+
+  const handleChange = (fieldName: string, value: any) => {
+    console.log('Field changed:', fieldName, 'New value:', value)
+    setFormValues(prev => ({
+      ...prev,
+      [fieldName]: value
+    }))
   }
 
   const formStr = (window as any).data?.site_constants?.form_register?.value
@@ -74,10 +84,11 @@ const RegisterForm: ({status, message, register}: {
   return <JSONForm
       fields={form.fields}
       onSubmit={handleSubmit}
+      onChange={handleChange}
+      defaultValues={formValues}
       state={{
         success: status === EStatuses.Success,
         failed: status === EStatuses.Fail,
-        //errorMessage: message,
       }}
   />
 }

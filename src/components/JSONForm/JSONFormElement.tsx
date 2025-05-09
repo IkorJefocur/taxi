@@ -75,6 +75,11 @@ const JSONFormElement = (props: {
     onChange: (e: any) => {
       const empty = getCalculation(validation?.required, values, variables) ? '' : null
       const value = e.target.value === '' ? empty : e.target.value
+      if (type === 'select') {
+        console.log('Select field name:', name)
+        console.log('Selected value:', value)
+        console.log('Available options:', getCalculation(options, values, variables))
+      }
       validate(value)
       onChange(e, e.target.name, value)
     },
