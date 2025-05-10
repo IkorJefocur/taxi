@@ -43,25 +43,24 @@ const MiniOrder: React.FC<IProps> = ({
   let avatar = images.avatar
   let avatarSize = '48px'
 
-  useEffect(() => {
-    if ( !order.b_start_latitude || !order.b_start_longitude || context?.ordersAddressRef.current[order.b_id] ) return
-    API.reverseGeocode(order.b_start_latitude?.toString(), order.b_start_longitude?.toString())
-      .then((res: any) => {
-        const val = {
-          latitude: order.b_start_latitude,
-          longitude: order.b_start_longitude,
-          address: res.display_name,
-          shortAddress: shortenAddress(
-            res.display_name, res.address.city || res.address.town || res.address.village,
-          ),
-        }
-        if ( context?.ordersAddressRef.current ) {
-          context.ordersAddressRef.current[order.b_id] = val
-        }
-        setAddress(val)
-      })
-  }, [])
-
+  // useEffect(() => {
+  //   if ( !order.b_start_latitude || !order.b_start_longitude || context?.ordersAddressRef.current[order.b_id] ) return
+  //   API.reverseGeocode(order.b_start_latitude?.toString(), order.b_start_longitude?.toString())
+  //     .then((res: any) => {
+  //       const val = {
+  //         latitude: order.b_start_latitude,
+  //         longitude: order.b_start_longitude,
+  //         address: res.display_name,
+  //         shortAddress: shortenAddress(
+  //           res.display_name, res.address.city || res.address.town || res.address.village,
+  //         ),
+  //       }
+  //       if ( context?.ordersAddressRef.current ) {
+  //         context.ordersAddressRef.current[order.b_id] = val
+  //       }
+  //       setAddress(val)
+  //     })
+  // }, [])
 
   return (<>
     <div

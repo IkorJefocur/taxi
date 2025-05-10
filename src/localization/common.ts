@@ -520,4 +520,5 @@ export default {
   CODE_WRITE: 'code_write_here',
   CODE_ERROR: 'code_error',
   CAR_WASH: 'car_wash',
+  CALCULATION: 'calculation',
 } as const

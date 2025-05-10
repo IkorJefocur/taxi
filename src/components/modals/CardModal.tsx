@@ -1,6 +1,6 @@
 import { addHiddenOrder, dateFormatDate, dateShowFormat, formatComment, formatCommentWithEmoji, getOrderCount, getPayment, shortenAddress } from "../../tools/utils"
 import { EBookingDriverState, EBookingStates, EColorTypes, EPaymentWays, EStatuses, IAddressPoint, IOrder, IUser } from "../../types/types"
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useMemo, useCallback } from 'react'
 import Button from "../Button"
 import { t, TRANSLATION } from "../../localization"
 import * as API from '../../API'
@@ -87,6 +87,37 @@ interface CardModalProps extends IProps {
   orderId: string
   closeModal: () => void
 }
+
+export function getPricingFormula(order: IOrder | null) {
+    if (!order) {
+        return 'err';
+    }
+    if (!order?.b_options?.pricingModel?.formula) {
+        return 'err';
+    }
+
+    let formula = order.b_options.pricingModel.formula;
+    const options = order.b_options.pricingModel.options || {};
+
+    // Replace all placeholders in the formula with their values
+    Object.entries(options).forEach(([key, value]) => {
+        const placeholder = `${key}`;
+        formula = formula.replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+    });
+
+    // Handle parentheses and coefficient formatting
+    const timeRatioMatch = formula.match(/\(([^)]+)\)\*(\d+(?:\.\d+)?)/);
+    if (timeRatioMatch) {
+        const coefficient = parseFloat(timeRatioMatch[2]);
+        if (coefficient === 1) {
+            // If coefficient is 1, remove parentheses and multiplication
+            formula = formula.replace(/\(([^)]+)\)\*\d+(?:\.\d+)?/, '$1');
+        }
+    }
+
+    return formula;
+}
+
 const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order, user, orderId, closeModal,
   client,
   loadedAddress,
@@ -107,12 +138,106 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
   const context = useContext(OrderAddressContext);
 
   const [address, setAddress] = useState<IAddressPoint|null>(loadedAddress || null)
+  const [destinationAddress, setDestinationAddress] = useState<IAddressPoint|null>(null)
+  const [isAddressLoading, setIsAddressLoading] = useState(false)
+  const [isDestinationLoading, setIsDestinationLoading] = useState(false)
+  const [hasStartAddressRequested, setHasStartAddressRequested] = useState(false)
+  const [hasDestinationAddressRequested, setHasDestinationAddressRequested] = useState(false)
 
-  const driver = order?.drivers?.find(item => item.c_state > EBookingDriverState.Canceled)
+  const driver = useMemo(() => 
+    order?.drivers?.find(item => item.c_state > EBookingDriverState.Canceled),
+    [order?.drivers]
+  );
 
   const [isFromAddressShort, setIsFromAddressShort] = useState<boolean>((localStorage.getItem('isFromAddressShort')==='true'))
 
   const navigate = useNavigate();
+
+  const formatShortAddress = useCallback((addressData: any) => {
+    const { road, suburb, city, county, state, country } = addressData.address;
+    const parts = [road, suburb, city, county, state, country].filter(Boolean);
+    return parts.join(', ');
+  }, []);
+
+  // Reset request flags when order changes
+  useEffect(() => {
+    if (order?.b_id) {
+      setHasStartAddressRequested(false);
+      setHasDestinationAddressRequested(false);
+    }
+  }, [order?.b_id]);
+
+  // Fetch start address
+  useEffect(() => {
+    // Запрашиваем только если модал открыт и есть order
+    if (!active || !order?.b_id || !order?.b_start_latitude || !order?.b_start_longitude) return;
+    // Если уже есть адрес в context или loadedAddress, используем его
+    if (context?.ordersAddressRef.current[order.b_id] || loadedAddress) {
+      setAddress(context?.ordersAddressRef.current[order.b_id] || loadedAddress);
+      return;
+    }
+    if (hasStartAddressRequested || isAddressLoading) return;
+    setHasStartAddressRequested(true);
+    setIsAddressLoading(true);
+    API.reverseGeocode(order.b_start_latitude.toString(), order.b_start_longitude.toString())
+      .then(res => {
+        const val = {
+          latitude: order.b_start_latitude,
+          longitude: order.b_start_longitude,
+          address: res.display_name,
+          shortAddress: formatShortAddress(res),
+        }
+        if (context?.ordersAddressRef.current) {
+          context.ordersAddressRef.current[order.b_id] = val
+        }
+        setAddress(val)
+      })
+      .finally(() => {
+        setIsAddressLoading(false);
+      });
+  }, [active, order?.b_id, order?.b_start_latitude, order?.b_start_longitude]);
+
+  // Fetch destination address
+  useEffect(() => {
+    if (!active || !order?.b_id || !order?.b_destination_latitude || !order?.b_destination_longitude) return;
+    // Если уже есть адрес в context, используем его
+    const cachedAddress = context?.ordersAddressRef.current[`${order.b_id}_destination`];
+    if (cachedAddress) {
+      setDestinationAddress(cachedAddress);
+      return;
+    }
+    if (hasDestinationAddressRequested || isDestinationLoading) return;
+    setHasDestinationAddressRequested(true);
+    setIsDestinationLoading(true);
+    API.reverseGeocode(order.b_destination_latitude.toString(), order.b_destination_longitude.toString())
+      .then(res => {
+        const val = {
+          latitude: order.b_destination_latitude,
+          longitude: order.b_destination_longitude,
+          address: res.display_name,
+          shortAddress: formatShortAddress(res),
+        };
+        if (context?.ordersAddressRef.current) {
+          context.ordersAddressRef.current[`${order.b_id}_destination`] = val;
+        }
+        setDestinationAddress(val);
+      })
+      .catch(() => {
+        const coordsAddress = {
+          latitude: order.b_destination_latitude,
+          longitude: order.b_destination_longitude,
+          address: `${order.b_destination_latitude}, ${order.b_destination_longitude}`,
+          shortAddress: `${order.b_destination_latitude}, ${order.b_destination_longitude}`,
+        };
+        if (context?.ordersAddressRef.current) {
+          context.ordersAddressRef.current[`${order.b_id}_destination`] = coordsAddress;
+        }
+        setDestinationAddress(coordsAddress);
+      })
+      .finally(() => {
+        setIsDestinationLoading(false);
+      });
+  }, [active, order?.b_id, order?.b_destination_latitude, order?.b_destination_longitude]);
 
   const { register, formState: { errors }, handleSubmit: formHandleSubmit, getValues } = useForm<IFormValues>({
     criteriaMode: 'all',
@@ -126,25 +251,6 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
       dispatch(setSelectedOrderId(orderId))
     }
   }, [active, orderId])
-
-  useEffect(() => {
-    if ( !order?.b_start_latitude || !order.b_start_longitude || context?.ordersAddressRef.current[order.b_id] || loadedAddress !== null ) return
-    API.reverseGeocode(order.b_start_latitude?.toString(), order.b_start_longitude?.toString())
-      .then(res => {
-        const val = {
-          latitude: order.b_start_latitude,
-          longitude: order.b_start_longitude,
-          address: res.display_name,
-          shortAddress: shortenAddress(
-            res.display_name, res.address.city || res.address.town || res.address.village,
-          ),
-        }
-        if ( context?.ordersAddressRef.current ) {
-          context.ordersAddressRef.current[order.b_id] = val
-        }
-        setAddress(val)
-      })
-  }, [])
 
   const handleSubmit = () => {
     const isCandidate = ['96', '95'].some(item => order?.b_comments?.includes(item))
@@ -345,7 +451,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           status={status}
         />
         <Button
-          svg={<svg width="20" height="20" viewBox="0 0 20 20" fill="none" ><path fillRule="evenodd" clipRule="evenodd" d="M2.5 4.16675C2.5 2.78604 3.61929 1.66675 5 1.66675H10.8333C12.214 1.66675 13.3333 2.78604 13.3333 4.16675V6.71883C13.3333 7.17907 12.9602 7.55216 12.5 7.55216C12.0398 7.55216 11.6667 7.17907 11.6667 6.71883V4.16675C11.6667 3.70651 11.2936 3.33341 10.8333 3.33341H5C4.53976 3.33341 4.16667 3.70651 4.16667 4.16675V15.8334C4.16667 16.2937 4.53976 16.6667 5 16.6667H10.8333C11.2936 16.6667 11.6667 16.2937 11.6667 15.8334V13.7501C11.6667 13.2898 12.0398 12.9167 12.5 12.9167C12.9602 12.9167 13.3333 13.2898 13.3333 13.7501V15.8334C13.3333 17.2141 12.214 18.3334 10.8333 18.3334H5C3.61929 18.3334 2.5 17.2141 2.5 15.8334V4.16675ZM14.8274 7.32749C15.1528 7.00206 15.6805 7.00206 16.0059 7.32749L18.0893 9.41083C18.4147 9.73626 18.4147 10.2639 18.0893 10.5893L16.0059 12.6727C15.6805 12.9981 15.1528 12.9981 14.8274 12.6727C14.502 12.3472 14.502 11.8196 14.8274 11.4942L15.4882 10.8334H9.16667C8.70643 10.8334 8.33333 10.4603 8.33333 10.0001C8.33333 9.53984 8.70643 9.16675 9.16667 9.16675H15.4882L14.8274 8.506C14.502 8.18057 14.502 7.65293 14.8274 7.32749Z" fill="white"/></svg>}
+          svg={<svg width="20" height="20" viewBox="0 0 20 20" fill="none" ><path d="M18.0703 6.60938C17.6289 5.56055 16.9961 4.61914 16.1894 3.81055C15.3828 3.00391 14.4414 2.36914 13.3906 1.92969C12.3164 1.47852 11.1758 1.25 9.99999 1.25H9.96093C8.77733 1.25586 7.63085 1.49023 6.55272 1.95117C5.51171 2.39648 4.57811 3.0293 3.77929 3.83594C2.98046 4.64258 2.3535 5.58008 1.91991 6.625C1.47069 7.70703 1.24413 8.85742 1.24999 10.041C1.25585 11.3965 1.58007 12.7422 2.18749 13.9453V16.9141C2.18749 17.4102 2.58983 17.8125 3.08593 17.8125H6.05663C7.25975 18.4199 8.60546 18.7441 9.96093 18.75H10.0019C11.1719 18.75 12.3066 18.5234 13.375 18.0801C14.4199 17.6445 15.3594 17.0195 16.1641 16.2207C16.9707 15.4219 17.6055 14.4883 18.0488 13.4473C18.5098 12.3691 18.7441 11.2227 18.75 10.0391C18.7558 8.84961 18.5254 7.69531 18.0703 6.60938ZM15.1191 15.1641C13.75 16.5195 11.9336 17.2656 9.99999 17.2656H9.96679C8.78905 17.2598 7.61913 16.9668 6.58593 16.416L6.42186 16.3281H3.67186V13.5781L3.58397 13.4141C3.03319 12.3809 2.74022 11.2109 2.73436 10.0332C2.72655 8.08594 3.47069 6.25781 4.83593 4.88086C6.19921 3.50391 8.02147 2.74219 9.96874 2.73438H10.0019C10.9785 2.73438 11.9258 2.92383 12.8183 3.29883C13.6894 3.66406 14.4707 4.18945 15.1426 4.86133C15.8125 5.53125 16.3398 6.31445 16.7051 7.18555C17.084 8.08789 17.2734 9.04492 17.2695 10.0332C17.2578 11.9785 16.4941 13.8008 15.1191 15.1641Z" fill="white"/></svg>}
           className="order_hide-order-btn"
           onClick={() => setCancelDriverOrderModal(true)}
           label={message}
@@ -438,26 +544,21 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
         </div>
 
         <div className='address' >
-          <b>Estimate time: {(order?.b_estimate_waiting||0)/60} min</b>
+          <b>Estimate time: {(Math.trunc(order?.b_options?.pricingModel?.options.duration) || 0)} min</b>
           <p>
             Departure and Arrival Address
             <span className="from_address">
-            {t(TRANSLATION.FROM)}: 
+              {t(TRANSLATION.FROM)}:
               {address?.shortAddress
-              ? <>
-                {address
-                  ? <span>{address?.shortAddress ? address?.shortAddress : address?.address}</span>
-                  : <Loader />
-                }
-                {address?.shortAddress && (
-                  <img
-                    src={isFromAddressShort ? images.minusIcon : images.plusIcon}
-                    onClick={shortAddressHandler}
-                    alt='change address mode'
-                  />
-                )}
-              </>
-              : order?.b_destination_address ? <span>{order?.b_start_address}</span> : <Loader />
+                ? <>
+                    <span>{isFromAddressShort ? address.shortAddress : address.address}</span>
+                    <img
+                      src={isFromAddressShort ? images.plusIcon : images.minusIcon}
+                      onClick={shortAddressHandler}
+                      alt='change address mode'
+                    />
+                  </>
+                : order?.b_destination_address ? <span>{order?.b_start_address}</span> : <Loader />
               }
               <span
                 onClick={() => {
@@ -470,26 +571,36 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
                       null,
                   })
                 }}
-                className="svg" ><svg width="18" height="19" viewBox="0 0 18 19" fill="none" ><path d="M9 9.5C9.89511 9.5 10.7536 9.14442 11.3865 8.51149C12.0194 7.87855 12.375 7.02011 12.375 6.125C12.375 5.22989 12.0194 4.37145 11.3865 3.73851C10.7536 3.10558 9.89511 2.75 9 2.75C8.10489 2.75 7.24645 3.10558 6.61351 3.73851C5.98058 4.37145 5.625 5.22989 5.625 6.125C5.625 7.02011 5.98058 7.87855 6.61351 8.51149C7.24645 9.14442 8.10489 9.5 9 9.5ZM9 10.625C7.80653 10.625 6.66193 10.1509 5.81802 9.30698C4.97411 8.46307 4.5 7.31847 4.5 6.125C4.5 4.93153 4.97411 3.78693 5.81802 2.94302C6.66193 2.09911 7.80653 1.625 9 1.625C10.1935 1.625 11.3381 2.09911 12.182 2.94302C13.0259 3.78693 13.5 4.93153 13.5 6.125C13.5 7.31847 13.0259 8.46307 12.182 9.30698C11.3381 10.1509 10.1935 10.625 9 10.625Z" fill="#FF9900"/><path d="M9 9.5C9.14918 9.5 9.29226 9.55926 9.39775 9.66475C9.50324 9.77024 9.5625 9.91332 9.5625 10.0625V14.5625C9.5625 14.7117 9.50324 14.8548 9.39775 14.9602C9.29226 15.0657 9.14918 15.125 9 15.125C8.85082 15.125 8.70774 15.0657 8.60225 14.9602C8.49676 14.8548 8.4375 14.7117 8.4375 14.5625V10.0625C8.4375 9.91332 8.49676 9.77024 8.60225 9.66475C8.70774 9.55926 8.85082 9.5 9 9.5Z" fill="#FF9900"/><path d="M6.75 11.9097V13.0516C4.74187 13.3734 3.375 14.0686 3.375 14.5625C3.375 15.2251 5.83425 16.25 9 16.25C12.1657 16.25 14.625 15.2251 14.625 14.5625C14.625 14.0675 13.2581 13.3734 11.25 13.0516V11.9097C13.8713 12.2956 15.75 13.3385 15.75 14.5625C15.75 16.115 12.7282 17.375 9 17.375C5.27175 17.375 2.25 16.115 2.25 14.5625C2.25 13.3374 4.12875 12.2956 6.75 11.9097Z" fill="#FF9900"/></svg></span>
-              {t(TRANSLATION.TO)}: 
-                {(order?.b_destination_address || order?.b_destination_latitude)
-                  ? <span>{order?.b_destination_address || `${order?.b_destination_latitude}, ${order?.b_destination_longitude}`}</span>
-                  : <Loader />
-                }
-              <span 
-                onClick={
-                  () => {
-                    setMapModal({
-                      isOpen: true,
-                      type: EMapModalTypes.OrderDetails,
-                      defaultCenter: destination?.latitude &&
-                      destination?.longitude ?
-                        [destination.latitude, destination.longitude] :
-                        null,
-                    })
-                  }
-                }
-                className="svg" ><svg width="18" height="19" viewBox="0 0 18 19" fill="none" ><path d="M9 9.5C9.89511 9.5 10.7536 9.14442 11.3865 8.51149C12.0194 7.87855 12.375 7.02011 12.375 6.125C12.375 5.22989 12.0194 4.37145 11.3865 3.73851C10.7536 3.10558 9.89511 2.75 9 2.75C8.10489 2.75 7.24645 3.10558 6.61351 3.73851C5.98058 4.37145 5.625 5.22989 5.625 6.125C5.625 7.02011 5.98058 7.87855 6.61351 8.51149C7.24645 9.14442 8.10489 9.5 9 9.5ZM9 10.625C7.80653 10.625 6.66193 10.1509 5.81802 9.30698C4.97411 8.46307 4.5 7.31847 4.5 6.125C4.5 4.93153 4.97411 3.78693 5.81802 2.94302C6.66193 2.09911 7.80653 1.625 9 1.625C10.1935 1.625 11.3381 2.09911 12.182 2.94302C13.0259 3.78693 13.5 4.93153 13.5 6.125C13.5 7.31847 13.0259 8.46307 12.182 9.30698C11.3381 10.1509 10.1935 10.625 9 10.625Z" fill="#00B100"/><path d="M9 9.5C9.14918 9.5 9.29226 9.55926 9.39775 9.66475C9.50324 9.77024 9.5625 9.91332 9.5625 10.0625V14.5625C9.5625 14.7117 9.50324 14.8548 9.39775 14.9602C9.29226 15.0657 9.14918 15.125 9 15.125C8.85082 15.125 8.70774 15.0657 8.60225 14.9602C8.49676 14.8548 8.4375 14.7117 8.4375 14.5625V10.0625C8.4375 9.91332 8.49676 9.77024 8.60225 9.66475C8.70774 9.55926 8.85082 9.5 9 9.5Z" fill="#00B100"/><path d="M6.75 11.9097V13.0516C4.74187 13.3734 3.375 14.0686 3.375 14.5625C3.375 15.2251 5.83425 16.25 9 16.25C12.1657 16.25 14.625 15.2251 14.625 14.5625C14.625 14.0675 13.2581 13.3734 11.25 13.0516V11.9097C13.8713 12.2956 15.75 13.3385 15.75 14.5625C15.75 16.115 12.7282 17.375 9 17.375C5.27175 17.375 2.25 16.115 2.25 14.5625C2.25 13.3374 4.12875 12.2956 6.75 11.9097Z" fill="#00B100"/></svg></span>
+                className="svg" >
+                <svg width="18" height="19" viewBox="0 0 18 19" fill="none" >
+                  <path d="M9 9.5C9.89511 9.5 10.7536 9.14442 11.3865 8.51149C12.0194 7.87855 12.375 7.02011 12.375 6.125C12.375 5.22989 12.0194 4.37145 11.3865 3.73851C10.7536 3.10558 9.89511 2.75 9 2.75C8.10489 2.75 7.24645 3.10558 6.61351 3.73851C5.98058 4.37145 5.625 5.22989 5.625 6.125C5.625 7.02011 5.98058 7.87855 6.61351 8.51149C7.24645 9.14442 8.10489 9.5 9 9.5ZM9 10.625C7.80653 10.625 6.66193 10.1509 5.81802 9.30698C4.97411 8.46307 4.5 7.31847 4.5 6.125C4.5 4.93153 4.97411 3.78693 5.81802 2.94302C6.66193 2.09911 7.80653 1.625 9 1.625C10.1935 1.625 11.3381 2.09911 12.182 2.94302C13.0259 3.78693 13.5 4.93153 13.5 6.125C13.5 7.31847 13.0259 8.46307 12.182 9.30698C11.3381 10.1509 10.1935 10.625 9 10.625Z" fill="#FF9900"/>
+                  <path d="M9 9.5C9.14918 9.5 9.29226 9.55926 9.39775 9.66475C9.50324 9.77024 9.5625 9.91332 9.5625 10.0625V14.5625C9.5625 14.7117 9.50324 14.8548 9.39775 14.9602C9.29226 15.0657 9.14918 15.125 9 15.125C8.85082 15.125 8.70774 15.0657 8.60225 14.9602C8.49676 14.8548 8.4375 14.7117 8.4375 14.5625V10.0625C8.4375 9.91332 8.49676 9.77024 8.60225 9.66475C8.70774 9.55926 8.85082 9.5 9 9.5Z" fill="#FF9900"/>
+                  <path d="M6.75 11.9097V13.0516C4.74187 13.3734 3.375 14.0686 3.375 14.5625C3.375 15.2251 5.83425 16.25 9 16.25C12.1657 16.25 14.625 15.2251 14.625 14.5625C14.625 14.0675 13.2581 13.3734 11.25 13.0516V11.9097C13.8713 12.2956 15.75 13.3385 15.75 14.5625C15.75 16.115 12.7282 17.375 9 17.375C5.27175 17.375 2.25 16.115 2.25 14.5625C2.25 13.3374 4.12875 12.2956 6.75 11.9097Z" fill="#FF9900"/>
+                </svg>
+              </span>
+              {t(TRANSLATION.TO)}:
+              {destinationAddress?.shortAddress
+                ? <span>{isFromAddressShort ? destinationAddress.shortAddress : destinationAddress.address}</span>
+                : order?.b_destination_address ? <span>{order?.b_destination_address}</span> : <Loader />
+              }
+              <span
+                onClick={() => {
+                  setMapModal({
+                    isOpen: true,
+                    type: EMapModalTypes.OrderDetails,
+                    defaultCenter: destinationAddress?.latitude &&
+                    destinationAddress?.longitude ?
+                      [destinationAddress.latitude, destinationAddress.longitude] :
+                      null,
+                  })
+                }}
+                className="svg" >
+                <svg width="18" height="19" viewBox="0 0 18 19" fill="none" >
+                  <path d="M9 9.5C9.89511 9.5 10.7536 9.14442 11.3865 8.51149C12.0194 7.87855 12.375 7.02011 12.375 6.125C12.375 5.22989 12.0194 4.37145 11.3865 3.73851C10.7536 3.10558 9.89511 2.75 9 2.75C8.10489 2.75 7.24645 3.10558 6.61351 3.73851C5.98058 4.37145 5.625 5.22989 5.625 6.125C5.625 7.02011 5.98058 7.87855 6.61351 8.51149C7.24645 9.14442 8.10489 9.5 9 9.5ZM9 10.625C7.80653 10.625 6.66193 10.1509 5.81802 9.30698C4.97411 8.46307 4.5 7.31847 4.5 6.125C4.5 4.93153 4.97411 3.78693 5.81802 2.94302C6.66193 2.09911 7.80653 1.625 9 1.625C10.1935 1.625 11.3381 2.09911 12.182 2.94302C13.0259 3.78693 13.5 4.93153 13.5 6.125C13.5 7.31847 13.0259 8.46307 12.182 9.30698C11.3381 10.1509 10.1935 10.625 9 10.625Z" fill="#00B100"/>
+                  <path d="M9 9.5C9.14918 9.5 9.29226 9.55926 9.39775 9.66475C9.50324 9.77024 9.5625 9.91332 9.5625 10.0625V14.5625C9.5625 14.7117 9.50324 14.8548 9.39775 14.9602C9.29226 15.0657 9.14918 15.125 9 15.125C8.85082 15.125 8.70774 15.0657 8.60225 14.9602C8.49676 14.8548 8.4375 14.7117 8.4375 14.5625V10.0625C8.4375 9.91332 8.49676 9.77024 8.60225 9.66475C8.70774 9.55926 8.85082 9.5 9 9.5Z" fill="#00B100"/>
+                  <path d="M6.75 11.9097V13.0516C4.74187 13.3734 3.375 14.0686 3.375 14.5625C3.375 15.2251 5.83425 16.25 9 16.25C12.1657 16.25 14.625 15.2251 14.625 14.5625C14.625 14.0675 13.2581 13.3734 11.25 13.0516V11.9097C13.8713 12.2956 15.75 13.3385 15.75 14.5625C15.75 16.115 12.7282 17.375 9 17.375C5.27175 17.375 2.25 16.115 2.25 14.5625C2.25 13.3374 4.12875 12.2956 6.75 11.9097Z" fill="#00B100"/>
+                </svg>
+              </span>
             </span>
           </p>
         </div>
@@ -505,6 +616,9 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           <svg width="18" height="19" viewBox="0 0 18 19" fill="none" ><circle cx="8.99988" cy="9.50002" r="7.5" stroke="#FF2400" strokeWidth="1.125"/><path d="M9 13.25V13.625V14" stroke="#FF2400" strokeWidth="1.125" strokeLinecap="round"/><path d="M9 5V5.375V5.75" stroke="#FF2400" strokeWidth="1.125" strokeLinecap="round"/><path d="M11.25 7.62498C11.25 6.58945 10.2426 5.74998 9 5.74998C7.75736 5.74998 6.75 6.58945 6.75 7.62498C6.75 8.66052 7.75736 9.49998 9 9.49998C10.2426 9.49998 11.25 10.3395 11.25 11.375C11.25 12.4105 10.2426 13.25 9 13.25C7.75736 13.25 6.75 12.4105 6.75 11.375" stroke="#FF2400" strokeWidth="1.125" strokeLinecap="round"/></svg>
           <p>{t(TRANSLATION.PAYMENT_WAY)}: {_value}</p>
         </div>
+          <div>
+              {t(TRANSLATION.CALCULATION) + ': ' + getPricingFormula(order)}
+          </div>
 
         <div className="client" >
           <div className="comments" data-active={false} onClick={e => e.currentTarget.dataset.active=e.currentTarget.dataset.active==='false'?'true':'false'} >

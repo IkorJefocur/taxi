@@ -56,7 +56,6 @@ const Header: React.FC<IProps> = ({
   setLoginModal,
   setProfileModal,
 }) => {
-  console.log('HeaderNew received language:', language)
   const [languagesOpened, setLanguagesOpened] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [menuOpened, setMenuOpened] = useState(false)

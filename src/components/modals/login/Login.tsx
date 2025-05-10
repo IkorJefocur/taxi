@@ -217,7 +217,6 @@ const LoginForm: React.FC<IProps> = ({
       return decodeURIComponent(results[1]) || 0
     }
   }
-  console.log('isVisible', isVisible, 'status', status, 'message', message, 'user', user)
 
   return <form className="sign-in-subform" onSubmit={handleSubmit(onSubmit)}>
     <Input

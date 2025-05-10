@@ -27,10 +27,6 @@ const mapDispatchToProps = {
 
 const connector = connect(null, mapDispatchToProps)
 
-
-
-
-
 interface IProps extends ConnectedProps<typeof connector> {
   user: IUserState['user'],
   activeOrders: IOrdersState['activeOrders'],
