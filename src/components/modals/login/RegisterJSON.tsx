@@ -86,6 +86,7 @@ const RegisterForm: ({status, message, register}: {
       onSubmit={handleSubmit}
       onChange={handleChange}
       defaultValues={formValues}
+      key={JSON.stringify(formValues)}
       state={{
         success: status === EStatuses.Success,
         failed: status === EStatuses.Fail,
