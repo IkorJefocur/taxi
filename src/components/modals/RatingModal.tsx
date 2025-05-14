@@ -54,11 +54,24 @@ export const calculateFinalPrice = (order: IOrder | null) => {
   if (!order) {
     return 'err';
   }
-  const formula = calculateFinalPriceFormula(order);
-  if (!formula) {
+  if(!order.b_options?.pricingModel?.formula) {
     return 'err';
   }
-  return Math.round(eval(formula));
+  if(order.b_options?.pricingModel?.formula === '-') {
+      return '-'
+  }
+  const formula = calculateFinalPriceFormula(order);
+  if (!formula || formula === 'err') {
+    return 'err';
+  }
+  try {
+    // Safely evaluate the formula using Function constructor
+    const safeEval = new Function('return ' + formula);
+    return Math.round(safeEval());
+  } catch (error) {
+    console.error('Error calculating final price1:', error);
+    return 'err';
+  }
 }
 
 const RatingModal: React.FC<IProps> = ({
@@ -97,30 +110,28 @@ const RatingModal: React.FC<IProps> = ({
   let finalPriceFormula: string | undefined = 'err'
   let finalPrice: string | number = 0
   console.log('detailedOrder', detailedOrder)
-  if (detailedOrder) {
+  if (detailedOrder?.b_options?.pricingModel) {
     const start_moment = moment(detailedOrder.b_start_datetime)
     const end_moment = moment()
     
-    if (detailedOrder.b_options?.pricingModel?.options) {
-      const updatedOptions = {
-        ...detailedOrder.b_options.pricingModel.options,
-        duration: end_moment.diff(start_moment, 'minutes')
-      }
-      
-      const orderWithUpdatedOptions = {
-        ...detailedOrder,
-        b_options: {
-          ...detailedOrder.b_options,
-          pricingModel: {
-            ...detailedOrder.b_options.pricingModel,
-            options: updatedOptions
-          }
+    const updatedOptions = {
+      ...(detailedOrder.b_options.pricingModel.options || {}),
+      duration: end_moment.diff(start_moment, 'minutes')
+    }
+    
+    const orderWithUpdatedOptions = {
+      ...detailedOrder,
+      b_options: {
+        ...detailedOrder.b_options,
+        pricingModel: {
+          ...detailedOrder.b_options.pricingModel,
+          options: updatedOptions
         }
       }
-      
-      finalPriceFormula = calculateFinalPriceFormula(orderWithUpdatedOptions)
-      finalPrice = calculateFinalPrice(orderWithUpdatedOptions)
     }
+    
+    finalPriceFormula = calculateFinalPriceFormula(orderWithUpdatedOptions)
+    finalPrice = calculateFinalPrice(orderWithUpdatedOptions)
   }
 
   return (
@@ -170,6 +181,7 @@ const RatingModal: React.FC<IProps> = ({
                 text={t(TRANSLATION.RATE)}
                 className="rating-modal_rating-btn"
                 onClick={onRating}
+                disabled={stars === 0}
               />
             </div>
           </fieldset>

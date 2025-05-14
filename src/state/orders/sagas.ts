@@ -20,9 +20,19 @@ const calculateFinalPriceFormula = (order: IOrder) => {
   // Replace all placeholders in the formula with their values
   Object.entries(options).forEach(([key, value]) => {
     const placeholder = `${key}`;
-    formula = (formula || 'error_0x01').replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+    // Ensure value is a valid number and sanitize it
+    const sanitizedValue = typeof value === 'number' ? Math.trunc(value) : 0;
+    formula = (formula || 'error_0x01').replace(new RegExp(placeholder, 'g'), sanitizedValue.toString());
   });
-  return formula
+
+  // Validate formula contains only allowed characters
+  const validFormulaRegex = /^[0-9+\-*/().\s]+$/;
+  if (!validFormulaRegex.test(formula)) {
+    console.error('Invalid formula characters:', formula);
+    return 'err';
+  }
+
+  return formula;
 }
 
 const calculateFinalPrice = (order: IOrder | null) => {
@@ -30,17 +40,33 @@ const calculateFinalPrice = (order: IOrder | null) => {
     return 'err';
   }
   const formula = calculateFinalPriceFormula(order);
-  if (!formula) {
+  if (!formula || formula === 'err') {
     return 'err';
   }
-  return Math.round(eval(formula));
+  try {
+    // Add parentheses to ensure proper evaluation
+    const wrappedFormula = `(${formula})`;
+    // Safely evaluate the formula using Function constructor
+    const safeEval = new Function('return ' + wrappedFormula);
+    const result = safeEval();
+    // Ensure result is a valid number
+    if (typeof result !== 'number' || !isFinite(result)) {
+      console.error('Invalid calculation result:', result);
+      return 'err';
+    }
+    return Math.round(result);
+  } catch (error) {
+    console.error('Error calculating final price:', error, 'Formula:', formula);
+    return 'err';
+  }
 }
 
 // Helper function to update duration and price for completed orders
 const updateCompletedOrdersDuration = (orders: IOrder[]) => {
   return orders.map(order => {
-    if (order?.b_state === EBookingStates.Completed && order?.b_options?.pricingModel?.options) {
-      order.b_options.pricingModel.options.duration = moment(order.b_completed).diff(order.b_start_datetime, 'minutes')
+    if (order?.b_state === EBookingStates.Completed && order?.b_options?.pricingModel) {
+      const options = order.b_options.pricingModel.options || {}
+      options.duration = moment(order.b_completed).diff(order.b_start_datetime, 'minutes')
       const newPrice = calculateFinalPrice(order)
       if (typeof newPrice === 'number') {
         order.b_options.pricingModel.price = newPrice

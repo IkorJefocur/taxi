@@ -238,14 +238,14 @@ export const getPayment = (
   let _value = 0,
     _text = ''
   if (_orderTime?.isAfter(_startOfNightTime) && _orderTime.isBefore(_endOfNightTime)) {
-    //_value = SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME * (callRate + (farePer1Km * _distance))
     _text =  `${SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME} * \
-    ( ${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} ) = ${_value}`
+    ( ${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} ) = ${_value === 0 ? '-' : _value}`
   } else {
-    //_value = callRate + (farePer1Km * _distance)
-    _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = ${_value}`
+    _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = ${_value === 0 ? '-' : _value}`
   }
   _value = order?.b_options?.pricingModel?.price || _value
+
+  console.log('TEXT', _text, _value)
 
   return { value: _value, text: _text, type: EPaymentType.Calculated }
 }
