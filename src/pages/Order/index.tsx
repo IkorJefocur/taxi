@@ -21,6 +21,7 @@ import { modalsActionCreators } from '../../state/modals'
 import { userSelectors } from '../../state/user'
 import { EMapModalTypes } from '../../state/modals/constants'
 import { withLayout } from '../../HOCs/withLayout'
+import moment from 'moment'
 
 const mapStateToProps = (state: IRootState) => ({
   order: orderSelectors.order(state),
@@ -134,16 +135,36 @@ const Order: React.FC<IProps> = ({
         navigate('/driver-order?tab=map')
       })
 
-  const onCompleteOrderClick = () =>
+  const onCompleteOrderClick = () => {
+    if (!driver?.c_started) {
+      setMessageModal({ 
+        isOpen: true, 
+        status: EStatuses.Fail, 
+        message: t(TRANSLATION.ERROR)
+      })
+      return
+    }
+
+    
     API.setOrderState(id, EBookingDriverState.Finished)
       .then(() => {
         getOrder(id)
+        setMessageModal({
+          isOpen: true,
+          status: EStatuses.Success,
+          message: t(TRANSLATION.TRIP, { })
+        })
         setRatingModal({ isOpen: true })
       })
       .catch(error => {
         console.error(error)
-        setMessageModal({ isOpen: true, status: EStatuses.Fail, message: t(TRANSLATION.ERROR) })
+        setMessageModal({ 
+          isOpen: true, 
+          status: EStatuses.Fail, 
+          message: t(TRANSLATION.ERROR) 
+        })
       })
+  }
 
   const onAlarmClick = () =>
     setAlarmModal({ isOpen: true })

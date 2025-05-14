@@ -1,27 +1,39 @@
-import { addHiddenOrder, dateFormatDate, dateShowFormat, formatComment, formatCommentWithEmoji, getOrderCount, getPayment, shortenAddress } from "../../tools/utils"
-import { EBookingDriverState, EBookingStates, EColorTypes, EPaymentWays, EStatuses, IAddressPoint, IOrder, IUser } from "../../types/types"
-import React, { useContext, useEffect, useState, useMemo, useCallback } from 'react'
+import {
+    addHiddenOrder,
+    dateFormatDate,
+    dateShowFormat,
+    formatCommentWithEmoji,
+    getOrderCount,
+    getPayment
+} from "../../tools/utils"
+import {
+    EBookingDriverState,
+    EBookingStates,
+    EColorTypes,
+    EPaymentWays,
+    EStatuses,
+    IAddressPoint,
+    IOrder
+} from "../../types/types"
+import React, {useCallback, useContext, useEffect, useMemo, useState} from 'react'
 import Button from "../Button"
-import { t, TRANSLATION } from "../../localization"
+import {t, TRANSLATION} from "../../localization"
 import * as API from '../../API'
-import { setMapModal, setMessageModal, setRatingModal } from "../../state/modals/actionCreators"
-import { modalsActionCreators, modalsSelectors } from "../../state/modals"
-import { connect, ConnectedProps } from 'react-redux'
-import { IRootState } from "../../state"
-import { orderSelectors, orderActionCreators } from '../../state/order'
-import { userSelectors } from "../../state/user"
-import { EMapModalTypes } from "../../state/modals/constants"
-import { useInterval } from "../../tools/hooks"
+import {modalsActionCreators, modalsSelectors} from "../../state/modals"
+import {connect, ConnectedProps, useDispatch} from 'react-redux'
+import {IRootState} from "../../state"
+import {orderActionCreators, orderSelectors} from '../../state/order'
+import {userSelectors} from "../../state/user"
+import {EMapModalTypes} from "../../state/modals/constants"
 import Input from "../Input"
-import { useForm } from "react-hook-form"
+import {useForm} from "react-hook-form"
 import images from "../../constants/images"
-import { useNavigate } from "react-router-dom"
-import { Loader } from "../loader/Loader"
-import Payment from "../order/orderInfo/Payment"
-import { CURRENCY } from "../../siteConstants"
-import { OrderAddressContext } from "../../pages/Driver"
-import { useDispatch } from 'react-redux'
-import { setSelectedOrderId } from '../../state/order/actionCreators'
+import {useNavigate} from "react-router-dom"
+import {Loader} from "../loader/Loader"
+import {CURRENCY} from "../../siteConstants"
+import {OrderAddressContext} from "../../pages/Driver"
+import {setSelectedOrderId} from '../../state/order/actionCreators'
+import moment from "moment";
 
 
 const bookingStates: Record<number, keyof typeof EBookingStates> = {
@@ -134,7 +146,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
   setAlarmModal,
   setActiveChat
  }: CardModalProps) => {
-
+    console.log('CardModal drive status',order?.b_id, order?.b_state,order?.b_state==EBookingStates.Completed)
   const context = useContext(OrderAddressContext);
 
   const [address, setAddress] = useState<IAddressPoint|null>(loadedAddress || null)
@@ -511,10 +523,10 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
     return 'rgba(0, 0, 0, 0.25)'
   }
 
-  const _type = order?.b_payment_way === EPaymentWays.Credit ? TRANSLATION.CARD : TRANSLATION.CASH
-  const _value = (order && order.b_options && order.b_options.customer_price) ?
-    t(_type) + '. ' + t(TRANSLATION.WHAT_WE_DELIVERING) + ` ${order.b_options.customer_price} ${CURRENCY.SIGN}` :
-    t(_type) + '. ' + t(TRANSLATION.FIXED) + ` ${order?.b_options?.pricingModel?.price || getPayment(order).text} ${CURRENCY.SIGN}`
+    const _type = order?.b_payment_way === EPaymentWays.Credit ? TRANSLATION.CARD : TRANSLATION.CASH
+    const _value = (order && order.b_options && order.b_options.customer_price) ?
+      t(_type) + '. ' + t(TRANSLATION.WHAT_WE_DELIVERING) + ` ${order.b_options.customer_price} ${CURRENCY.SIGN}` :
+      t(_type) + '. ' + t(TRANSLATION.FIXED) + ` ${order?.b_options?.pricingModel?.price || getPayment(order).text} ${CURRENCY.SIGN}`
 
   return (
     <div className='status-card__modal' data-active={active} onClick={outsideClick} >

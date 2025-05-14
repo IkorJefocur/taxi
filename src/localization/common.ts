@@ -521,4 +521,5 @@ export default {
   CODE_ERROR: 'code_error',
   CAR_WASH: 'car_wash',
   CALCULATION: 'calculation',
+  FINAL_PRICE: 'final_price',
 } as const

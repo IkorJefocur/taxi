@@ -9,7 +9,7 @@ import { t, TRANSLATION } from '../../localization'
 import { useInterval } from '../../tools/hooks'
 import * as API from '../../API'
 import ChatToggler from '../../components/Chat/Toggler'
-import { EBookingDriverState, IAddressPoint, IOrder, IUser } from '../../types/types'
+import { EBookingDriverState, IAddressPoint, IOrder, IUser, EStatuses } from '../../types/types'
 import { useCachedState } from '../../tools/hooks'
 import images from '../../constants/images'
 import { dateFormatTime, getAngle, getAttribution, getTileServerUrl } from '../../tools/utils'
@@ -17,6 +17,10 @@ import { EDriverTabs, OrderAddressContext } from '.'
 import SITE_CONSTANTS from '../../siteConstants'
 import CardModal from '../../components/modals/CardModal'
 import { createPortal } from 'react-dom'
+import { connect, ConnectedProps } from 'react-redux'
+import { modalsActionCreators } from '../../state/modals'
+import { IRootState } from '../../state'
+import { orderActionCreators } from '../../state/order'
 
 interface IProps {
   user: IUser,
@@ -24,15 +28,26 @@ interface IProps {
   readyOrders: IOrder[] | null,
 }
 
+const mapDispatchToProps = {
+  setRatingModal: modalsActionCreators.setRatingModal,
+  setMessageModal: modalsActionCreators.setMessageModal,
+  getOrder: orderActionCreators.getOrder,
+}
+
+const connector = connect(null, mapDispatchToProps)
+
 interface IContentProps extends IProps {
   locate: boolean,
   setZoom: (zoom: number) => void
   setPosition: (position: L.LatLngExpression) => void
+  setRatingModal: typeof modalsActionCreators.setRatingModal
+  setMessageModal: typeof modalsActionCreators.setMessageModal
+  getOrder: typeof orderActionCreators.getOrder
 }
 
 const cachedDriverMapStateKey = 'cachedDriverMapState'
 
-const DriverOrderMapMode: React.FC<IProps> = props => {
+const DriverOrderMapMode: React.FC<IProps & ConnectedProps<typeof connector>> = props => {
   const [position, setPosition] = useCachedState<L.LatLngExpression | undefined>(
     `${cachedDriverMapStateKey}.position`,
   )
@@ -66,6 +81,9 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
   locate,
   setPosition,
   setZoom,
+  setRatingModal,
+  setMessageModal,
+  getOrder,
 }) => {
 
   const context = useContext(OrderAddressContext);
@@ -177,7 +195,15 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
     if (!currentOrder) return
 
     API.setOrderState(currentOrder.b_id, EBookingDriverState.Finished)
-    navigate(`/driver-order/${currentOrder.b_id}`)
+      .then(() => {
+        getOrder(currentOrder.b_id)
+        navigate(`/driver-order?tab=${EDriverTabs.Lite}`)
+        setRatingModal({ isOpen: true })
+      })
+      .catch(error => {
+        console.error(error)
+        setMessageModal({ isOpen: true, status: EStatuses.Fail, message: t(TRANSLATION.ERROR) })
+      })
   }
 
   let avatar = images.avatar
@@ -325,4 +351,4 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
   )
 }
 
-export default DriverOrderMapMode
+export default connector(DriverOrderMapMode)

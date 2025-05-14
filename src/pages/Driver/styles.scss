@@ -242,9 +242,6 @@
     }
   }
 
-
-
-
   img {
     z-index: 3;
   }
@@ -286,7 +283,7 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 401;
+    z-index: 9999;
 
     button {
       background: linear-gradient(90deg, #EC4C60 0%, #991B0E 100%);

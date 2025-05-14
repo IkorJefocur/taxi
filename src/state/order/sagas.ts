@@ -8,6 +8,37 @@ import { select, call } from '../../tools/sagaUtils'
 import * as API from '../../API'
 import { orderSelectors } from '.'
 import store from '../'
+import moment from 'moment'
+import { EBookingStates } from '../../types/types'
+
+const calculateFinalPriceFormula = (order: IOrder) => {
+  if (!order) {
+    return 'err';
+  }
+  if (!order?.b_options?.pricingModel?.formula) {
+    return 'err';
+  }
+  let formula = order.b_options?.pricingModel?.formula;
+  const options = order.b_options?.pricingModel?.options || {};
+
+  // Replace all placeholders in the formula with their values
+  Object.entries(options).forEach(([key, value]) => {
+    const placeholder = `${key}`;
+    formula = (formula || 'error_0x01').replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+  });
+  return formula
+}
+
+const calculateFinalPrice = (order: IOrder | null) => {
+  if (!order) {
+    return 'err';
+  }
+  const formula = calculateFinalPriceFormula(order);
+  if (!formula) {
+    return 'err';
+  }
+  return Math.round(eval(formula));
+}
 
 export const saga = function* () {
   yield all([
@@ -22,6 +53,15 @@ function* getOrderSaga(data: TAction) {
     const currentOrder = yield* select<IOrder>(orderSelectors.order)
 
     const order = yield* call<IOrder>(API.getOrder, data.payload)
+
+    // Update duration and price for completed orders
+    if (order?.b_state === EBookingStates.Completed && order?.b_options?.pricingModel?.options) {
+      order.b_options.pricingModel.options.duration = moment(order.b_completed).diff(order.b_start_datetime, 'minutes')
+      const newPrice = calculateFinalPrice(order)
+      if (typeof newPrice === 'number') {
+        order.b_options.pricingModel.price = newPrice
+      }
+    }
 
     if (!isEqual(currentOrder, order)) {
       if (!order.b_start_address) {
