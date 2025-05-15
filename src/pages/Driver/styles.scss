@@ -120,6 +120,8 @@
 
 .driver-order-map-mode {
   position: relative;
+  height: 100vh;
+  overflow: hidden;
 
   .leaflet-div-icon {
     background: none;
@@ -131,7 +133,9 @@
   }
 
   .map {
-    height: 85vh;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
   }
 
   .no-coords-orders {
@@ -302,10 +306,14 @@
       background-color: darken(#FF2400, 5%);
     }
 
-    @media (max-width: 768px) {
-      bottom: 90px;
+    @media (max-width: 1024px) {
+      bottom: 100px;
       width: calc(100% - 32px);
       max-width: none;
+    }
+
+    @media (max-width: 768px) {
+      bottom: 90px;
     }
   }
 }
