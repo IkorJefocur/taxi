@@ -115,7 +115,7 @@ const RatingModal: React.FC<IProps> = ({
   console.log('detailedOrder', detailedOrder)
   if (detailedOrder?.b_options?.pricingModel) {
     const start_moment = moment(detailedOrder.b_start_datetime)
-    const end_moment = moment()
+    const end_moment = moment(detailedOrder.b_completed)
     
     const updatedOptions = {
       ...(detailedOrder.b_options.pricingModel.options || {}),
