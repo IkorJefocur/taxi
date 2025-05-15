@@ -60,17 +60,19 @@ export const calculateFinalPrice = (order: IOrder | null) => {
   if(order.b_options?.pricingModel?.formula === '-') {
       return '-'
   }
-  const formula = order.b_options?.pricingModel?.formula;
+  let formula  = order.b_options?.pricingModel?.formula;
   if (!formula || formula === 'err') {
     return 'err';
   }
   Object.entries(order.b_options?.pricingModel?.options || {}).forEach(([key, value]) => {
     const placeholder = `${key}`;
-    formula.replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+    formula = formula.replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+    console.log('Formed formula', formula,'replacing', placeholder, 'with', Math.trunc(value)?.toString() || '0')
   });
   try {
     return Math.round(eval(formula))
   } catch (e) {
+    console.log('OPTIONS', order.b_options?.pricingModel?.options)
     return 'err, status: ' + e;
   }
 }
