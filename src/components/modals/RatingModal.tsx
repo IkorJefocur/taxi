@@ -60,17 +60,18 @@ export const calculateFinalPrice = (order: IOrder | null) => {
   if(order.b_options?.pricingModel?.formula === '-') {
       return '-'
   }
-  const formula = calculateFinalPriceFormula(order);
+  const formula = order.b_options?.pricingModel?.formula;
   if (!formula || formula === 'err') {
     return 'err';
   }
+  Object.entries(order.b_options?.pricingModel?.options || {}).forEach(([key, value]) => {
+    const placeholder = `${key}`;
+    formula.replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+  });
   try {
-    // Safely evaluate the formula using Function constructor
-    const safeEval = new Function('return ' + formula);
-    return Math.round(safeEval());
-  } catch (error) {
-    console.error('Error calculating final price1:', error);
-    return 'err';
+    return Math.round(eval(formula))
+  } catch (e) {
+    return 'err, status: ' + e;
   }
 }
 
@@ -147,7 +148,7 @@ const RatingModal: React.FC<IProps> = ({
             {finalPriceFormula !== 'err' && (
                 <div>
                   <div className="final-price">
-                    {t(TRANSLATION.FINAL_PRICE)}: {finalPrice} {CURRENCY.SIGN}
+                    {t(TRANSLATION.FINAL_PRICE)}: {finalPrice!=='-'? CURRENCY.SIGN : ''} {finalPrice}
                   </div>
                   <div className="final-price">
                     {t(TRANSLATION.CALCULATION)}: {finalPriceFormula}

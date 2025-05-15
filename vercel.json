@@ -11,6 +11,10 @@
                 {
                     "key": "Access-Control-Allow-Methods",
                     "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+                },
+                {
+                    "key": "Cache-Control",
+                    "value": "no-store, max-age=0"
                 }
             ]
         }

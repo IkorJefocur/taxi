@@ -6,60 +6,8 @@ import { ActionTypes } from './constants'
 import { EOrderTypes, IOrder, EBookingStates } from '../../types/types'
 import { select, call } from '../../tools/sagaUtils'
 import moment from 'moment'
+import {calculateFinalPrice} from "../../components/modals/RatingModal";
 
-const calculateFinalPriceFormula = (order: IOrder) => {
-  if (!order) {
-    return 'err';
-  }
-  if (!order?.b_options?.pricingModel?.formula) {
-    return 'err';
-  }
-  let formula = order.b_options?.pricingModel?.formula;
-  const options = order.b_options?.pricingModel?.options || {};
-
-  // Replace all placeholders in the formula with their values
-  Object.entries(options).forEach(([key, value]) => {
-    const placeholder = `${key}`;
-    // Ensure value is a valid number and sanitize it
-    const sanitizedValue = typeof value === 'number' ? Math.trunc(value) : 0;
-    formula = (formula || 'error_0x01').replace(new RegExp(placeholder, 'g'), sanitizedValue.toString());
-  });
-
-  // Validate formula contains only allowed characters
-  const validFormulaRegex = /^[0-9+\-*/().\s]+$/;
-  if (!validFormulaRegex.test(formula)) {
-    console.error('Invalid formula characters:', formula);
-    return 'err';
-  }
-
-  return formula;
-}
-
-const calculateFinalPrice = (order: IOrder | null) => {
-  if (!order) {
-    return 'err';
-  }
-  const formula = calculateFinalPriceFormula(order);
-  if (!formula || formula === 'err') {
-    return 'err';
-  }
-  try {
-    // Add parentheses to ensure proper evaluation
-    const wrappedFormula = `(${formula})`;
-    // Safely evaluate the formula using Function constructor
-    const safeEval = new Function('return ' + wrappedFormula);
-    const result = safeEval();
-    // Ensure result is a valid number
-    if (typeof result !== 'number' || !isFinite(result)) {
-      console.error('Invalid calculation result:', result);
-      return 'err';
-    }
-    return Math.round(result);
-  } catch (error) {
-    console.error('Error calculating final price:', error, 'Formula:', formula);
-    return 'err';
-  }
-}
 
 // Helper function to update duration and price for completed orders
 const updateCompletedOrdersDuration = (orders: IOrder[]) => {

@@ -279,14 +279,33 @@
   }
 
   .finish-drive-button {
-    position: absolute;
-    bottom: 20px;
+    position: fixed;
+    bottom: 80px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 9999;
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    background-color: #FF2400;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-    button {
-      background: linear-gradient(90deg, #EC4C60 0%, #991B0E 100%);
+    &:hover {
+      background-color: darken(#FF2400, 5%);
+    }
+
+    @media (max-width: 768px) {
+      bottom: 90px;
+      width: calc(100% - 32px);
+      max-width: none;
     }
   }
 }
