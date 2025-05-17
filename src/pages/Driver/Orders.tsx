@@ -134,6 +134,7 @@ const DriverOrders: React.FC<IProps> = ({
                     order={item}
                     onClick={() => handleOrderClick(item.b_id)}
                     key={item.b_id}
+                    isHistory={false}
                   /> :
                   <StatusCard
                     className="driver-order-wide-mode-status-card"
@@ -183,6 +184,7 @@ const DriverOrders: React.FC<IProps> = ({
                 order={item}
                 onClick={() => handleOrderClick(item.b_id)}
                 key={item.b_id}
+                isHistory={false}
               /> :
               <StatusCard
                 style={{ boxShadow: '0px 1px 7px rgba(0, 0, 0, 0.23)', border: 'none' }}
@@ -210,6 +212,7 @@ const DriverOrders: React.FC<IProps> = ({
                 order={item}
                 onClick={() => handleOrderClick(item.b_id)}
                 key={item.b_id}
+                isHistory={true}
               /> :
               <StatusCard
                 className="driver-order-wide-mode-status-card"

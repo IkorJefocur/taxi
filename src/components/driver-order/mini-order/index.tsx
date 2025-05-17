@@ -11,34 +11,93 @@ import { createPortal } from 'react-dom'
 import CardModal from '../../modals/CardModal'
 import * as API from '../../../API'
 import { OrderAddressContext } from '../../../pages/Driver'
+import { connect, ConnectedProps } from 'react-redux'
+import { IRootState } from '../../../state'
+import { modalsActionCreators, modalsSelectors } from '../../../state/modals'
 
-interface IProps {
+const mapStateToProps = (state: IRootState) => ({
+  activeChat: modalsSelectors.activeChat(state),
+})
+
+const mapDispatchToProps = {
+  setActiveChat: modalsActionCreators.setActiveChat,
+}
+
+const connector = connect(mapStateToProps, mapDispatchToProps)
+
+interface IProps extends ConnectedProps<typeof connector> {
   user: IUser,
   order: IOrder,
-  onClick: (event: React.MouseEvent, id: IOrder['b_id']) => any
+  onClick: (event: React.MouseEvent, id: IOrder['b_id']) => any,
+  isHistory?: boolean
 }
 
 const MiniOrder: React.FC<IProps> = ({
   user,
   order,
   onClick,
+  activeChat,
+  setActiveChat,
+  isHistory,
 }) => {
-
-  const context = useContext(OrderAddressContext);
-
   const [activeModal, setActiveModal] = useState(false)
-  const [address, setAddress] = useState<IAddressPoint|null>(context?.ordersAddressRef.current[order.b_id] || null)
+  const [address, setAddress] = useState<IAddressPoint | null>(null)
+  const context = useContext(OrderAddressContext)
 
-  const payment = getPayment(order)
-  const _onClick = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (onClick) {
-      onClick(event, order.b_id)
-    }
+  const _style = {
+    background: '#FFFFFF',
   }
 
-  const borderColor = '#FFFFFF' // TODO
-  const _style = { borderRight: `12px solid ${borderColor}` }
-  const driver = order.drivers?.find(item => item.c_state > EBookingDriverState.Canceled)
+  const _onClick = (event: React.MouseEvent) => {
+    onClick(event, order.b_id)
+  }
+
+  useEffect(() => {
+    if (context?.ordersAddressRef.current[order.b_id]) {
+      setAddress(context.ordersAddressRef.current[order.b_id])
+    }
+  }, [context?.ordersAddressRef.current[order.b_id]])
+
+  const payment = getPayment(order)
+  const driver = order?.drivers?.find(item => item.c_state !== EBookingDriverState.Canceled)
+
+  const openChatModal = (e: React.MouseEvent) => {
+    console.log('openChatModal', order.b_id)
+    e.stopPropagation()
+    console.log('QQQQQQQQQQq')
+    
+    // Если клиент на сайте, используем стандартный чат
+    if (!order?.b_options?.createdBy) {
+      const from = `${user?.u_id}_${order.b_id}`
+      const to = `${order?.u_id}_${order.b_id}`
+      const chatID = `${from};${to}`
+      setActiveChat(activeChat === chatID ? null : chatID)
+      return
+    }
+    console.log('createdBy', order.b_options.createdBy)
+    console.log('createdBy type', typeof order.b_options.createdBy)
+    console.log('createdBy toLowerCase', order.b_options.createdBy.toLowerCase())
+    
+    // В зависимости от типа контакта формируем соответствующую ссылку
+    switch (order.b_options.createdBy.toLowerCase()) {
+      case 'sms':
+        console.log('Opening phone app')
+        // Ссылка на приложение для звонков
+        window.location.href = `tel:${order.user?.u_phone}`
+        break
+      case 'whatsapp':
+        console.log('Opening WhatsApp')
+        window.location.href = `https://wa.me/${order.user?.u_phone}`
+        break
+      default:
+        console.log('Opening default chat')
+        // Для неизвестных типов используем стандартный чат
+        const from = `${user?.u_id}_${order.b_id}`
+        const to = `${order?.u_id}_${order.b_id}`
+        const chatID = `${from};${to}`
+        setActiveChat(activeChat === chatID ? null : chatID)
+    }
+  }
 
   let avatar = images.avatar
   let avatarSize = '48px'
@@ -66,17 +125,32 @@ const MiniOrder: React.FC<IProps> = ({
     <div
       className={cn('mini-order', { 'mini-order--history': order.b_canceled || order.b_completed })}
       style={_style}
-      // onClick={_onClick}
       onClick={() => setActiveModal(true)}
     >
       <span className="colored">№{order.b_id}</span>
-      {driver && driver.u_id === user.u_id && !(order.b_canceled || order.b_completed) ?
-        <ChatToggler
-          anotherUserID={order.u_id}
-          orderID={order.b_id}
-        /> :
-        null
-      }
+      {!isHistory && driver && driver.u_id === user.u_id && driver.c_state !== EBookingDriverState.Started ?
+        <span
+          className="mini-order__chat-btn"
+          onClick={openChatModal}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(90deg, #1E90FF 0%, #0D47A1 100%)',
+            borderRadius: '10px',
+            width: '60px',
+            height: '28px',
+            margin: '0 auto 6px auto',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(30,144,255,0.15)'
+          }}
+        >
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="28" height="28" rx="8" fill="none"/>
+            <path d="M8.5 19.5L19.5 8.5M19.5 8.5L15.5 8M19.5 8.5L19.5 12.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </span>
+        : null}
       <img src={images.stars} alt={t(TRANSLATION.STARS)}/>
       {/** TODO time */}
       <span className="mini-order__time colored">0 {t(TRANSLATION.MINUTES)}</span>
@@ -97,7 +171,6 @@ const MiniOrder: React.FC<IProps> = ({
         avatar={avatar}
         avatarSize={avatarSize}
         order={order}
-        // user={user}
         loadedAddress={address}
         orderId={order.b_id}
         closeModal={() => setActiveModal(false)}
@@ -107,4 +180,4 @@ const MiniOrder: React.FC<IProps> = ({
   </>)
 }
 
-export default MiniOrder
+export default connector(MiniOrder)

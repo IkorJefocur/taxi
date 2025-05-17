@@ -24,6 +24,7 @@ interface IProps extends ConnectedProps<typeof connector> {
   anotherUserID: IUser['u_id']
   orderID: IOrder['b_id']
   small?: boolean
+  onClick?: (e: React.MouseEvent) => void
 }
 
 const Toggler: React.FC<IProps> = ({
@@ -33,6 +34,7 @@ const Toggler: React.FC<IProps> = ({
   orderID,
   small,
   setActiveChat,
+  onClick,
 }) => {
   const from = `${user?.u_id}_${orderID}`
   const to = `${anotherUserID}_${orderID}`
@@ -40,7 +42,11 @@ const Toggler: React.FC<IProps> = ({
 
   const handleClick: React.MouseEventHandler = (e) => {
     e.stopPropagation()
-    setActiveChat(activeChat === chatID ? null : chatID)
+    if (onClick) {
+      onClick(e)
+    } else {
+      setActiveChat(activeChat === chatID ? null : chatID)
+    }
   }
 
   return (

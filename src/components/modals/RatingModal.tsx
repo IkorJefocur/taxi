@@ -66,13 +66,12 @@ export const calculateFinalPrice = (order: IOrder | null) => {
   }
   Object.entries(order.b_options?.pricingModel?.options || {}).forEach(([key, value]) => {
     const placeholder = `${key}`;
-    formula = formula.replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
-    console.log('Formed formula', formula,'replacing', placeholder, 'with', Math.trunc(value)?.toString() || '0')
+    formula = formula.replace(new RegExp(placeholder, 'g'), value?.toString() || '0');
   });
+  console.log('FINAL FORMULA', formula)
   try {
     return Math.round(eval(formula))
   } catch (e) {
-    console.log('OPTIONS', order.b_options?.pricingModel?.options)
     return 'err, status: ' + e;
   }
 }
@@ -116,6 +115,7 @@ const RatingModal: React.FC<IProps> = ({
   if (detailedOrder?.b_options?.pricingModel) {
     const start_moment = moment(detailedOrder.b_start_datetime)
     const end_moment = moment(detailedOrder.b_completed)
+    console.log('TOTAL DURATION:',end_moment.diff(start_moment, 'minutes'))
     
     const updatedOptions = {
       ...(detailedOrder.b_options.pricingModel.options || {}),
@@ -186,6 +186,11 @@ const RatingModal: React.FC<IProps> = ({
                 onClick={onRating}
                 disabled={stars === 0}
               />
+              <div>
+                <p>b_start_datetime: {(detailedOrder?.b_start_datetime || '').toString()}</p>
+                <p>b_completed: {(detailedOrder?.b_completed || '').toString()}</p>
+                <p>diff: {(moment(detailedOrder?.b_completed).diff(moment(detailedOrder?.b_start_datetime), 'minutes') || '').toString()}</p>
+              </div>
             </div>
           </fieldset>
         </form>
