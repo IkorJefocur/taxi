@@ -1813,7 +1813,7 @@ function WaitingForm({
                 _time,
                 auto.id,
               ).value
-              const payment = `~${value.toFixed(2)}${CURRENCY.NAME
+              const payment = `~${typeof value === 'number' ? value.toFixed(2) : value}${CURRENCY.NAME
               }`
 
               return (

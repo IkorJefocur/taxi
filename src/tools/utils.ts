@@ -236,7 +236,7 @@ export const getPayment = (
   const callRate = +(window as any).data.car_classes[order?.b_car_class || carClass || ECarClasses.Any]?.courier_call_rate ?? SITE_CONSTANTS.COURIER_CALL_RATE
   // @ts-ignore
   const farePer1Km = +(window as any).data.car_classes[order?.b_car_class || carClass || ECarClasses.Any]?.courier_fare_per_1_km ?? SITE_CONSTANTS.COURIER_FARE_PER_1_KM
-  let _value = 0,
+  let _value: string | number = 0,
     _text = ''
   if (_orderTime?.isAfter(_startOfNightTime) && _orderTime.isBefore(_endOfNightTime)) {
     _text =  `${SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME} * \
@@ -244,7 +244,7 @@ export const getPayment = (
   } else {
     _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = ${_value === 0 ? '-' : _value}`
   }
-  _value = calculateFinalPrice(order) || _value
+  _value = calculateFinalPrice(order || null) || _value
 
   console.log('TEXT', _text, _value)
 
