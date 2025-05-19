@@ -6,6 +6,7 @@ import { ISelectOption } from '../types'
 import { findBestMatch } from 'string-similarity'
 import _ from 'lodash'
 import images from '../constants/images'
+import {calculateFinalPrice} from "../components/modals/RatingModal";
 
 const hints = [
   'Roman Ridge',
@@ -243,7 +244,7 @@ export const getPayment = (
   } else {
     _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = ${_value === 0 ? '-' : _value}`
   }
-  _value = order?.b_options?.pricingModel?.price || _value
+  _value = calculateFinalPrice(order) || _value
 
   console.log('TEXT', _text, _value)
 

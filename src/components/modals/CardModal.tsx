@@ -35,6 +35,7 @@ import {OrderAddressContext} from "../../pages/Driver"
 import {setSelectedOrderId} from '../../state/order/actionCreators'
 import moment from "moment";
 import {EDriverTabs} from "../../pages/Driver"
+import {calculateFinalPrice} from "./RatingModal";
 
 
 const bookingStates: Record<number, keyof typeof EBookingStates> = {
@@ -524,11 +525,12 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
     // 'reccomended': return '#00A72F'\
     return 'rgba(0, 0, 0, 0.25)'
   }
+    const price = calculateFinalPrice(order)
 
     const _type = order?.b_payment_way === EPaymentWays.Credit ? TRANSLATION.CARD : TRANSLATION.CASH
     const _value = (order && order.b_options && order.b_options.customer_price) ?
       t(_type) + '. ' + t(TRANSLATION.WHAT_WE_DELIVERING) + ` ${order.b_options.customer_price} ${CURRENCY.SIGN}` :
-      t(_type) + '. ' + t(TRANSLATION.FIXED) + `${order?.b_options?.pricingModel?.price ? CURRENCY.SIGN : ''}${(order?.b_options?.pricingModel?.price || '-') || getPayment(order).text }`
+      t(_type) + '. ' + t(TRANSLATION.FIXED) + `${price ? CURRENCY.SIGN : ''}${(price || '-') || getPayment(order).text }`
 
   return (
     <div className='status-card__modal' data-active={active} onClick={outsideClick} >

@@ -153,6 +153,7 @@ export interface IDriver {
 }
 
 export interface IOptions {
+  submitPrice?: string;
   fromShortAddress?: string
   toShortAddress?: string
   courier_auto?: string | ECourierAutoTypes

@@ -41,7 +41,15 @@ export const calculateFinalPriceFormula = (order: IOrder) => {
     return 'err';
   }
   let formula = order.b_options?.pricingModel?.formula;
-  const options = order.b_options?.pricingModel?.options || {};
+  let options = order.b_options?.pricingModel?.options || {};
+
+  // pick up submitPrice from b_options
+  options = {
+    ...options,
+    ...{
+      submit_rice: order.b_options?.submitPrice
+    }
+  }
 
   // Replace all placeholders in the formula with their values
   Object.entries(options).forEach(([key, value]) => {
@@ -61,16 +69,25 @@ export const calculateFinalPrice = (order: IOrder | null) => {
       return '-'
   }
   let formula  = order.b_options?.pricingModel?.formula;
+  let options = order.b_options?.pricingModel?.options || {};
+
+  // pick up submitPrice from b_options
+  options = {
+    ...options,
+    ...{
+      submit_rice: order.b_options?.submitPrice
+    }
+  }
   if (!formula || formula === 'err') {
     return 'err';
   }
-  Object.entries(order.b_options?.pricingModel?.options || {}).forEach(([key, value]) => {
+  Object.entries(options).forEach(([key, value]) => {
     const placeholder = `${key}`;
     formula = formula.replace(new RegExp(placeholder, 'g'), value?.toString() || '0');
   });
-  console.log('FINAL FORMULA', formula)
+  console.log('FINAL FORMULA', formula, '=', eval(formula), ' ~ ', Math.trunc(eval(formula)))
   try {
-    return Math.round(eval(formula))
+    return Math.trunc(eval(formula))
   } catch (e) {
     return 'err, status: ' + e;
   }
@@ -85,15 +102,19 @@ const RatingModal: React.FC<IProps> = ({
 }) => {
   console.log('Rerendering rating modal')
   const [stars, setStars] = useState(0)
+  const [tips, setTips] = useState('')
+  const [comment, setComment] = useState('')
 
   const _orderID = orderID || detailedOrder?.b_id || selectedOrder
 
   const navigate = useNavigate()
 
-  // Reset stars when modal opens for a new order
+  // Reset stars, tips and comment when modal opens for a new order
   useEffect(() => {
     if (isOpen) {
       setStars(0)
+      setTips('')
+      setComment('')
     }
   }, [isOpen, _orderID])
 
@@ -173,11 +194,15 @@ const RatingModal: React.FC<IProps> = ({
               <Input
                 inputProps={{
                   placeholder: t(TRANSLATION.ADD_TAXES),
+                  value: tips,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setTips(e.target.value.toString())
                 }}
               />
               <Input
                 inputProps={{
                   placeholder: t(TRANSLATION.WRITE_COMMENT),
+                  value: comment,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setComment(e.target.value.toString())
                 }}
               />
               <Button
