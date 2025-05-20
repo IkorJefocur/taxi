@@ -35,7 +35,7 @@ import {OrderAddressContext} from "../../pages/Driver"
 import {setSelectedOrderId} from '../../state/order/actionCreators'
 import moment from "moment";
 import {EDriverTabs} from "../../pages/Driver"
-import {calculateFinalPrice} from "./RatingModal";
+import {calculateFinalPrice, calculateFinalPriceFormula} from "./RatingModal";
 
 
 const bookingStates: Record<number, keyof typeof EBookingStates> = {
@@ -631,8 +631,8 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
         <div className="payment" >
           <svg width="18" height="19" viewBox="0 0 18 19" fill="none" ><circle cx="8.99988" cy="9.50002" r="7.5" stroke="#FF2400" strokeWidth="1.125"/><path d="M9 13.25V13.625V14" stroke="#FF2400" strokeWidth="1.125" strokeLinecap="round"/><path d="M9 5V5.375V5.75" stroke="#FF2400" strokeWidth="1.125" strokeLinecap="round"/><path d="M11.25 7.62498C11.25 6.58945 10.2426 5.74998 9 5.74998C7.75736 5.74998 6.75 6.58945 6.75 7.62498C6.75 8.66052 7.75736 9.49998 9 9.49998C10.2426 9.49998 11.25 10.3395 11.25 11.375C11.25 12.4105 10.2426 13.25 9 13.25C7.75736 13.25 6.75 12.4105 6.75 11.375" stroke="#FF2400" strokeWidth="1.125" strokeLinecap="round"/></svg>
           <div>
-            <p>{t(TRANSLATION.PAYMENT_WAY)}: {_value}</p>
-            <p>{t(TRANSLATION.CALCULATION) + ': ' + getPricingFormula(order)}</p>
+            <p>{t(TRANSLATION.PAYMENT_WAY)}: {_value}{order?.b_options?.pricingModel?.calculationType === 'incomplete' ? ' + ?' : ''}</p>
+            <p>{t(TRANSLATION.CALCULATION) + ': ' + calculateFinalPriceFormula(order)}</p>
           </div>
         </div>
 

@@ -221,7 +221,7 @@ export const getPayment = (
     return { value: order.b_options.customer_price, text: '', type: EPaymentType.Customer }
   }
   const _distance = distance || calcOrderDistance(points, order) || order?.b_options?.pricingModel?.options?.distance
-  if (!_distance) return { value: 0, text: '0', type: EPaymentType.Calculated }
+  //if (!_distance) return { value: 0, text: '0', type: EPaymentType.Calculated }
   let _orderTime = startDatetime,
     _startOfNightTime = moment(SITE_CONSTANTS.START_OF_NIGHT_TIME, 'h:mm'),
     _endOfNightTime = moment(SITE_CONSTANTS.END_OF_NIGHT_TIME, 'h:mm'),

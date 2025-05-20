@@ -33,7 +33,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {
 }
-export const calculateFinalPriceFormula = (order: IOrder) => {
+export const calculateFinalPriceFormula = (order: IOrder | null) => {
   if (!order) {
     return 'err';
   }
@@ -47,15 +47,26 @@ export const calculateFinalPriceFormula = (order: IOrder) => {
   options = {
     ...options,
     ...{
-      submit_rice: order.b_options?.submitPrice
+      submit_price: order.b_options?.submitPrice,
+      distance: order.b_options?.pricingModel?.calculationType === 'incomplete'? '?' : order.b_options?.pricingModel?.options?.distance,
+      duration:  order.b_options?.pricingModel?.calculationType === 'incomplete' && order.b_options?.pricingModel?.options?.duration === 0? '?' : order.b_options?.pricingModel?.options?.duration
     }
   }
-
   // Replace all placeholders in the formula with their values
   Object.entries(options).forEach(([key, value]) => {
     const placeholder = `${key}`;
-    formula = (formula || 'error_0x01').replace(new RegExp(placeholder, 'g'), Math.trunc(value)?.toString() || '0');
+    formula = (formula || 'error_0x01').replace(new RegExp(placeholder, 'g'), value === '?' ? '?' :Math.trunc(value)?.toString() || '0');
   });
+
+  const timeRatioMatch = (formula || 'error_0x02').match(/\(([^)]+)\)\*(\d+(?:\.\d+)?)/);
+  if (timeRatioMatch) {
+    const coefficient = parseFloat(timeRatioMatch[2]);
+    if (coefficient === 1) {
+      // If coefficient is 1, remove parentheses and multiplication
+      formula = (formula || 'error_0x03').replace(/\(([^)]+)\)\*\d+(?:\.\d+)?/, '$1');
+    }
+  }
+
   return formula
 }
 export const calculateFinalPrice = (order: IOrder | null) => {
@@ -87,7 +98,7 @@ export const calculateFinalPrice = (order: IOrder | null) => {
   });
   console.log('FINAL FORMULA', formula, '=', eval(formula), ' ~ ', Math.trunc(eval(formula)))
   try {
-    return Math.trunc(eval(formula))
+    return Math.trunc(eval(formula)).toString()
   } catch (e) {
     return 'err, status: ' + e;
   }
@@ -171,7 +182,7 @@ const RatingModal: React.FC<IProps> = ({
             {finalPriceFormula !== 'err' && (
                 <div>
                   <div className="final-price">
-                    {t(TRANSLATION.FINAL_PRICE)}: {finalPrice!=='-'? CURRENCY.SIGN : ''} {finalPrice}
+                    {t(TRANSLATION.FINAL_PRICE)}: {finalPrice!=='-'? CURRENCY.SIGN : ''} {finalPrice + (detailedOrder?.b_options?.pricingModel?.calculationType === 'incomplete' ? '+?' : '')}
                   </div>
                   <div className="final-price">
                     {t(TRANSLATION.CALCULATION)}: {finalPriceFormula}

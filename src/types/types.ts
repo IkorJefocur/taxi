@@ -201,7 +201,8 @@ export interface IOptions {
     formula: string,
     options: {
         [key: string]: any
-    }
+    },
+    calculationType?: string
   }
 }
 
