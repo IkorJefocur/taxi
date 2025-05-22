@@ -36,6 +36,7 @@ import {setSelectedOrderId} from '../../state/order/actionCreators'
 import moment from "moment";
 import {EDriverTabs} from "../../pages/Driver"
 import {calculateFinalPrice, calculateFinalPriceFormula} from "./RatingModal";
+import {setLoginModal} from "../../state/modals/actionCreators";
 
 
 const bookingStates: Record<number, keyof typeof EBookingStates> = {
@@ -183,6 +184,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
 
   // Fetch start address
   useEffect(() => {
+      console.log('Loading start addres for order', order?.b_id)
     // Запрашиваем только если модал открыт и есть order
     if (!active || !order?.b_id || !order?.b_start_latitude || !order?.b_start_longitude) return;
     // Если уже есть адрес в context или loadedAddress, используем его
@@ -210,6 +212,20 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
         setIsAddressLoading(false);
       });
   }, [active, order?.b_id, order?.b_start_latitude, order?.b_start_longitude]);
+  useEffect( () => {
+      console.log('Loading NULL start addres for order', order?.b_id)
+      const val = {
+          latitude: undefined,
+          longitude: undefined,
+          address: order?.b_start_address,
+          shortAddress: order?.b_start_address,
+      }
+      if (context?.ordersAddressRef.current && order?.b_id) {
+          context.ordersAddressRef.current[order?.b_id] = val
+      }
+      setAddress(val)
+      setIsAddressLoading(false)
+  }, [active, order?.b_id, !order?.b_start_latitude, !order?.b_start_longitude]);
 
   // Fetch destination address
   useEffect(() => {
@@ -252,6 +268,20 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
         setIsDestinationLoading(false);
       });
   }, [active, order?.b_id, order?.b_destination_latitude, order?.b_destination_longitude]);
+
+    useEffect(() => {
+        const val = {
+            latitude: undefined,
+            longitude: undefined,
+            address: order?.b_destination_address,
+            shortAddress: order?.b_destination_address,
+        }
+        if (context?.ordersAddressRef.current && order?.b_id) {
+            context.ordersAddressRef.current[`${order?.b_id}_destination`] = val;
+        }
+        setDestinationAddress(val)
+        setIsDestinationLoading(false);
+    }, [active, order?.b_id, order?.b_destination_latitude, order?.b_destination_longitude]);
 
   const { register, formState: { errors }, handleSubmit: formHandleSubmit, getValues } = useForm<IFormValues>({
     criteriaMode: 'all',
