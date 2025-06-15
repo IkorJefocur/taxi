@@ -53,6 +53,8 @@ export const setUser = (payload: IUserState['user']) => {
   return { type: ActionTypes.SET_USER, payload }
 }
 
-export const whatsappSignUp = (payload: Parameters<typeof API.whatsappSignUp>[0]) => {
-    return { type: ActionTypes.WHATSAPP_SIGNUP_REQUEST, payload }
-  }
+export const whatsappSignUp = (payload: Parameters<typeof API.whatsappSignUp>[0] & {
+  navigate: (location: string) => void
+}) => {
+  return { type: ActionTypes.WHATSAPP_SIGNUP_REQUEST, payload }
+}

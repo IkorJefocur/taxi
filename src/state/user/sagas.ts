@@ -56,6 +56,8 @@ function* loginSaga(data: TAction) {
 
     localStorage.setItem('tokens', JSON.stringify(result.tokens))
 
+    console.log(data,data.payload)
+
     if(result.user.u_role === EUserRoles.Client || result.user.u_role === EUserRoles.Agent) {
       data.payload.navigate('/passenger-order')
     } else if(result.user.u_role === EUserRoles.Driver) {
@@ -239,7 +241,14 @@ function* whatsappSignUpSaga(data: TAction) {
       yield put(setRefCodeModal({ isOpen: false }))  
       yield put({ type: ActionTypes.WHATSAPP_SIGNUP_SUCCESS, payload: result })
       console.log("запускаем loginSaga")
-      yield* call(loginSaga, {type:ActionTypes.LOGIN_REQUEST, payload: { login: data.payload.login, type: data.payload.type }})
+      yield* call(loginSaga, {
+        type: ActionTypes.LOGIN_REQUEST, 
+        payload: { 
+          login: data.payload.login, 
+          type: data.payload.type,
+          navigate: data.payload.navigate 
+        }
+      })
 
     } catch (error) {
       console.error(error)

@@ -174,7 +174,7 @@ const LoginForm: React.FC<IProps> = ({
       setWAOpen({
         isOpen: true,
         login: login,
-        data: dataToLogin,
+        data: {...dataToLogin, navigate},
       })
     }
   }, [status])
@@ -205,7 +205,8 @@ const LoginForm: React.FC<IProps> = ({
           ...data,
           login: data.login || ''
         }
-      login({...loginData, navigate})
+        console.log('giving data: ', {...loginData, navigate})
+      login({...loginData, navigate: navigate})
     }
   }
 
