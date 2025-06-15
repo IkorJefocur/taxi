@@ -205,7 +205,6 @@ const LoginForm: React.FC<IProps> = ({
           ...data,
           login: data.login || ''
         }
-        console.log('giving data: ', {...loginData, navigate})
       login({...loginData, navigate: navigate})
     }
   }

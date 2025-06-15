@@ -56,7 +56,6 @@ function* loginSaga(data: TAction) {
 
     localStorage.setItem('tokens', JSON.stringify(result.tokens))
 
-    console.log(data,data.payload)
 
     if(result.user.u_role === EUserRoles.Client || result.user.u_role === EUserRoles.Agent) {
       data.payload.navigate('/passenger-order')
