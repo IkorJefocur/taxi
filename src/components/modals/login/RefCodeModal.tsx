@@ -84,14 +84,17 @@ const RefCodeModal: React.FC<IProps> = ({
 
   const onSubmit = (formData : IFormValues) => {
     let data = payload.data
-      if (!formData.code) {
-      
+    if (!formData.code) {
       if(whatsappSignUpData?.u_phone) {
-        whatsappSignUp({ type: ERegistrationType.Whatsapp, login: whatsappSignUpData.u_phone, })
+        whatsappSignUp({
+          type: ERegistrationType.Whatsapp,
+          login: whatsappSignUpData.u_phone,
+          navigate,
+        })
         return
       } else {
         googleLogin({ data, auth_hash: null, navigate })
-        return  
+        return
       }
     }
 
@@ -103,11 +106,16 @@ const RefCodeModal: React.FC<IProps> = ({
       data.ref_code = formData.code
 
       if(whatsappSignUpData?.u_phone) {
-        whatsappSignUp({ type: ERegistrationType.Whatsapp, login: whatsappSignUpData.u_phone, ref_code:formData.code })
+        whatsappSignUp({
+          type: ERegistrationType.Whatsapp,
+          login: whatsappSignUpData.u_phone,
+          ref_code: formData.code,
+          navigate,
+        })
         return
       } else {
         googleLogin({ data, auth_hash: null, navigate })
-        return  
+        return
       }
     })
   }
