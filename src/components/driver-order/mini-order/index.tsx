@@ -2,7 +2,13 @@ import React, { useContext, useEffect, useState } from 'react'
 import { t, TRANSLATION } from '../../../localization'
 import { CURRENCY } from '../../../siteConstants'
 import './mini-order.scss'
-import { EBookingDriverState, IAddressPoint, IOrder, IUser } from '../../../types/types'
+import {
+  EBookingDriverState,
+  EOrderProfitRank,
+  IAddressPoint,
+  IOrder,
+  IUser,
+} from '../../../types/types'
 import images from '../../../constants/images'
 import { EPaymentType, getOrderCount, getOrderIcon, getPayment } from '../../../tools/utils'
 import cn from 'classnames'
@@ -84,7 +90,15 @@ const MiniOrder: React.FC<IProps> = ({
 
   return (<>
     <div
-      className={cn('mini-order', { 'mini-order--history': order.b_canceled || order.b_completed })}
+      className={cn(
+        'mini-order',
+        { 'mini-order--history': order.b_canceled || order.b_completed },
+        order.profitRank !== undefined && `mini-order--profit--${{
+          [EOrderProfitRank.Low]: 'low',
+          [EOrderProfitRank.Medium]: 'medium',
+          [EOrderProfitRank.High]: 'high',
+        }[order.profitRank]}`,
+      )}
       onClick={() => setActiveModal(true)}
     >
       <span className="colored">№{order.b_id}</span>

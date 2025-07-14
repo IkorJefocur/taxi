@@ -12,6 +12,8 @@ import { moduleName as configModule } from './config/constants'
 import configReducer from './config/reducer'
 import { moduleName as modalsModule } from './modals/constants'
 import modalsReducer from './modals/reducer'
+import { moduleName as areasModule } from './areas/constants'
+import areasReducer from './areas/reducer'
 
 const rootReducer = combineReducers({
   [userModule]: userReducer,
@@ -20,6 +22,7 @@ const rootReducer = combineReducers({
   [clientOrderModule]: clientOrderReducer,
   [configModule]: configReducer,
   [modalsModule]: modalsReducer,
+  [areasModule]: areasReducer,
 })
 
 export default rootReducer

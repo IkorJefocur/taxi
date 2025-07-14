@@ -4,6 +4,18 @@ import { EMoveTypes } from '../components/passenger-order/move/MoveTypeTabs'
 import { IBigTruckService } from '../constants/bigTruckServices'
 import { IDateTime } from '../tools/dateTime'
 
+export type {
+  ITags,
+  IArea,
+  IWayNode,
+  IWayNodeTags,
+  IWay,
+  IWayTags,
+  IWayRelation,
+  IWayRelationMember,
+  IWayRelationTags,
+} from './way'
+
 export enum EPointType {
   From,
   To
@@ -206,7 +218,19 @@ export interface IOptions {
   }
 }
 
-export interface IOrder extends IBookingCoordinates, IBookingAddresses {
+export enum EOrderProfitRank {
+  Low,
+  Medium,
+  High,
+}
+
+export interface IOrderEstimation {
+  profit?: number,
+  profitRank?: EOrderProfitRank,
+}
+
+export interface IOrder
+  extends IBookingCoordinates, IBookingAddresses, IOrderEstimation {
   /** Идентификатор поездки */
   b_id: string
   /** Идентификатор клиента */

@@ -4,6 +4,7 @@ import { saga as userSaga } from './user/sagas'
 import { saga as ordersSaga } from './orders/sagas'
 import { saga as orderSaga } from './order/sagas'
 import { saga as configSaga } from './config/sagas'
+import { saga as areasSaga } from './areas/sagas'
 
 export default function* rootSaga() {
   yield all([
@@ -12,5 +13,6 @@ export default function* rootSaga() {
     ordersSaga(),
     orderSaga(),
     configSaga(),
+    areasSaga(),
   ])
 }

@@ -156,6 +156,37 @@
     align-items: center;
     position: relative;
     cursor: pointer;
+
+    &--profit {
+      &--low {
+        .order-marker-hint {
+          background: #C19276;
+        }
+        .order-profit-estimation {
+          color: #3E0C0C;
+        }
+      }
+      &--medium {
+        .order-marker-hint {
+          background: #FFFB8E;
+        }
+        .order-profit-estimation {
+          color: #A37211;
+        }
+      }
+      &--high {
+        .order-marker-hint {
+          background: #A1FF97;
+        }
+        .order-profit-estimation {
+          color: #22A613;
+        }
+      }
+    }
+  }
+
+  .order-profit-estimation {
+    color: #636363;
   }
 
   .popup-list {

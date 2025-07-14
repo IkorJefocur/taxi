@@ -28,4 +28,7 @@ export interface IOrdersState {
   activeOrders: IOrder[] | null,
   readyOrders: IOrder[] | null,
   historyOrders: IOrder[] | null,
+  activeOrdersTakerGeolocation?: [lat: number, lng: number],
+  readyOrdersTakerGeolocation?: [lat: number, lng: number],
+  historyOrdersTakerGeolocation?: [lat: number, lng: number],
 }

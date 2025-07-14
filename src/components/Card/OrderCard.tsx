@@ -1,21 +1,19 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { t, TRANSLATION } from '../../localization'
-import SITE_CONSTANTS, { CURRENCY } from '../../siteConstants'
-// import { Chat } from '../chat/chat.js'
-// import { ChatUpdaterMode } from '../chat/messaging'
-import { EBookingDriverState, EBookingStates, IAddressPoint, IOrder, IUser } from '../../types/types'
+import { CURRENCY } from '../../siteConstants'
+import {
+  EBookingDriverState,
+  EOrderProfitRank,
+  IAddressPoint,
+  IOrder,
+  IUser
+} from '../../types/types'
 import './styles.scss'
 import images from '../../constants/images'
-import { dateFormatDate, dateShowFormat, formatComment, formatCommentWithEmoji, getOrderCount, getOrderIcon, getPayment, shortenAddress } from '../../tools/utils'
+import { dateFormatDate, dateShowFormat, formatCommentWithEmoji, getOrderCount, getPayment, shortenAddress } from '../../tools/utils'
 import cn from 'classnames'
 import { createPortal } from 'react-dom'
 
-import { setMessageModal, setRatingModal } from "../../state/modals/actionCreators"
-import { modalsActionCreators } from "../../state/modals"
-import { connect, ConnectedProps } from 'react-redux'
-import store, { IRootState } from "../../state"
-import { orderSelectors, orderActionCreators } from '../../state/order'
-import { userSelectors } from "../../state/user"
 import * as API from '../../API'
 import CardModal from '../modals/CardModal'
 import { Loader } from '../loader/Loader'
@@ -82,7 +80,16 @@ const OrderCard: React.FC<IOrderCardProps> = ({
 
   return (<>
     <div
-      className={cn('status-card colored', { 'status-card--history': order.b_canceled || order.b_completed }, className)}
+      className={cn(
+        'status-card colored',
+        { 'status-card--history': order.b_canceled || order.b_completed },
+        order.profitRank !== undefined && `status-card--profit--${{
+          [EOrderProfitRank.Low]: 'low',
+          [EOrderProfitRank.Medium]: 'medium',
+          [EOrderProfitRank.High]: 'high',
+        }[order.profitRank]}`,
+        className,
+      )}
       style={style}
       // onClick={onClick}
       onClick={() => setActiveModal(true)}
@@ -148,12 +155,21 @@ const OrderCard: React.FC<IOrderCardProps> = ({
           </div> */}
         </span>
       </div>
-      <div className="status-card__separator separate status-card__cost">
+      <div className="status-card__separator separate status-card__money">
 
         {/* <span style={{ color: SITE_CONSTANTS.PALETTE.primary.light }}> */}
-        <span>
+        <span className="status-card__cost">
           <img src={images.dollarMinimalistic} alt={t(TRANSLATION.CASH)}/> {getPayment(order).value} {CURRENCY.NAME}
         </span>
+
+        {order.profit &&
+          <span className="status-card__profit">
+            {new Intl.NumberFormat(undefined, {
+              signDisplay: 'always',
+              maximumFractionDigits: 0,
+            }).format(order.profit)}
+          </span>
+        }
       </div>
       <div className="status-card__comments">
         <p>{formatCommentWithEmoji(order.b_comments)?.map(({ src }) => <img src={src} />)}</p>

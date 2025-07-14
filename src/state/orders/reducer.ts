@@ -7,27 +7,40 @@ export const ReducerRecord = Record<IOrdersState>({
   activeOrders: null,
   readyOrders: null,
   historyOrders: null,
+  activeOrdersTakerGeolocation: undefined,
+  readyOrdersTakerGeolocation: undefined,
+  historyOrdersTakerGeolocation: undefined,
 })
 
 export default function reducer(state = new ReducerRecord(), action: TAction) {
   const { type, payload } = action
 
+  let ordersKey: keyof IOrdersState | undefined
+  let ordersGeolocationKey: keyof IOrdersState | undefined
   switch (type) {
     case ActionTypes.GET_ACTIVE_ORDERS_SUCCESS:
-      return _.isEqual(state.activeOrders, payload) ?
-        state :
-        state
-          .set('activeOrders', payload)
+      ordersKey = 'activeOrders'
+      ordersGeolocationKey = 'activeOrdersTakerGeolocation'
+      break
     case ActionTypes.GET_READY_ORDERS_SUCCESS:
-      return _.isEqual(state.readyOrders, payload) ?
-        state :
-        state
-          .set('readyOrders', payload)
+      ordersKey = 'readyOrders'
+      ordersGeolocationKey = 'readyOrdersTakerGeolocation'
+      break
     case ActionTypes.GET_HISTORY_ORDERS_SUCCESS:
-      return _.isEqual(state.historyOrders, payload) ?
-        state :
-        state
-          .set('historyOrders', payload)
+      ordersKey = 'historyOrders'
+      ordersGeolocationKey = 'historyOrdersTakerGeolocation'
+      break
+  }
+  if (ordersKey && ordersGeolocationKey) {
+    const { orders, geolocation } = payload
+    if (!_.isEqual(state[ordersKey], orders))
+      state = state.set(ordersKey, orders)
+    if (!_.isEqual(state[ordersGeolocationKey], geolocation))
+      state = state.set(ordersGeolocationKey, geolocation)
+    return state
+  }
+
+  switch (type) {
     case ActionTypes.CLEAR:
       return new ReducerRecord()
     default:

@@ -1,15 +1,21 @@
 import React, { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './styles.scss'
-import { MapContainer, Marker, TileLayer, CircleMarker, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, Marker, TileLayer, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import Fullscreen from 'react-leaflet-fullscreen-plugin'
 import Button from '../../components/Button'
 import { t, TRANSLATION } from '../../localization'
 import { useInterval } from '../../tools/hooks'
 import * as API from '../../API'
-import ChatToggler from '../../components/Chat/Toggler'
-import { EBookingDriverState, IAddressPoint, IOrder, IUser, EStatuses } from '../../types/types'
+import {
+  EBookingDriverState,
+  EOrderProfitRank,
+  IAddressPoint,
+  IOrder,
+  IUser,
+  EStatuses,
+} from '../../types/types'
 import { useCachedState } from '../../tools/hooks'
 import images from '../../constants/images'
 import { dateFormatTime, getAngle, getAttribution, getTileServerUrl } from '../../tools/utils'
@@ -19,7 +25,6 @@ import CardModal from '../../components/modals/CardModal'
 import { createPortal } from 'react-dom'
 import { connect, ConnectedProps } from 'react-redux'
 import { modalsActionCreators } from '../../state/modals'
-import { IRootState } from '../../state'
 import { orderActionCreators } from '../../state/order'
 
 interface IProps {
@@ -252,12 +257,20 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
                   iconSize: [50, 50],
                   shadowSize: [29, 40],
                   shadowAnchor: [7, 40],
-                  html: `<div class='order-marker'>
+                  html: `<div class='order-marker${
+                    item.profitRank !== undefined ?
+                      ' order-marker--profit--' + {
+                        [EOrderProfitRank.Low]: 'low',
+                        [EOrderProfitRank.Medium]: 'medium',
+                        [EOrderProfitRank.High]: 'high',
+                      }[item.profitRank] :
+                      ''
+                  }'>
                       <div class='order-marker-hint'>
                         <div class='row-info'>
                           ${item.b_destination_address}
                         </div>
-                         <div class='row-info'>
+                        <div class='row-info'>
                           <div>${item.b_start_datetime.format(dateFormatTime)}</div>
                           <div class='competitors-num'>${item.drivers?.length || 0}</div>
                         </div>
@@ -268,6 +281,19 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
                             src='${images.mapMarkerProfit}'
                           />
                           <div class='order-profit'>${item.b_passengers_count || 0}</div>
+                        </div>
+                        <div class='row-info'>
+                          <img
+                            src='${images.mapMarkerProfit}'
+                          />
+                          <div class='order-profit-estimation'>${
+                            item.profit !== undefined ?
+                              new Intl.NumberFormat(undefined, {
+                                signDisplay: 'always',
+                                maximumFractionDigits: 0,
+                              }).format(item.profit) :
+                              '+?'
+                          }</div>
                         </div>
                       </div>
                       <img

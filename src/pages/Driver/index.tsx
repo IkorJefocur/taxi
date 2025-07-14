@@ -17,8 +17,8 @@ import images from '../../constants/images'
 import { withLayout } from '../../HOCs/withLayout'
 
 const mapStateToProps = (state: IRootState) => ({
-  activeOrders: ordersSelectors.activeOrders(state),
-  readyOrders: ordersSelectors.readyOrders(state),
+  activeOrders: ordersSelectors.activeEstimatedOrders(state),
+  readyOrders: ordersSelectors.readyEstimatedOrders(state),
   historyOrders: ordersSelectors.historyOrders(state),
   user: userSelectors.user(state),
 })

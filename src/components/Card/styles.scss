@@ -42,6 +42,8 @@
 }
 
 .status-card {
+  $b: &;
+
   cursor: pointer;
   // min-height: 172px;
   background: #FFFFFF;
@@ -53,6 +55,27 @@
 
   &:not(:last-child) {
     margin-bottom: 8px;
+  }
+
+  &--profit {
+    &--low {
+      background: #C19276;
+      #{$b}__profit {
+        color: #3E0C0C;
+      }
+    }
+    &--medium {
+      background: #FFFB8E;
+      #{$b}__profit {
+        color: #A37211;
+      }
+    }
+    &--high {
+      background: #A1FF97;
+      #{$b}__profit {
+        color: #22A613;
+      }
+    }
   }
 
   // &--history {
@@ -69,22 +92,46 @@
       padding-bottom: 10px;
     }
 
-    &__cost {
+    &__money {
       justify-content: center !important;
       border-bottom: 1px solid rgba(79, 0, 0, 0.22);
       padding: 10px 0;
     }
   }
 
-  &__cost {
+  &__money {
     border-bottom: 1px solid #F5F5F5;
     padding: 8px 0;
 
-    span {
-      width: max-content!important;
+    #{$b}__cost {
+      width: max-content;
       color: #000000;
       font-size: 18px;
       font-weight: 500;
+    }
+
+    #{$b}__profit {
+      width: max-content;
+      font-size: 18px;
+    }
+
+    &#{$b}__separator {
+      &.separate {
+        #{$b}__cost {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+
+          @include phone {
+            display: none;
+          }
+        }
+      }
+
+      #{$b}__profit {
+        display: flex;
+        align-items: center;
+      }
     }
   }
 
@@ -194,36 +241,10 @@
   &__separator {
     margin-bottom: 5px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
 
-    &.separate {
-      span:nth-child(1) {
-        width: 55%;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-
-        @include phone {
-          display: none;
-        }
-      }
-    }
-
-    span:nth-child(2) {
-      display: flex;
-      align-items: center;
-      font-weight: 500;
-      font-size: 29px;
-      line-height: 34px;
-      text-align: right;
-
-      img {
-        margin-left: 10px;
-      }
-
-      @include phone {
-        align-self: center;
-      }
+    @include phone {
+      justify-content: center;
     }
   }
   // &__separator {

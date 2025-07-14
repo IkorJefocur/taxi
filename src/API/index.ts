@@ -43,6 +43,10 @@ import getCountryISO3 from '../tools/countryISO2To3'
 import {getCacheVersion} from './cacheVersion'
 
 export { getCacheVersion }
+export {
+  getAreasIdsBetweenPoints,
+  getArea,
+} from './way'
 
 export enum EBookingActions {
     SetConfirmState = 'set_confirm_state',
