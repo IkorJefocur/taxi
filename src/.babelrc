@@ -15,7 +15,5 @@
       }],
     "@babel/preset-react"
   ],
-  "plugins": [
-    ["@babel/plugin-transform-arrow-functions", { "spec": true }]
-  ]
+  "plugins": []
 }
