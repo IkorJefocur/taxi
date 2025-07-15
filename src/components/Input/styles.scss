@@ -57,6 +57,7 @@ textarea {
 }
 
 .input {
+    $b: &;
     height: 52px;
     border: none;
     padding-right: 10px;
@@ -110,6 +111,26 @@ textarea {
 
         &--margin-disabled {
             margin-bottom: 0;
+        }
+
+        &--style {
+            &--login {
+                #{$b} {
+                    &__wrapper {
+                        overflow: hidden;
+                        align-items: stretch;
+                        padding: 0;
+                        border: 1px solid #8E8E8E;
+                        background: transparent;
+                    }
+
+                    &__buttons {
+                        overflow: hidden;
+                        border-radius: inherit;
+                        margin: -1px;
+                    }
+                }
+            }
         }
     }
 
@@ -192,6 +213,7 @@ textarea {
         border-top: 1px solid $border-color;
         transition: 0.2s ease-in-out opacity;
         height: 0;
+        margin-top: -1px;
 
         &--active {
             opacity: 1;
@@ -235,7 +257,7 @@ textarea {
     }
 
     &__error {
-        margin-top: 5px;
+        margin: 5px 0 0 0;
         color: red;
     }
 }

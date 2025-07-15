@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import Input from '../../Input'
 import { t, TRANSLATION } from '../../../localization'
 import Checkbox from '../../Checkbox'
 import { useForm, useWatch } from 'react-hook-form'
@@ -19,6 +18,7 @@ import { useVisibility } from '../../../tools/hooks'
 import { GoogleLoginButton } from 'react-social-login-buttons'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { modalsActionCreators,  modalsSelectors } from '../../../state/modals'
+import { Input } from './elements'
 
 
 const mapStateToProps = (state: IRootState) => ({
@@ -218,7 +218,10 @@ const LoginForm: React.FC<IProps> = ({
     }
   }
 
-  return <form className="sign-in-subform" onSubmit={handleSubmit(onSubmit)}>
+  return <form
+    className="login-form sign-in-subform"
+    onSubmit={handleSubmit(onSubmit)}
+  >
     <Input
       inputProps={{
         ...formRegister('login'),
@@ -321,6 +324,7 @@ const LoginForm: React.FC<IProps> = ({
     <Button
       type="submit"
       text={!!user ? t(TRANSLATION.LOGOUT) : t(TRANSLATION.SIGN_IN)}
+      fixedSize={false}
       className="login-modal_login-btn"
       skipHandler={true}
       disabled={!!Object.values(errors).length}

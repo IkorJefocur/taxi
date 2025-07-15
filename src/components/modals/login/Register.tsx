@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import Input, { EInputTypes } from '../../Input'
+import { EInputTypes } from '../../Input'
 import { t, TRANSLATION } from '../../../localization'
 import Checkbox from '../../Checkbox'
 import { getPhoneError } from '../../../tools/utils'
@@ -19,11 +19,10 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import Alert from '../../Alert/Alert'
 import { Intent } from '../../Alert'
-import ErrorFrame from '../../../components/ErrorFrame'
 import { useVisibility } from '../../../tools/hooks'
 import { ISelectOption } from '../../../types'
-import JSONForm from '../../JSONForm'
-import {formatPhoneNumber, normalizePhoneNumber} from '../../../tools/phoneUtils'
+import { normalizePhoneNumber } from '../../../tools/phoneUtils'
+import { Input } from './elements'
 
 const mapStateToProps = (state: IRootState) => {
   return {
@@ -322,7 +321,7 @@ const RegisterForm: React.FC<IProps> = ({
   if (isDriver && requireFeildsMap.driver_license_photo && !filesMap.driver_license_photo.length) isValidFrom = false
   if (isDriver && requireFeildsMap.license_photo && !filesMap.license_photo) isValidFrom = false
   return (
-    <form className="sign-up-subform" onSubmit={handleSubmit(onSubmit)}>
+    <form className="login-form sign-up-subform" onSubmit={handleSubmit(onSubmit)}>
       {isDriver && <Input
         inputProps={{
           onChange: (e: any) => setWorkType(Number(e.target.value)),
@@ -385,6 +384,7 @@ const RegisterForm: React.FC<IProps> = ({
         label={t(TRANSLATION.EMAIL)}
         error={errors.u_email?.message}
       />
+
       <Checkbox
         {...formRegister('type')}
         type="radio"
@@ -626,6 +626,7 @@ const RegisterForm: React.FC<IProps> = ({
       <Button
         type="submit"
         text={t(TRANSLATION.SIGNUP)}
+        fixedSize={false}
         className="login-modal_login-btn"
         skipHandler={true}
         disabled={!isValidFrom}

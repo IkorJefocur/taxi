@@ -2,6 +2,8 @@
   margin-bottom: 10px;
 
   label {
+    display: flex;
+    align-items: center;
     cursor: pointer;
   }
 
@@ -14,16 +16,18 @@
   input {
     visibility: hidden;
     position: absolute;
+    margin: 0;
   }
 
   input + label:before {
     content: "\00a0";
     display: inline-block;
     font: 22px/1em sans-serif;
-    height: 25px;
-    margin: 0 0.5em 0 0;
-    padding: 0;
     width: 25px;
+    height: 25px;
+    border: 2px solid #1D2A50;
+    padding: 0;
+    margin: 0 0.5em 0 0;
 
     box-sizing: border-box;
     border-radius: 4px;

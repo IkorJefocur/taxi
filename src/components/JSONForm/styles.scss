@@ -35,7 +35,8 @@
             display: none;
 
             & + span {
-                display: block;
+                display: flex;
+                align-items: center;
                 cursor: pointer;
                 line-height: 25px;
                 height: 25px;
@@ -66,7 +67,6 @@
                 & + span:after {
                     position: absolute;
                     left: 8px;
-                    top: 9px;
                     width: 9px;
                     height: 9px;
                     border-radius: 100%;
@@ -213,7 +213,9 @@
         height: 24px;
 
         &_icon {
-            display: block;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             width: 24px;
             height: 24px;
             cursor: help;

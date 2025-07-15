@@ -39,6 +39,14 @@
     align-self: center;
   }
 
+  .login-form {
+    color: #1D2A50;
+
+    &__input {
+      margin-bottom: 40px;
+    }
+  }
+
   fieldset {
     border-radius: 13px;
     width: 100%;
@@ -131,11 +139,10 @@
   }
 
   &_login-btn {
-    button {
-      margin-bottom: 10px;
-      background: linear-gradient(90deg, #EC4C60 0%, #991B0E 100%);
-      text-transform: capitalize !important;
-    }
+    height: 50px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #EC4C60 0%, #991B0E 100%);
+    text-transform: capitalize !important;
   }
 
   

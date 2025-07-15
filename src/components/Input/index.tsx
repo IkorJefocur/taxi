@@ -5,7 +5,7 @@ import SITE_CONSTANTS from '../../siteConstants'
 import useMergedRef from '@react-hook/merged-ref'
 import { ISelectOption } from '../../types'
 import cn from 'classnames'
-import Button from '../Button'
+import Button, { EButtonShape } from '../Button'
 import { ESuggestionType, ISuggestion } from '../../types/types'
 import { t, TRANSLATION } from '../../localization'
 import { Helmet } from 'react-helmet-async'
@@ -32,6 +32,11 @@ export enum EInputTypes {
   File,
 }
 
+export enum EInputStyle {
+  Default,
+  Login,
+}
+
 interface ISideCheckbox {
   value: boolean,
   onClick: () => any
@@ -40,6 +45,7 @@ interface ISideCheckbox {
 
 interface IProps {
   inputType?: EInputTypes
+  style?: EInputStyle,
   error?: string | null
   label?: string
   buttons?: (React.ComponentProps<'img'> | React.ComponentProps<typeof Button>)[]
@@ -66,6 +72,7 @@ interface IProps {
 const Input: React.FC<IProps> = (
   {
     inputType,
+    style = EInputStyle.Default,
     error,
     label,
     buttons,
@@ -247,6 +254,9 @@ const Input: React.FC<IProps> = (
           'input__field-wrapper--oneline': oneline || isDefaultValueUsed,
           'input__field-wrapper--margin-disabled': hideInput,
         },
+        style !== EInputStyle.Default && 'input__field-wrapper--style--' + {
+          [EInputStyle.Login]: 'login',
+        }[style],
       )
     }
     >
@@ -341,7 +351,16 @@ const Input: React.FC<IProps> = (
                         <img key={index} {...item as React.ComponentProps<'img'>} />
                       ) :
                       (
-                        <Button key={index} {...item as React.ComponentProps<typeof Button>} />
+                        <Button
+                          fixedSize={false}
+                          shape={
+                            style === EInputStyle.Login ?
+                              EButtonShape.Flat :
+                              undefined
+                          }
+                          key={index}
+                          {...item as React.ComponentProps<typeof Button>}
+                        />
                       )
                   ))}
                 </div>}

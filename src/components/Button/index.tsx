@@ -19,9 +19,16 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
+export enum EButtonShape {
+  Default,
+  Flat,
+}
+
 interface IProps extends React.ComponentProps<'button'>, ConnectedProps<typeof connector> {
   wrapperProps?: React.ComponentProps<'div'>,
   imageProps?: React.ComponentProps<'img'>,
+  fixedSize?: boolean,
+  shape?: EButtonShape,
   skipHandler?: boolean,
   text?: string,
   svg?: ReactElement,
@@ -33,6 +40,8 @@ interface IProps extends React.ComponentProps<'button'>, ConnectedProps<typeof c
 const Button: React.FC<IProps> = ({
   wrapperProps = {},
   imageProps,
+  fixedSize = true,
+  shape = EButtonShape.Default,
   skipHandler,
   text,
   svg,
@@ -68,6 +77,10 @@ const Button: React.FC<IProps> = ({
             'button',
             { disabled: buttonProps.disabled },
             { 'button--accent': colorType === EColorTypes.Accent },
+            { 'button--size--fixed': fixedSize },
+            shape !== EButtonShape.Default && 'button--shape--' + {
+              [EButtonShape.Flat]: 'flat'
+            }[shape],
             buttonProps.className,
           )}
           style={{
