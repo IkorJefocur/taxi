@@ -13,7 +13,7 @@ import {
   UseFormRegister,
   UseFormSetValue,
 } from 'react-hook-form'
-import Input, { EInputTypes } from '../../components/InputNew'
+import Input, { EInputTypes } from '../../components/Input'
 import Separator from '../../components/separator/Separator'
 import Card from '../../components/Card/Card'
 import Button from '../../components/Button'
