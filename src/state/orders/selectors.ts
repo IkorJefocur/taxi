@@ -1,4 +1,4 @@
-import { createSelector } from 'reselect'
+import { createSelector, weakMapMemoize } from 'reselect'
 import { IOrder } from '../../types/types'
 import { estimateOrder } from '../../tools/estimateOrder'
 import { IReadonlyOSMGraph } from '../../tools/OSMGraph'
@@ -33,16 +33,29 @@ const historyOrdersTakerGeolocation = createSelector(
   state => state.historyOrdersTakerGeolocation,
 )
 
+const estimatedOrder = createSelector(
+  [
+    (order) => order,
+    (_, geolocation) => geolocation,
+    (_, __, graph) => graph,
+  ],
+  (
+    order: IOrder,
+    geolocation: [number, number],
+    graph: IReadonlyOSMGraph,
+  ) => ({
+    ...order,
+    ...estimateOrder(order, geolocation, graph),
+  }),
+  { memoize: weakMapMemoize },
+)
 const estimatedOrders = (
   orders: IOrder[] | null,
   geolocation: [number, number] | undefined,
   graph: IReadonlyOSMGraph,
 ): IOrder[] | null =>
   orders && geolocation ?
-    orders.map(order => ({
-      ...order,
-      ...estimateOrder(order, geolocation, graph),
-    })) :
+    orders.map(order => estimatedOrder(order, geolocation, graph)) :
     orders
 export const activeEstimatedOrders = createSelector(
   [activeOrders, activeOrdersTakerGeolocation, osmGraph],
