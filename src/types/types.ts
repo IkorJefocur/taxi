@@ -5,15 +5,11 @@ import { IBigTruckService } from '../constants/bigTruckServices'
 import { IDateTime } from '../tools/dateTime'
 
 export type {
-  ITags,
   IArea,
-  IWayNode,
-  IWayNodeTags,
   IWay,
-  IWayTags,
-  IWayRelation,
-  IWayRelationMember,
-  IWayRelationTags,
+  IWayNode,
+  IWayEdge,
+  IWayTurnRestriction,
 } from './way'
 
 export enum EPointType {

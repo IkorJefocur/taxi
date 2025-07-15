@@ -4,12 +4,12 @@ import {
   PROFIT_RANKS,
 } from '../constants/orders'
 import { EOrderProfitRank, IOrder, IOrderEstimation } from '../types/types'
-import { IReadonlyOSMGraph, IGraphNode } from './OSMGraph'
+import { IWayGraph, IWayGraphNode } from './maps'
 
 export function estimateOrder(
   order: IOrder,
   startingPoint: [lat: number, lng: number],
-  graph: IReadonlyOSMGraph,
+  graph: IWayGraph,
 ): IOrderEstimation {
   const profit = estimateOrderProfit(order, startingPoint, graph)
   const profitRank = profit && rankProfit(profit)
@@ -19,7 +19,7 @@ export function estimateOrder(
 export function estimateOrderProfit(
   order: IOrder,
   startingPoint: [lat: number, lng: number],
-  graph: IReadonlyOSMGraph,
+  graph: IWayGraph,
 ): number | undefined {
   if (!(
     order.b_start_latitude && order.b_start_longitude &&
@@ -27,7 +27,7 @@ export function estimateOrderProfit(
   ))
     return
 
-  const nodes: IGraphNode[] = []
+  const nodes: IWayGraphNode[] = []
   for (const [lat, lng] of [
     startingPoint,
     [order.b_start_latitude, order.b_start_longitude],

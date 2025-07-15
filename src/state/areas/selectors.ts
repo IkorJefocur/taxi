@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect'
 import { IArea } from '../../types/types'
-import { OSMGraph, IReadonlyOSMGraph } from '../../tools/OSMGraph'
+import { IWayGraph, WayGraph } from '../../tools/maps'
 import { IRootState } from '../'
 import { moduleName, IAreasState } from './constants'
 
@@ -11,30 +11,30 @@ export const area = createSelector([
   (state: IRootState, id: IArea['id']) => id,
 ], (areas, id) => areas[id])
 
-let latestOSMGraph = new OSMGraph()
+let latestWayGraph = new WayGraph()
 let latestAreas: IAreasState['areas'] = {}
-export function osmGraph(state: IRootState): IReadonlyOSMGraph {
+export function wayGraph(state: IRootState): IWayGraph {
   const currentAreas = areas(state)
   if (currentAreas !== latestAreas) {
     let rebuilt = false
     for (const id in latestAreas)
       if (!(id in currentAreas)) {
-        latestOSMGraph = new OSMGraph(undefined, ...Object.values(currentAreas))
+        latestWayGraph = new WayGraph(undefined, ...Object.values(currentAreas))
         rebuilt = true
         break
       }
     if (!rebuilt) {
       for (const id in currentAreas)
         if (!(id in latestAreas))
-          latestOSMGraph.extend(currentAreas[id])
+          latestWayGraph.extend(currentAreas[id])
       // Создание копии объекта для проверки равенства
       // без рекурсивного копирования свойств с целью оптимизации
-      latestOSMGraph = Object.create(
-        Object.getPrototypeOf(latestOSMGraph),
-        Object.getOwnPropertyDescriptors(latestOSMGraph),
+      latestWayGraph = Object.create(
+        Object.getPrototypeOf(latestWayGraph),
+        Object.getOwnPropertyDescriptors(latestWayGraph),
       )
     }
     latestAreas = currentAreas
   }
-  return latestOSMGraph
+  return latestWayGraph
 }
