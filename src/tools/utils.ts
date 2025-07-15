@@ -833,9 +833,12 @@ export function parseLanguages(languages: any) {
   return languagesList;
 }
 
-export const getCurrentPosition = () => new Promise<GeolocationPosition>((res, rej) => {
-  navigator.geolocation.getCurrentPosition(res, rej)
-})
+export const getCurrentPosition = (
+  options?: Parameters<Geolocation['getCurrentPosition']>[2],
+) =>
+  new Promise<GeolocationPosition>((res, rej) => {
+    navigator.geolocation.getCurrentPosition(res, rej, options)
+  })
 
 export const getOrderIcon = (order: IOrder) => {
   if (order.b_comments?.includes('98')) return images.deliveryRed

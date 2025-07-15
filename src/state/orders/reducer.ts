@@ -15,32 +15,31 @@ export const ReducerRecord = Record<IOrdersState>({
 export default function reducer(state = new ReducerRecord(), action: TAction) {
   const { type, payload } = action
 
-  let ordersKey: keyof IOrdersState | undefined
-  let ordersGeolocationKey: keyof IOrdersState | undefined
   switch (type) {
     case ActionTypes.GET_ACTIVE_ORDERS_SUCCESS:
-      ordersKey = 'activeOrders'
-      ordersGeolocationKey = 'activeOrdersTakerGeolocation'
-      break
+      return _.isEqual(state.activeOrders, payload) ?
+        state :
+        state.set('activeOrders', payload)
+    case ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_SUCCESS:
+      return _.isEqual(state.activeOrdersTakerGeolocation, payload) ?
+        state :
+        state.set('activeOrdersTakerGeolocation', payload)
     case ActionTypes.GET_READY_ORDERS_SUCCESS:
-      ordersKey = 'readyOrders'
-      ordersGeolocationKey = 'readyOrdersTakerGeolocation'
-      break
+      return _.isEqual(state.readyOrders, payload) ?
+        state :
+        state.set('readyOrders', payload)
+    case ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_SUCCESS:
+      return _.isEqual(state.readyOrdersTakerGeolocation, payload) ?
+        state :
+        state.set('readyOrdersTakerGeolocation', payload)
     case ActionTypes.GET_HISTORY_ORDERS_SUCCESS:
-      ordersKey = 'historyOrders'
-      ordersGeolocationKey = 'historyOrdersTakerGeolocation'
-      break
-  }
-  if (ordersKey && ordersGeolocationKey) {
-    const { orders, geolocation } = payload
-    if (!_.isEqual(state[ordersKey], orders))
-      state = state.set(ordersKey, orders)
-    if (!_.isEqual(state[ordersGeolocationKey], geolocation))
-      state = state.set(ordersGeolocationKey, geolocation)
-    return state
-  }
-
-  switch (type) {
+      return _.isEqual(state.historyOrders, payload) ?
+        state :
+        state.set('historyOrders', payload)
+    case ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_SUCCESS:
+      return _.isEqual(state.historyOrdersTakerGeolocation, payload) ?
+        state :
+        state.set('historyOrdersTakerGeolocation', payload)
     case ActionTypes.CLEAR:
       return new ReducerRecord()
     default:

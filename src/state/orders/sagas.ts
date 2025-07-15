@@ -36,70 +36,106 @@ export const saga = function* () {
 
 function* getActiveOrdersSaga() {
   try {
-    const [orders, geolocation] = yield* getOrdersSaga(EOrderTypes.Active)
-    yield put({
-      type: ActionTypes.GET_ACTIVE_ORDERS_SUCCESS,
-      payload: { orders, geolocation },
-    })
+    const orders = yield* getOrdersSaga(EOrderTypes.Active)
+    yield put({ type: ActionTypes.GET_ACTIVE_ORDERS_SUCCESS, payload: orders })
     if (orders.length === 1) yield put(setSelectedOrder(orders[0].b_id))
     if (orders.length === 0) yield put(setSelectedOrder(null))
+    try {
+      const geolocation = yield* getOrdersTakerGeolocationSaga(orders)
+      if (geolocation)
+        yield put({
+          type: ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_SUCCESS,
+          payload: geolocation,
+        })
+    } catch (error) {
+      console.error(error)
+      yield put({
+        type: ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_FAIL,
+        payload: error,
+      })
+    }
   } catch (error) {
     console.error(error)
+    yield put({ type: ActionTypes.GET_ACTIVE_ORDERS_FAIL, payload: error })
   }
 }
 
 function* getReadyOrdersSaga() {
   try {
-    const [orders, geolocation] = yield* getOrdersSaga(EOrderTypes.Ready)
-    yield put({
-      type: ActionTypes.GET_READY_ORDERS_SUCCESS,
-      payload: { orders, geolocation },
-    })
+    const orders = yield* getOrdersSaga(EOrderTypes.Ready)
+    yield put({ type: ActionTypes.GET_READY_ORDERS_SUCCESS, payload: orders })
+    try {
+      const geolocation = yield* getOrdersTakerGeolocationSaga(orders)
+      if (geolocation)
+        yield put({
+          type: ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_SUCCESS,
+          payload: geolocation,
+        })
+    } catch (error) {
+      console.error(error)
+      yield put({
+        type: ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_FAIL,
+        payload: error,
+      })
+    }
   } catch (error) {
     console.error(error)
+    yield put({ type: ActionTypes.GET_READY_ORDERS_FAIL, payload: error })
   }
 }
 
 function* getHistoryOrdersSaga() {
   try {
-    const [orders, geolocation] = yield* getOrdersSaga(EOrderTypes.History)
-    yield put({
-      type: ActionTypes.GET_HISTORY_ORDERS_SUCCESS,
-      payload: { orders, geolocation },
-    })
+    const orders = yield* getOrdersSaga(EOrderTypes.History)
+    yield put({ type: ActionTypes.GET_HISTORY_ORDERS_SUCCESS, payload: orders })
+    try {
+      const geolocation = yield* getOrdersTakerGeolocationSaga(orders)
+      if (geolocation)
+        yield put({
+          type: ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_SUCCESS,
+          payload: geolocation,
+        })
+    } catch (error) {
+      console.error(error)
+      yield put({
+        type: ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_FAIL,
+        payload: error,
+      })
+    }
   } catch (error) {
     console.error(error)
+    yield put({ type: ActionTypes.GET_HISTORY_ORDERS_FAIL, payload: error })
   }
 }
 
 function* getOrdersSaga(
   orderType: EOrderTypes,
-): Generator<any, [IOrder[], [lat: number, lng: number] | undefined], any> {
+): Generator<any, IOrder[], any> {
   const userID = (yield* select<ReturnType<typeof user>>(user))?.u_id
   if (!userID) throw new Error()
 
   const _orders = yield* call<IOrder[]>(API.getOrders, orderType)
-  const updatedOrders = updateCompletedOrdersDuration(_orders)
-  let geolocation: [number, number] | undefined
+  return updateCompletedOrdersDuration(_orders)
+}
 
-  if (updatedOrders.length > 0) {
-    try {
-      const position = yield* call<GeolocationPosition>(getCurrentPosition)
-      const { latitude, longitude } = position.coords
-      geolocation = [latitude, longitude]
-    } catch (error) {}
+function* getOrdersTakerGeolocationSaga(
+  orders: IOrder[],
+): Generator<any, [lat: number, lng: number] | undefined, any> {
+  if (orders.length > 0) {
+    const position = yield* call<GeolocationPosition>(getCurrentPosition)
+    const { latitude, longitude } = position.coords
+    const geolocation: [number, number] = [latitude, longitude]
 
-    if (geolocation)
-      yield put(getAreasBetweenPoints([
-        ...updatedOrders
-          .flatMap(order => [
-            [order.b_start_latitude, order.b_start_longitude],
-            [order.b_destination_latitude, order.b_destination_longitude],
-          ])
-          .filter(([lat, lng]) => lat && lng) as [number, number][],
-        geolocation,
-      ]))
+    yield put(getAreasBetweenPoints([
+      ...orders
+        .flatMap(order => [
+          [order.b_start_latitude, order.b_start_longitude],
+          [order.b_destination_latitude, order.b_destination_longitude],
+        ])
+        .filter(([lat, lng]) => lat && lng) as [number, number][],
+      geolocation,
+    ]))
+
+    return geolocation
   }
-
-  return [updatedOrders, geolocation]
 }
