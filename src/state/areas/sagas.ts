@@ -29,7 +29,7 @@ export function* saga() {
 
     }),
     takeEvery(
-      ActionTypes.GET_AREAS_INCLUDES_POINTS_REQUEST,
+      ActionTypes.GET_AREAS_BETWEEN_POINTS_REQUEST,
       getAreasBetweenPointsSaga,
     ),
   ])

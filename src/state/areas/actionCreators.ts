@@ -7,4 +7,4 @@ export const getArea = (payload: IArea['id']): TAction =>
 
 export const getAreasBetweenPoints = (
   payload: [lat: number, lng: number][],
-): TAction => ({ type: ActionTypes.GET_AREAS_INCLUDES_POINTS_REQUEST, payload })
+): TAction => ({ type: ActionTypes.GET_AREAS_BETWEEN_POINTS_REQUEST, payload })
