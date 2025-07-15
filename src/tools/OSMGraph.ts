@@ -2,6 +2,7 @@ import { Heap } from 'heap-js'
 import { IArea, IWayNode, IWay, IWayRelation } from '../types/way'
 
 export interface IReadonlyOSMGraph {
+  readonly roadNetwork: Iterable<IGraphNode>
   getNode(id: number): IGraphNode | undefined
   findShortestPath(startId: number, endId: number): [IGraphNode[], number]
   findClosestNode(lat: number, lng: number): [IGraphNode | undefined, number]
@@ -16,6 +17,8 @@ export interface IOSMGraph extends IReadonlyOSMGraph {
 
 export interface IGraphNode {
   readonly id: number
+  readonly lat: number
+  readonly lng: number
   readonly edges: Iterable<Readonly<TGraphEdge>>
   isTurnAllowed(fromWay: number, toWay: number): boolean
 }
@@ -30,9 +33,8 @@ export class OSMGraph implements IOSMGraph {
 
   private static EARTH_RADIUS = 6371000
 
-  private wayNodes: Map<IWayNode['id'], IWayNode> = new Map()
   private nodes: Map<IWayNode['id'], GraphNode> = new Map()
-  private closestNodeRadius: number
+  readonly closestNodeRadius: number
 
   /**
    * @param closestNodeRadius Максимальное допустимое расстояние (в метрах) до точки при поиске ближайшего узла
@@ -43,9 +45,15 @@ export class OSMGraph implements IOSMGraph {
       this.extend(area)
   }
 
+  get roadNetwork() { return this._roadNetwork() }
+  private *_roadNetwork(): Iterable<IGraphNode> {
+    for (const node of this.nodes.values())
+      if (!node.edges[Symbol.iterator]().next().done)
+        yield node
+  }
+
   getNode(id: number): IGraphNode | undefined {
-    if (this.wayNodes.has(id))
-      return this.nodes.get(id) ?? new GraphNode(id)
+    return this.nodes.get(id)
   }
 
   extend(area: IArea): void {
@@ -58,10 +66,12 @@ export class OSMGraph implements IOSMGraph {
   }
 
   addNode(node: IWayNode): void {
-    this.wayNodes.set(node.id, node)
+    this.nodes.set(node.id, new GraphNode(node.id, node.lat, node.lng))
   }
 
   addWay(way: IWay): void {
+    if (!OSMGraph.isWayRoadway(way))
+      return
     const multiplier = OSMGraph.getWayWeightMultiplier(way)
     const isOneway = OSMGraph.isWayOneway(way)
 
@@ -69,17 +79,15 @@ export class OSMGraph implements IOSMGraph {
       const node1Id = way.nodeIds[i]
       const node2Id = way.nodeIds[i + 1]
 
-      const wayNode1 = this.wayNodes.get(node1Id)
-      const wayNode2 = this.wayNodes.get(node2Id)
-      if (!wayNode1 || !wayNode2) continue
+      const node1 = this.nodes.get(node1Id)
+      const node2 = this.nodes.get(node2Id)
+      if (!node1 || !node2) continue
 
       const weight = OSMGraph.calculateDistance(
-        [wayNode1.lat, wayNode1.lng],
-        [wayNode2.lat, wayNode2.lng],
+        [node1.lat, node1.lng],
+        [node2.lat, node2.lng],
       ) * multiplier
 
-      const node1 = this.getOrCreateNode(node1Id)
-      const node2 = this.getOrCreateNode(node2Id)
       node1.addEdge(node2, weight, way.id)
       if (!isOneway)
         node2.addEdge(node1, weight, way.id)
@@ -107,8 +115,11 @@ export class OSMGraph implements IOSMGraph {
       }
     }
 
-    if (fromMember && viaMember && toMember)
-      this.getOrCreateNode(viaMember).addTurnRestriction(fromMember, toMember)
+    if (fromMember && viaMember && toMember) {
+      const node = this.nodes.get(viaMember)
+      if (node)
+        node.addTurnRestriction(fromMember, toMember)
+    }
   }
 
   findShortestPath(startId: number, endId: number): [IGraphNode[], number] {
@@ -180,10 +191,10 @@ export class OSMGraph implements IOSMGraph {
   }
 
   findClosestNode(lat: number, lng: number): [IGraphNode | undefined, number] {
-    let closestNode: IWayNode | undefined
+    let closestNode: IGraphNode | undefined
     let closestDistance = this.closestNodeRadius
 
-    for (const node of this.wayNodes.values()) {
+    for (const node of this.roadNetwork) {
       const distance = OSMGraph.calculateDistance(
         [lat, lng],
         [node.lat, node.lng],
@@ -195,14 +206,8 @@ export class OSMGraph implements IOSMGraph {
     }
 
     return closestNode ?
-      [this.getOrCreateNode(closestNode.id), closestDistance] :
+      [closestNode, closestDistance] :
       [undefined, Infinity]
-  }
-
-  private getOrCreateNode(id: number): GraphNode {
-    if (!this.nodes.has(id))
-      this.nodes.set(id, new GraphNode(id))
-    return this.nodes.get(id)!
   }
 
   private static getWayWeightMultiplier(way: IWay): number {
@@ -217,6 +222,20 @@ export class OSMGraph implements IOSMGraph {
       'service': 1.0,
     }
     return (highwayType && multipliers[highwayType]) || 1.5
+  }
+
+  private static isWayRoadway(way: IWay): boolean {
+    return ([
+      'motorway', 'motorway_link',
+      'trunk', 'trunk_link',
+      'primary', 'primary_link',
+      'secondary', 'secondary_link',
+      'tertiary', 'tertiary_link',
+      'unclassified',
+      'residential',
+      'living_street',
+      'service',
+    ] as unknown[]).includes(way.tags.highway)
   }
 
   private static isWayOneway(way: IWay): boolean {
@@ -248,11 +267,15 @@ export class OSMGraph implements IOSMGraph {
 class GraphNode implements IGraphNode {
 
   readonly id: number
+  readonly lat: number
+  readonly lng: number
   readonly edges: Readonly<TGraphEdge>[] = []
   private turnRestrictions: Map<number, Set<number>> = new Map()
 
-  constructor(id: number) {
+  constructor(id: number, lat: number, lng: number) {
     this.id = id
+    this.lat = lat
+    this.lng = lng
   }
 
   addEdge(toNode: IGraphNode, weight: number, wayId: number): void {
