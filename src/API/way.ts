@@ -51,7 +51,7 @@ export async function getAreaFromXML(id: IArea['id']): Promise<IArea> {
 
   const edges: IWayEdge[] = []
   for (const wayElement of root.getElementsByTagName('way')) {
-    let skip = false
+    let skip = true
     let multiplier = 1.5
     let bidirectional = true
 
@@ -60,10 +60,10 @@ export async function getAreaFromXML(id: IArea['id']): Promise<IArea> {
       const value = tagElement.getAttribute('v')!
 
       if (key === 'highway') {
-        if (!ROADWAY_TYPES.has(value)) {
-          skip = true
+        if (ROADWAY_TYPES.has(value))
+          skip = false
+        else
           break
-        }
         multiplier = WEIGHT_MULTIPLIERS[value] ?? 1.5
       }
 
