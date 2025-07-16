@@ -1,5 +1,12 @@
 @import "../../tools/mixins";
 
+$low-profit-bg: #C19276;
+$low-profit-fg: #3E0C0C;
+$medium-profit-bg: #FFFB8E;
+$medium-profit-fg: #A37211;
+$high-profit-bg: #A1FF97;
+$high-profit-fg: #22A613;
+
 .card {
   display: flex;
   flex-direction: column;
@@ -59,21 +66,21 @@
 
   &--profit {
     &--low {
-      background: #C19276;
+      background: $low-profit-bg;
       #{$b}__profit {
-        color: #3E0C0C;
+        color: $low-profit-fg;
       }
     }
     &--medium {
-      background: #FFFB8E;
+      background: $medium-profit-bg;
       #{$b}__profit {
-        color: #A37211;
+        color: $medium-profit-fg;
       }
     }
     &--high {
-      background: #A1FF97;
+      background: $high-profit-bg;
       #{$b}__profit {
-        color: #22A613;
+        color: $high-profit-fg;
       }
     }
   }
@@ -387,6 +394,24 @@
       opacity: 1;
       visibility: visible;
       pointer-events: all;
+    }
+
+    &--profit {
+      &--low {
+        #{$b}__profit {
+          color: $low-profit-fg;
+        }
+      }
+      &--medium {
+        #{$b}__profit {
+          color: $medium-profit-fg;
+        }
+      }
+      &--high {
+        #{$b}__profit {
+          color: $high-profit-fg;
+        }
+      }
     }
 
     & > div {

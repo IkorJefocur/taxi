@@ -1,21 +1,23 @@
 import {
-    addHiddenOrder,
-    dateFormatDate,
-    dateShowFormat,
-    formatCommentWithEmoji,
-    getOrderCount,
-    getPayment
+  addHiddenOrder,
+  dateFormatDate,
+  dateShowFormat,
+  formatCommentWithEmoji,
+  getOrderCount,
+  getPayment,
 } from "../../tools/utils"
 import {
-    EBookingDriverState,
-    EBookingStates,
-    EColorTypes,
-    EPaymentWays,
-    EStatuses,
-    IAddressPoint,
-    IOrder
+  EBookingDriverState,
+  EBookingStates,
+  EColorTypes,
+  EPaymentWays,
+  EStatuses,
+  EOrderProfitRank,
+  IAddressPoint,
+  IOrder,
 } from "../../types/types"
 import React, {useCallback, useContext, useEffect, useMemo, useState} from 'react'
+import cn from 'classnames'
 import Button from "../Button"
 import {t, TRANSLATION} from "../../localization"
 import * as API from '../../API'
@@ -563,7 +565,14 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
       t(_type) + '. ' + t(TRANSLATION.FIXED) + `${price ? CURRENCY.SIGN : ''}${(price || '-') || getPayment(order).text }`
 
   return (
-    <div className='status-card__modal' data-active={active} onClick={outsideClick} >
+    <div className={cn(
+      'status-card__modal',
+      order?.profitRank !== undefined && `status-card__modal--profit--${{
+        [EOrderProfitRank.Low]: 'low',
+        [EOrderProfitRank.Medium]: 'medium',
+        [EOrderProfitRank.High]: 'high',
+      }[order.profitRank]}`
+    )} data-active={active} onClick={outsideClick} >
       <div>
         
         <div className='top' >
@@ -663,6 +672,14 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
           <div>
             <p>{t(TRANSLATION.PAYMENT_WAY)}: {_value}{order?.b_options?.pricingModel?.calculationType === 'incomplete' ? ' + ?' : ''}</p>
             <p>{t(TRANSLATION.CALCULATION) + ': ' + calculateFinalPriceFormula(order)}</p>
+            {order?.profit &&
+              <p className='status-card__profit'>
+                {new Intl.NumberFormat(undefined, {
+                  signDisplay: 'always',
+                  maximumFractionDigits: 0,
+                }).format(order.profit)}
+              </p>
+            }
           </div>
         </div>
 
