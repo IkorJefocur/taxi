@@ -7,8 +7,8 @@ import { IDateTime } from '../tools/dateTime'
 export type {
   IArea,
   IWay,
+  IWaySegment,
   IWayNode,
-  IWayEdge,
   IWayTurnRestriction,
 } from './way'
 

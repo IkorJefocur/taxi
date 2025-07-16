@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { IArea, IWayNode, IWayEdge } from '../types/types'
+import { IArea, IWay, IWaySegment, IWayNode } from '../types/types'
 import { calculateDistance } from '../tools/maps'
 
 export async function getAreasIdsBetweenPoints(
@@ -49,11 +49,11 @@ export async function getAreaFromXML(id: IArea['id']): Promise<IArea> {
     }
   }
 
-  const edges: IWayEdge[] = []
+  const ways: IWay[] = []
   for (const wayElement of root.getElementsByTagName('way')) {
     let skip = true
     let multiplier = 1.5
-    let bidirectional = true
+    let oneway = false
 
     for (const tagElement of wayElement.getElementsByTagName('tag')) {
       const key = tagElement.getAttribute('k')!
@@ -68,23 +68,28 @@ export async function getAreaFromXML(id: IArea['id']): Promise<IArea> {
       }
 
       if (key === 'oneway')
-        bidirectional = value !== 'yes'
+        oneway = value === 'yes'
     }
 
     if (skip)
       continue
     const id = parseInt(wayElement.getAttribute('id')!)
+    const segments: IWaySegment[] = []
 
     let prevNodeId: number | undefined
     for (const nodeRefElement of wayElement.getElementsByTagName('nd')) {
       const node1Id = prevNodeId
       const node2Id = parseInt(nodeRefElement.getAttribute('ref')!)
       prevNodeId = node2Id
-      if (!node1Id)
+
+      const node2 = nodes[node2Id]
+      if (!node1Id) {
+        if (node2)
+          segments.push({ nodeId: node2Id, weight: 0 })
         continue
+      }
 
       const node1 = nodes[node1Id]
-      const node2 = nodes[node2Id]
       if (!node1 || !node2)
         continue
 
@@ -92,17 +97,13 @@ export async function getAreaFromXML(id: IArea['id']): Promise<IArea> {
         [node1.latitude, node1.longitude],
         [node2.latitude, node2.longitude],
       ) * multiplier
-
-      const edge: IWayEdge = {
-        fromId: node1Id,
-        toId: node2Id,
-        wayId: id,
-        weight,
-      }
-      if (bidirectional)
-        edge.bidirectional = true
-      edges.push(edge)
+      segments.push({ nodeId: node2Id, weight })
     }
+
+    const way: IWay = { id, segments }
+    if (oneway)
+      way.oneway = oneway
+    ways.push(way)
   }
 
   for (const relationElement of root.getElementsByTagName('relation')) {
@@ -142,12 +143,10 @@ export async function getAreaFromXML(id: IArea['id']): Promise<IArea> {
   }
 
   const resultNodes = new Set<IWayNode>()
-  for (const edge of edges) {
-    if (edge.fromId in nodes)
-      resultNodes.add(nodes[edge.fromId])
-    if (edge.toId in nodes)
-      resultNodes.add(nodes[edge.toId])
-  }
+  for (const way of ways)
+    for (const segment of way.segments)
+      if (segment.nodeId in nodes)
+        resultNodes.add(nodes[segment.nodeId])
 
-  return { id, nodes: [...resultNodes], edges }
+  return { id, nodes: [...resultNodes], ways }
 }

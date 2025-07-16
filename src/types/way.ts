@@ -1,11 +1,18 @@
 export interface IArea {
   id: number,
   nodes: IWayNode[],
-  edges: IWayEdge[],
+  ways: IWay[],
 }
 
 export interface IWay {
   id: number,
+  segments: IWaySegment[],
+  oneway?: boolean,
+}
+
+export interface IWaySegment {
+  nodeId: IWayNode['id'],
+  weight: number,
 }
 
 export interface IWayNode {
@@ -13,14 +20,6 @@ export interface IWayNode {
   latitude: number,
   longitude: number,
   turnRestrictions?: IWayTurnRestriction[],
-}
-
-export interface IWayEdge {
-  fromId: IWayNode['id'],
-  toId: IWayNode['id'],
-  wayId: IWay['id'],
-  weight: number,
-  bidirectional?: boolean,
 }
 
 export interface IWayTurnRestriction {

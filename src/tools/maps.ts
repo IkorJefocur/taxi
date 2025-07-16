@@ -72,14 +72,22 @@ export class WayGraph implements IWayGraph {
       this.nodes.set(node.id, graphNode)
     }
 
-    for (const edge of area.edges) {
-      const fromNode = this.nodes.get(edge.fromId)
-      const toNode = this.nodes.get(edge.toId)
-      if (!fromNode || !toNode)
-        continue
-      fromNode.addEdge(toNode, edge.weight, edge.wayId)
-      if (edge.bidirectional)
-        toNode.addEdge(fromNode, edge.weight, edge.wayId)
+    for (const way of area.ways) {
+      let prevNodeId: IWayGraphNode['id'] | undefined
+      for (const segment of way.segments) {
+        const node1Id = prevNodeId
+        const node2Id = segment.nodeId
+        prevNodeId = node2Id
+        if (!node1Id)
+          continue
+        const node1 = this.nodes.get(node1Id)
+        const node2 = this.nodes.get(node2Id)
+        if (!node1 || !node2)
+          continue
+        node1.addEdge(node2, segment.weight, way.id)
+        if (!way.oneway)
+          node2.addEdge(node1, segment.weight, way.id)
+      }
     }
   }
 
