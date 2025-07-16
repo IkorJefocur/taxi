@@ -1,6 +1,7 @@
 import { Record } from 'immutable'
 import _ from 'lodash'
 import { TAction } from '../../types'
+import { calculateDistance } from '../../tools/maps'
 import { ActionTypes, IOrdersState } from './constants'
 
 export const ReducerRecord = Record<IOrdersState>({
@@ -21,7 +22,7 @@ export default function reducer(state = new ReducerRecord(), action: TAction) {
         state :
         state.set('activeOrders', payload)
     case ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_SUCCESS:
-      return _.isEqual(state.activeOrdersTakerGeolocation, payload) ?
+      return geolocationEqual(state.activeOrdersTakerGeolocation, payload) ?
         state :
         state.set('activeOrdersTakerGeolocation', payload)
     case ActionTypes.GET_READY_ORDERS_SUCCESS:
@@ -29,7 +30,7 @@ export default function reducer(state = new ReducerRecord(), action: TAction) {
         state :
         state.set('readyOrders', payload)
     case ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_SUCCESS:
-      return _.isEqual(state.readyOrdersTakerGeolocation, payload) ?
+      return geolocationEqual(state.readyOrdersTakerGeolocation, payload) ?
         state :
         state.set('readyOrdersTakerGeolocation', payload)
     case ActionTypes.GET_HISTORY_ORDERS_SUCCESS:
@@ -37,7 +38,7 @@ export default function reducer(state = new ReducerRecord(), action: TAction) {
         state :
         state.set('historyOrders', payload)
     case ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_SUCCESS:
-      return _.isEqual(state.historyOrdersTakerGeolocation, payload) ?
+      return geolocationEqual(state.historyOrdersTakerGeolocation, payload) ?
         state :
         state.set('historyOrdersTakerGeolocation', payload)
     case ActionTypes.CLEAR:
@@ -46,3 +47,14 @@ export default function reducer(state = new ReducerRecord(), action: TAction) {
       return state
   }
 }
+
+const GEOLOCATION_CHANGE_THRESHOLD = 100
+const geolocationEqual = (
+  a?: [lat: number, lng: number],
+  b?: [lat: number, lng: number],
+): boolean => !!(
+  a === b || (a && b && (
+    (a[0] === b[0] && a[1] === b[1]) ||
+    calculateDistance(a, b) < GEOLOCATION_CHANGE_THRESHOLD
+  ))
+)
