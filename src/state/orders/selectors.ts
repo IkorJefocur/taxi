@@ -1,21 +1,23 @@
 import { createSelector, weakMapMemoize } from 'reselect'
-import { IOrder } from '../../types/types'
+import { IOrder, ICar } from '../../types/types'
 import { estimateOrder } from '../../tools/estimateOrder'
 import { IWayGraph } from '../../tools/maps'
 import { IRootState } from '../'
 import { wayGraph } from '../areas/selectors'
+import { car } from '../user/selectors'
 import { moduleName } from './constants'
 
 export const moduleSelector = (state: IRootState) => state[moduleName]
-export const activeOrders = createSelector(
+
+const pureActiveOrders = createSelector(
   moduleSelector,
   state => state.activeOrders,
 )
-export const readyOrders = createSelector(
+const pureReadyOrders = createSelector(
   moduleSelector,
   state => state.readyOrders,
 )
-export const historyOrders = createSelector(
+const pureHistoryOrders = createSelector(
   moduleSelector,
   state => state.historyOrders,
 )
@@ -37,35 +39,38 @@ const estimatedOrder = createSelector(
   [
     (order) => order,
     (_, geolocation) => geolocation,
-    (_, __, graph) => graph,
+    (_, __, car) => car,
+    (_, __, ___, graph) => graph,
   ],
   (
     order: IOrder,
     geolocation: [number, number],
+    car: ICar,
     graph: IWayGraph,
   ) => ({
     ...order,
-    ...estimateOrder(order, geolocation, graph),
+    ...estimateOrder(order, car, geolocation, graph),
   }),
   { memoize: weakMapMemoize },
 )
 const estimatedOrders = (
   orders: IOrder[] | null,
   geolocation: [number, number] | undefined,
+  car: ICar | undefined,
   graph: IWayGraph,
 ): IOrder[] | null =>
-  orders && geolocation ?
-    orders.map(order => estimatedOrder(order, geolocation, graph)) :
+  orders && geolocation && car ?
+    orders.map(order => estimatedOrder(order, geolocation, car, graph)) :
     orders
-export const activeEstimatedOrders = createSelector(
-  [activeOrders, activeOrdersTakerGeolocation, wayGraph],
+export const activeOrders = createSelector(
+  [pureActiveOrders, activeOrdersTakerGeolocation, car, wayGraph],
   estimatedOrders,
 )
-export const readyEstimatedOrders = createSelector(
-  [readyOrders, readyOrdersTakerGeolocation, wayGraph],
+export const readyOrders = createSelector(
+  [pureReadyOrders, readyOrdersTakerGeolocation, car, wayGraph],
   estimatedOrders,
 )
-export const historyEstimatedOrders = createSelector(
-  [historyOrders, historyOrdersTakerGeolocation, wayGraph],
+export const historyOrders = createSelector(
+  [pureHistoryOrders, historyOrdersTakerGeolocation, car, wayGraph],
   estimatedOrders,
 )

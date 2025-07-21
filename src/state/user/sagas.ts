@@ -1,5 +1,6 @@
 import { ActionTypes as ConfigActionTypes } from './../config/constants'
-import { all, put } from 'redux-saga/effects'
+import { Channel } from 'redux-saga'
+import { all, fork, take, put, actionChannel } from 'redux-saga/effects'
 import { setLoginModal, setMessageModal, setRefCodeModal } from '../modals/actionCreators'
 import { ActionTypes } from './constants'
 import { uploadRegisterFiles, uploadFiles } from './helpers'
@@ -7,7 +8,7 @@ import { call, takeEvery } from '../../tools/sagaUtils'
 import { t, TRANSLATION } from '../../localization'
 import * as API from './../../API'
 import { PromiseReturn, TAction } from '../../types'
-import { EStatuses, EUserRoles, ITokens, IUser } from '../../types/types'
+import { EStatuses, EUserRoles, ITokens, IUser, ICar } from '../../types/types'
 import { setUser } from './actionCreators'
 import { clearOrders } from '../orders/actionCreators'
 import SITE_CONSTANTS from '../../siteConstants'
@@ -22,6 +23,26 @@ export const saga = function* () {
     takeEvery(ActionTypes.REMIND_PASSWORD_REQUEST, remindPasswordSaga),
     takeEvery(ActionTypes.INIT_USER, initUserSaga),
     takeEvery(ActionTypes.WHATSAPP_SIGNUP_REQUEST, whatsappSignUpSaga),
+    call(function*() {
+
+      while (true) {
+        const requestChannel: Channel<TAction> =
+          yield actionChannel(ActionTypes.GET_CAR_REQUEST)
+        while (true) {
+          yield take(requestChannel)
+          yield fork(getCarSaga)
+          const result: TAction = yield take([
+            ActionTypes.GET_CAR_SUCCESS,
+            ActionTypes.GET_CAR_FAIL,
+          ])
+          if (result.type === ActionTypes.GET_CAR_SUCCESS)
+            break
+        }
+        requestChannel.close()
+        yield take(ActionTypes.SET_USER)
+      }
+
+    }),
   ])
 }
 
@@ -32,11 +53,11 @@ function* loginSaga(data: TAction) {
     if (!result) throw new Error('wrong login response')
 
     if(result.data === 'wrong login') {
-      yield put({ type: ActionTypes.LOGIN_FAIL, payload: result.data})
+      yield put({ type: ActionTypes.LOGIN_FAIL, payload: result.data })
       throw new Error('wrong login')
     }
     if(result.data === 'wrong password') {
-      yield put({ type: ActionTypes.LOGIN_FAIL, payload: result.data})
+      yield put({ type: ActionTypes.LOGIN_FAIL, payload: result.data })
       throw new Error('wrong password')
     }
 
@@ -70,7 +91,7 @@ function* loginSaga(data: TAction) {
     yield put(setLoginModal(false))
   } catch (error: any) {
     console.error('catch', error)
-    yield put({ 
+    yield put({
       type: ActionTypes.LOGIN_FAIL,
       payload: error.message,
     })
@@ -113,7 +134,7 @@ function* registerSaga(data: TAction) {
     let response = yield* call<any>(API.register, { ...payload, st: 1 })
     console.log(response)
     if(response.error) {
-      yield put({ type: ActionTypes.REGISTER_FAIL, payload: response.error})
+      yield put({ type: ActionTypes.REGISTER_FAIL, payload: response.error })
       throw new Error(response.error)
     }
     const tokens = {
@@ -145,7 +166,7 @@ function* registerSaga(data: TAction) {
       message: t(messageText),
     }))
   } catch (error) {
-    console.error('registerSaga error', error,)
+    console.error('registerSaga error', error)
     yield put({ type: ActionTypes.REGISTER_FAIL, payload: error })
   }
 }
@@ -233,24 +254,34 @@ function* initUserSaga() {
 }
 
 function* whatsappSignUpSaga(data: TAction) {
-    try {
-      const result = yield* call<PromiseReturn<ReturnType<typeof API.whatsappSignUp>>>(API.whatsappSignUp, data.payload)
-      if (!result) throw new Error('Wrong whatsappSignUp response')
+  try {
+    const result = yield* call<PromiseReturn<ReturnType<typeof API.whatsappSignUp>>>(API.whatsappSignUp, data.payload)
+    if (!result) throw new Error('Wrong whatsappSignUp response')
 
-      yield put(setRefCodeModal({ isOpen: false }))  
-      yield put({ type: ActionTypes.WHATSAPP_SIGNUP_SUCCESS, payload: result })
-      console.log("запускаем loginSaga")
-      yield* call(loginSaga, {
-        type: ActionTypes.LOGIN_REQUEST, 
-        payload: { 
-          login: data.payload.login, 
-          type: data.payload.type,
-          navigate: data.payload.navigate 
-        }
-      })
+    yield put(setRefCodeModal({ isOpen: false }))
+    yield put({ type: ActionTypes.WHATSAPP_SIGNUP_SUCCESS, payload: result })
+    console.log('запускаем loginSaga')
+    yield* call(loginSaga, {
+      type: ActionTypes.LOGIN_REQUEST,
+      payload: {
+        login: data.payload.login,
+        type: data.payload.type,
+        navigate: data.payload.navigate,
+      },
+    })
 
-    } catch (error) {
-      console.error(error)
-      yield put({ type: ActionTypes.WHATSAPP_SIGNUP_FAIL })
-    }
+  } catch (error) {
+    console.error(error)
+    yield put({ type: ActionTypes.WHATSAPP_SIGNUP_FAIL })
   }
+}
+
+function* getCarSaga() {
+  try {
+    const cars = yield* call<ICar[]>(API.getUserCars)
+    yield put({ type: ActionTypes.GET_CAR_SUCCESS, payload: cars[0] })
+  } catch (error) {
+    console.error(error)
+    yield put({ type: ActionTypes.GET_CAR_FAIL, payload: error })
+  }
+}

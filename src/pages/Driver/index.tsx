@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react'
+import React, { createContext, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DriverOrders from './Orders'
 import DriverMap from './Map'
@@ -17,8 +17,8 @@ import images from '../../constants/images'
 import { withLayout } from '../../HOCs/withLayout'
 
 const mapStateToProps = (state: IRootState) => ({
-  activeOrders: ordersSelectors.activeEstimatedOrders(state),
-  readyOrders: ordersSelectors.readyEstimatedOrders(state),
+  activeOrders: ordersSelectors.activeOrders(state),
+  readyOrders: ordersSelectors.readyOrders(state),
   historyOrders: ordersSelectors.historyOrders(state),
   user: userSelectors.user(state),
 })
@@ -33,7 +33,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 export const OrderAddressContext = createContext<{ ordersAddressRef: React.RefObject<{
   [orderId: string]: IAddressPoint;
-}> }|null>(null);
+}> }|null>(null)
 
 
 export enum EDriverTabs {
@@ -57,17 +57,17 @@ const Driver: React.FC<IProps> = ({
 }) => {
 
   const { tab = EDriverTabs.Lite } = useQuery()
-  
+
   const navigate = useNavigate()
 
   const ordersAddressRef = useRef<{ [orderId:string]: IAddressPoint }>({})
 
   useInterval(() => {
-    user && getActiveOrders()
+    user && getActiveOrders({ estimate: true })
   }, 2000)
 
   useInterval(() => {
-    user && getReadyOrders()
+    user && getReadyOrders({ estimate: true })
   }, 3000)
 
   useInterval(() => {
@@ -76,8 +76,8 @@ const Driver: React.FC<IProps> = ({
 
   useEffect(() => {
     if (user) {
-      getActiveOrders()
-      getReadyOrders()
+      getActiveOrders({ estimate: true })
+      getReadyOrders({ estimate: true })
       getHistoryOrders()
     }
   }, [user])
@@ -116,7 +116,7 @@ const Driver: React.FC<IProps> = ({
         </button>
       </div>
       {(tab === EDriverTabs.Lite || tab === EDriverTabs.Detailed) &&
-        <OrderAddressContext.Provider value={{ordersAddressRef}}>
+        <OrderAddressContext.Provider value={{ ordersAddressRef }}>
           <DriverOrders
             user={user}
             type={tab}
@@ -127,7 +127,7 @@ const Driver: React.FC<IProps> = ({
         </OrderAddressContext.Provider>
       }
       {tab === EDriverTabs.Map &&
-        <OrderAddressContext.Provider value={{ordersAddressRef}}>
+        <OrderAddressContext.Provider value={{ ordersAddressRef }}>
           <DriverMap
             user={user}
             activeOrders={activeOrders}

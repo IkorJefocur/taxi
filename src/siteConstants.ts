@@ -1,6 +1,19 @@
 import { PassengerOrderConfig } from './tools/siteConstants/formConfig'
-import { parseAvailableModes, parseEntries, parseLanguages, parseMoneyModes } from './tools/utils'
-import { IPaletteColor, TAvailableModes, TEntries, ILanguage, TMoneyModes } from './types/types'
+import {
+  parseAvailableModes,
+  parseCalculationBenefits,
+  parseEntries,
+  parseLanguages,
+  parseMoneyModes,
+} from './tools/utils'
+import {
+  IPaletteColor,
+  TAvailableModes,
+  TEntries,
+  ILanguage,
+  TMoneyModes,
+  IProfitEstimationConfig,
+} from './types/types'
 import shader from 'shader'
 
 const SITE_CONSTANTS_SECTION = 'site_constants'
@@ -37,6 +50,7 @@ const defaultValues = {
   MONEY_MODES: '',
   BIG_TRUCK_TRANSPORT_TYPES: '1-truck;2-wagon',
   BIG_TRUCK_CARGO_TYPES: '1-truck;2-wagon',
+  CALCULATION_BENEFITS: JSON.stringify({}),
   LANGUAGES: {
     1: { iso: 'ru', logo: 'ru', native: 'Русский' },
     2: { iso: 'en', logo: 'gb', native: 'English' },
@@ -72,6 +86,11 @@ class Constants {
   MONEY_MODES: TMoneyModes
   BIG_TRUCK_TRANSPORT_TYPES: TEntries
   BIG_TRUCK_CARGO_TYPES: TEntries
+  CALCULATION_BENEFITS: Record<
+    number, Record<
+      number, IProfitEstimationConfig
+    >
+  >
   LANGUAGES: ILanguage[]
 
   constructor() {
@@ -146,6 +165,11 @@ class Constants {
       defaultValues.BIG_TRUCK_CARGO_TYPES,
       parseEntries,
     )
+    this.CALCULATION_BENEFITS = getConstantValue(
+      'calculation_benefits',
+      defaultValues.CALCULATION_BENEFITS,
+      parseCalculationBenefits,
+    )
     this.LANGUAGES = parseLanguages((window as any).data?.langs || defaultValues.LANGUAGES)
     console.log('CONSTANTS LANGUAGES', this.LANGUAGES)
   }
@@ -204,7 +228,7 @@ export const getConstantValue = <T = any>(key: string | number, defaultValue: T,
 
 const SITE_CONSTANTS = new Constants()
 export default SITE_CONSTANTS
-export function getApiConstants():{
+export function getApiConstants(): {
   langs: {
     [key: string]: {
       iso: string,
@@ -212,6 +236,6 @@ export function getApiConstants():{
     }
   },
   [key: string]: any
-} {
+  } {
   return (window as any).data
 }

@@ -290,8 +290,10 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
                             item.profit !== undefined ?
                               new Intl.NumberFormat(undefined, {
                                 signDisplay: 'always',
-                                maximumFractionDigits: 0,
-                              }).format(item.profit) :
+                                style: 'currency',
+                                currency: 'MAD',
+                                currencyDisplay: 'code',
+                              }).format(item.profit).replace('MAD', '') :
                               '+?'
                           }</div>
                         </div>

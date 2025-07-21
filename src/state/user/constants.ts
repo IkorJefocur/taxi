@@ -1,7 +1,13 @@
 import { ArrayValue } from './../../types/index'
 import { appName } from '../../constants'
 import { TRANSLATION } from '../../localization'
-import { EStatuses, IRegisterResponse, ITokens, IUser } from '../../types/types'
+import {
+  EStatuses,
+  IRegisterResponse,
+  ITokens,
+  IUser,
+  ICar,
+} from '../../types/types'
 
 export const moduleName = 'user' as const
 
@@ -47,6 +53,9 @@ export const ActionTypes = {
   WHATSAPP_SIGNUP_FAIL: `${prefix}/WHATSAPP_SIGNUP_FAIL`,
   WHATSAPP_SIGNUP_REQUEST: `${prefix}/WHATSAPP_SIGNUP_REQUEST`,
 
+  GET_CAR_REQUEST: `${prefix}/GET_CAR_REQUEST`,
+  GET_CAR_SUCCESS: `${prefix}/GET_CAR_SUCCESS`,
+  GET_CAR_FAIL: `${prefix}/GET_CAR_FAIL`,
 } as const
 
 export enum ERegistrationType {
@@ -71,4 +80,5 @@ export interface IUserState {
   tab: TLoginTab,
   response: IRegisterResponse | null,
   whatsappSignUpData?:{u_phone: string}|null,
+  car?: ICar,
 }

@@ -58,3 +58,5 @@ export const whatsappSignUp = (payload: Parameters<typeof API.whatsappSignUp>[0]
 }) => {
   return { type: ActionTypes.WHATSAPP_SIGNUP_REQUEST, payload }
 }
+
+export const getCar = () => ({ type: ActionTypes.GET_CAR_REQUEST })

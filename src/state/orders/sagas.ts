@@ -1,10 +1,12 @@
-import { setSelectedOrder } from './../clientOrder/actionCreators'
+import { setSelectedOrder } from '../clientOrder/actionCreators'
 import { getCurrentPosition } from '../../tools/utils'
 import { getAreasBetweenPoints } from '../areas/actionCreators'
-import { user } from './../user/selectors'
+import { getCar } from '../user/actionCreators'
+import { user } from '../user/selectors'
 import { all, takeEvery, put } from 'redux-saga/effects'
 import * as API from '../../API'
 import { ActionTypes } from './constants'
+import { TAction } from '../../types'
 import { EOrderTypes, IOrder, EBookingStates } from '../../types/types'
 import { select, call } from '../../tools/sagaUtils'
 import moment from 'moment'
@@ -34,21 +36,22 @@ export const saga = function* () {
   ])
 }
 
-function* getActiveOrdersSaga() {
+function* getActiveOrdersSaga({ payload: { estimate } }: TAction) {
   try {
     const orders = yield* getOrdersSaga(EOrderTypes.Active)
     yield put({ type: ActionTypes.GET_ACTIVE_ORDERS_SUCCESS, payload: orders })
     if (orders.length === 1) yield put(setSelectedOrder(orders[0].b_id))
     if (orders.length === 0) yield put(setSelectedOrder(null))
     try {
-      const geolocation = yield* getOrdersTakerGeolocationSaga(orders)
+      const geolocation = estimate ?
+        yield* getOrdersTakerGeolocationSaga(orders) :
+        undefined
       if (geolocation)
         yield put({
           type: ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_SUCCESS,
           payload: geolocation,
         })
     } catch (error) {
-      console.error(error)
       yield put({
         type: ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_FAIL,
         payload: error,
@@ -60,19 +63,20 @@ function* getActiveOrdersSaga() {
   }
 }
 
-function* getReadyOrdersSaga() {
+function* getReadyOrdersSaga({ payload: { estimate } }: TAction) {
   try {
     const orders = yield* getOrdersSaga(EOrderTypes.Ready)
     yield put({ type: ActionTypes.GET_READY_ORDERS_SUCCESS, payload: orders })
     try {
-      const geolocation = yield* getOrdersTakerGeolocationSaga(orders)
+      const geolocation = estimate ?
+        yield* getOrdersTakerGeolocationSaga(orders) :
+        undefined
       if (geolocation)
         yield put({
           type: ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_SUCCESS,
           payload: geolocation,
         })
     } catch (error) {
-      console.error(error)
       yield put({
         type: ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_FAIL,
         payload: error,
@@ -84,19 +88,20 @@ function* getReadyOrdersSaga() {
   }
 }
 
-function* getHistoryOrdersSaga() {
+function* getHistoryOrdersSaga({ payload: { estimate } }: TAction) {
   try {
     const orders = yield* getOrdersSaga(EOrderTypes.History)
     yield put({ type: ActionTypes.GET_HISTORY_ORDERS_SUCCESS, payload: orders })
     try {
-      const geolocation = yield* getOrdersTakerGeolocationSaga(orders)
+      const geolocation = estimate ?
+        yield* getOrdersTakerGeolocationSaga(orders) :
+        undefined
       if (geolocation)
         yield put({
           type: ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_SUCCESS,
           payload: geolocation,
         })
     } catch (error) {
-      console.error(error)
       yield put({
         type: ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_FAIL,
         payload: error,
@@ -135,6 +140,7 @@ function* getOrdersTakerGeolocationSaga(
         .filter(([lat, lng]) => lat && lng) as [number, number][],
       geolocation,
     ]))
+    yield put(getCar())
 
     return geolocation
   }

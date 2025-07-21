@@ -676,7 +676,8 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
               <p className='status-card__profit'>
                 {new Intl.NumberFormat(undefined, {
                   signDisplay: 'always',
-                  maximumFractionDigits: 0,
+                  style: 'currency',
+                  currency: 'MAD',
                 }).format(order.profit)}
               </p>
             }

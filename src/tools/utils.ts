@@ -1,4 +1,17 @@
-import { ECarClasses, EStatuses, IOrder, TAvailableModes, TMoneyModes, IDriver, ICar, IUser, IAddressPoint, TBlockObject, ITrip } from '../types/types'
+import {
+  ECarClasses,
+  EStatuses,
+  IOrder,
+  TAvailableModes,
+  TMoneyModes,
+  IDriver,
+  ICar,
+  IUser,
+  IAddressPoint,
+  TBlockObject,
+  ITrip,
+  IProfitEstimationConfig,
+} from '../types/types'
 import moment, { Moment } from 'moment'
 import SITE_CONSTANTS/**, { MAP_MODE } */ from '../siteConstants'
 import { t, TRANSLATION } from '../localization'
@@ -6,7 +19,7 @@ import { ISelectOption } from '../types'
 import { findBestMatch } from 'string-similarity'
 import _ from 'lodash'
 import images from '../constants/images'
-import {calculateFinalPrice} from "../components/modals/RatingModal";
+import { calculateFinalPrice } from '../components/modals/RatingModal';
 
 const hints = [
   'Roman Ridge',
@@ -809,6 +822,22 @@ export function parseMoneyModes(modes: string) {
 
     return sum
   }, {})
+}
+
+export function parseCalculationBenefits(
+  benefits: string,
+): Record<number, Record<number, IProfitEstimationConfig>> {
+  const value = JSON.parse(benefits)
+  for (const cityFactors of Object.values(value) as any)
+    for (const factors of Object.values(cityFactors) as any) {
+      if (!factors.time_modifications)
+        factors.time_modifications = []
+      for (const modification of factors.time_modifications) {
+        modification.start = moment(`70 ${modification.start}`, 'YY HH:mm')
+        modification.end = moment(`70 ${modification.start}`, 'YY HH:mm')
+      }
+    }
+  return value as Record<number, Record<number, IProfitEstimationConfig>>
 }
 
 export function parseEntries(entries: string) {

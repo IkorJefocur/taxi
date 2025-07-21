@@ -736,3 +736,20 @@ export type TFilesMap = {
 export interface IRequiredFields {
   [key: string]: boolean
 }
+
+export interface IProfitEstimationFactors {
+  fuel_cost: number
+  rate: number
+  base_fare: number
+  min_fare: number
+}
+
+export interface IProfitEstimationTimeModification
+  extends Partial<IProfitEstimationFactors> {
+  start: Moment
+  end: Moment
+}
+
+export interface IProfitEstimationConfig extends IProfitEstimationFactors {
+  time_modifications: IProfitEstimationTimeModification[]
+}

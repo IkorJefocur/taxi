@@ -371,6 +371,19 @@ const _getUserCars = (
 
 export const getUserCars = apiMethod<typeof _getUserCars>(_getUserCars)
 
+async function _getUserDrivenCar(
+  { formData }: IApiMethodArguments,
+): Promise<ICar> {
+  const { data } = await axios.post(
+    `${Config.API_URL}/user/authorized/car/driven`,
+    formData,
+  )
+  return Object.values(data.data.car)[0] as ICar
+}
+
+export const getUserDrivenCar =
+  apiMethod<typeof _getUserDrivenCar>(_getUserDrivenCar)
+
 const _getCar = (
   { formData }: IApiMethodArguments,
   id: ICar['c_id'],
