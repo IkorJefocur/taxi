@@ -1,26 +1,11 @@
 import _ from 'lodash'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
   useWatch,
   DeepPartialSkipArrayKey, Control, FieldValues,
 } from 'react-hook-form'
-
-const cacheValue = (value: any, parentObjectKey: string, valueKey: string, callback: Function) => {
-  try {
-    if (parentObjectKey) {
-      const localStorageObject = localStorage.getItem(parentObjectKey)
-      const object = localStorageObject ? JSON.parse(localStorageObject) : {}
-      localStorage.setItem(parentObjectKey, JSON.stringify({ ...object, [valueKey]: value }))
-    } else {
-      localStorage.setItem(valueKey, JSON.stringify(value))
-    }
-  } catch (error) {
-    console.error(`Error occured at cacheValue(${value}, ${parentObjectKey}, ${valueKey})`, error)
-  }
-
-  callback(value)
-}
+import { getItem, setItem } from './localStorage'
 
 interface IAdditionalDataFlags {
   dirty?: boolean,
@@ -44,38 +29,8 @@ export const useCachedState = <T>(
   allowableValues?: T[],
   additionalData: IAdditionalDataFlags = {},
 ): [T, React.Dispatch<React.SetStateAction<T>>, IAdditionalData] => {
-  const splittedKey = key.split('.')
-  let valueKey: string, parentObjectKey: string
-
-  const _defaultValue = (defaultValue || (allowableValues && allowableValues[0])) as T
-
-  if (splittedKey.length === 1) valueKey = splittedKey[0]
-  else {
-    parentObjectKey = splittedKey[0]
-    valueKey = splittedKey[1]
-  }
-
-  const [value, setValue] = useState(() => {
-    let value
-    try {
-      if (parentObjectKey) {
-        const localStorageObject = localStorage.getItem(parentObjectKey)
-        value = localStorageObject &&
-          (JSON.parse(localStorageObject)[valueKey] ?? _defaultValue)
-      } else {
-        value = localStorage.getItem(valueKey) ?? _defaultValue
-      }
-    } catch (error) {
-      console.error(`Error occured at useCachedState(${key})`, error)
-      value = _defaultValue
-    }
-
-    if (allowableValues) {
-      return allowableValues.includes(value) ? value : _defaultValue
-    } else {
-      return value ?? defaultValue
-    }
-  })
+  const [value, setValue] =
+    useState<T>(getItem(key, defaultValue, allowableValues))
 
   let dirty: boolean = false
   let setDirty: React.Dispatch<React.SetStateAction<boolean>>
@@ -92,14 +47,19 @@ export const useCachedState = <T>(
     }
   }, [value])
 
-  return [
+  return useMemo(() => [
     value,
-    (v) => cacheValue(typeof v === 'function' ? (v as Function)(value) : v, parentObjectKey, valueKey, setValue),
+    v => {
+      if (typeof v === 'function')
+        v = (v as (v: T) => T)(value)
+      setItem(key, v)
+      setValue(v)
+    },
     {
       dirty,
       previousValue,
     },
-  ]
+  ], [value, dirty, previousValue])
 }
 
 /** Returns value before update */

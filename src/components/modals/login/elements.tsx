@@ -1,6 +1,6 @@
 import React from 'react'
 import cn from 'classnames'
-import BaseInput, { EInputStyle } from '../../Input'
+import BaseInput, { EInputStyles } from '../../Input'
 
 export function Input({
   fieldWrapperClassName,
@@ -8,7 +8,7 @@ export function Input({
 }: React.ComponentProps<typeof BaseInput>) {
   return (
     <BaseInput
-      style={EInputStyle.Login}
+      style={EInputStyles.Login}
       fieldWrapperClassName={cn('login-form__input', fieldWrapperClassName)}
       {...props}
     />

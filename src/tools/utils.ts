@@ -1,25 +1,21 @@
+import moment, { Moment } from 'moment'
+import { findBestMatch } from 'string-similarity'
+import _ from 'lodash'
 import {
-  ECarClasses,
   EStatuses,
   IOrder,
-  TAvailableModes,
-  TMoneyModes,
   IDriver,
   ICar,
   IUser,
   IAddressPoint,
   TBlockObject,
   ITrip,
-  IProfitEstimationConfig,
 } from '../types/types'
-import moment, { Moment } from 'moment'
 import SITE_CONSTANTS/**, { MAP_MODE } */ from '../siteConstants'
 import { t, TRANSLATION } from '../localization'
 import { ISelectOption } from '../types'
-import { findBestMatch } from 'string-similarity'
-import _ from 'lodash'
 import images from '../constants/images'
-import { calculateFinalPrice } from '../components/modals/RatingModal';
+import { calculateFinalPrice } from '../components/modals/RatingModal'
 
 const hints = [
   'Roman Ridge',
@@ -199,6 +195,8 @@ const hints = [
 
 // eslint-disable-next-line
 export const phoneRegex = /^[\+]?[0-9]{1,3}[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{3,6}$/im
+export const minPhoneLength = 10
+export const maxPhoneLength = 15
 // eslint-disable-next-line
 export const emailRegex = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
 
@@ -228,8 +226,12 @@ export const getPayment = (
   points?: [IAddressPoint, IAddressPoint] | null,
   distance?: number,
   startDatetime?: IOrder['b_start_datetime'],
-  carClass?: ECarClasses,
-) => {
+  carClass?: string,
+): {
+  value: number | string,
+  text: string,
+  type: EPaymentType,
+} => {
   if (order?.b_options?.customer_price && SITE_CONSTANTS.ENABLE_CUSTOMER_PRICE) {
     return { value: order.b_options.customer_price, text: '', type: EPaymentType.Customer }
   }
@@ -245,10 +247,12 @@ export const getPayment = (
     _startOfNightTime = _startOfNightTime.subtract(1, 'days')
   }
 
-  // @ts-ignore
-  const callRate = +(window as any).data.car_classes[order?.b_car_class || carClass || ECarClasses.Any]?.courier_call_rate ?? SITE_CONSTANTS.COURIER_CALL_RATE
-  // @ts-ignore
-  const farePer1Km = +(window as any).data.car_classes[order?.b_car_class || carClass || ECarClasses.Any]?.courier_fare_per_1_km ?? SITE_CONSTANTS.COURIER_FARE_PER_1_KM
+  const carClassData =
+    SITE_CONSTANTS.CAR_CLASSES[order?.b_car_class ?? carClass ?? 0]
+  const callRate = carClassData?.courier_call_rate ??
+    SITE_CONSTANTS.COURIER_CALL_RATE
+  const farePer1Km = carClassData?.courier_fare_per_1_km ??
+    SITE_CONSTANTS.COURIER_FARE_PER_1_KM
   let _value: string | number = 0,
     _text = ''
   if (_orderTime?.isAfter(_startOfNightTime) && _orderTime.isBefore(_endOfNightTime)) {
@@ -548,14 +552,27 @@ const convertTypes = <T extends object, R>(
 }
 
 export const getEmptyPhoneValue = () => {
-  return SITE_CONSTANTS.DEFAULT_PHONE_MASK.replaceAll('9', '_')
+  return SITE_CONSTANTS.DEFAULT_PHONE_MASK
 }
 
-export const getPhoneError = (phone?: string | null, required = true) => {
-  if (!phone) return null
-  if (phone === getEmptyPhoneValue() || phone === '') return required ? t(TRANSLATION.REQUIRED_FIELD) : null
-  if (!phone.match(phoneRegex)) return t(TRANSLATION.PHONE_PATTERN_ERROR)
+export function getPhoneError(phone?: string | null, required = true) {
+  if (!phone)
+    return null
+  if (phone === getEmptyPhoneValue() || phone === '')
+    return required ? t(TRANSLATION.REQUIRED_FIELD) : null
+  if (!phone.match(phoneRegex))
+    return t(TRANSLATION.PHONE_PATTERN_ERROR)
   return null
+}
+
+export function getPhoneNumberError(phone: number | null, required = true) {
+  if (
+    phone === null ||
+    phone < 10 ** (getEmptyPhoneValue().match(/\d/g)?.length ?? 0)
+  )
+    return required ? t(TRANSLATION.REQUIRED_FIELD) : null
+  if (phone < 10 ** (minPhoneLength - 1) || phone >= 10 ** maxPhoneLength)
+    return t(TRANSLATION.PHONE_PATTERN_ERROR)
 }
 
 export const getPointError = (point?: IAddressPoint | null) => {
@@ -718,7 +735,7 @@ export const formatCommentWithEmoji = (
     ?.filter(item => parseInt(item) < 99)
     .map(item => ({
       src: EMOJI[item],
-      hint: t(TRANSLATION.BOOKING_COMMENTS[item])
+      hint: t(TRANSLATION.BOOKING_COMMENTS[item]),
     }))
 }
 
@@ -791,75 +808,6 @@ export function addHiddenOrder(orderID?: IOrder['b_id'], userID?: IUser['u_id'])
     hiddenOrders[userID] = [orderID]
   }
   localStorage.setItem('hiddenOrders', JSON.stringify(hiddenOrders))
-}
-
-export function parseAvailableModes(modes: string) {
-  return modes.split(';').reduce((acc: TAvailableModes, value) => {
-    let _subModes = value.split('=')
-    acc[_subModes[0]] = {}
-
-    if (_subModes[1]) {
-      acc[_subModes[0]].subs = _subModes[1].split(',')
-    }
-
-    return acc
-  }, {})
-}
-
-export function parseMoneyModes(modes: string) {
-  return modes.split(';').reduce((sum: TMoneyModes, item) => {
-    const [main, submodes] = item.split('=')
-    const [key, value] = main.split('-')
-    if (value) sum[key] = Boolean(parseInt(value))
-
-    if (submodes) {
-      sum[key] = {}
-      submodes.split(',').forEach(i => {
-        const [k, v] = i.split('-');
-        (sum[key] as any)[k] = Boolean(parseInt(v))
-      })
-    }
-
-    return sum
-  }, {})
-}
-
-export function parseCalculationBenefits(
-  benefits: string,
-): Record<number, Record<number, IProfitEstimationConfig>> {
-  const value = JSON.parse(benefits)
-  for (const cityFactors of Object.values(value) as any)
-    for (const factors of Object.values(cityFactors) as any) {
-      if (!factors.time_modifications)
-        factors.time_modifications = []
-      for (const modification of factors.time_modifications) {
-        modification.start = moment(`70 ${modification.start}`, 'YY HH:mm')
-        modification.end = moment(`70 ${modification.start}`, 'YY HH:mm')
-      }
-    }
-  return value as Record<number, Record<number, IProfitEstimationConfig>>
-}
-
-export function parseEntries(entries: string) {
-  return entries.split(';').map(item => {
-    const [key, value] = item.split('-')
-    return { key, value }
-  })
-}
-
-export function parseLanguages(languages: any) {
-  const configName = localStorage.getItem('config');
-  console.log('langs to parse', languages);
-  const languagesList = Object.entries(languages).map(([key, value]: [string, any]) => ({
-    ...value, id: key, logo: `/assets/images/default/flag-${value.logo}.svg`,
-  }));
-
-  // Удаляем русский язык только если конфиг имеет имя "children"
-  // Для всех остальных конфигов (включая grzuvill) оставляем русский язык
-
-
-  // Для всех остальных конфигов возвращаем полный список языков
-  return languagesList;
 }
 
 export const getCurrentPosition = (

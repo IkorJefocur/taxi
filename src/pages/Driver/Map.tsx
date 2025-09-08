@@ -4,6 +4,7 @@ import './styles.scss'
 import { MapContainer, Marker, TileLayer, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import Fullscreen from 'react-leaflet-fullscreen-plugin'
+import PageSection from '../../components/PageSection'
 import Button from '../../components/Button'
 import { t, TRANSLATION } from '../../localization'
 import { useInterval } from '../../tools/hooks'
@@ -62,7 +63,7 @@ const DriverOrderMapMode: React.FC<IProps & ConnectedProps<typeof connector>> = 
   )
 
   return (
-    <section className="driver-order-map-mode">
+    <PageSection className="driver-order-map-mode">
       <MapContainer
         center={position ?? SITE_CONSTANTS.DEFAULT_POSITION}
         zoom={zoom}
@@ -75,7 +76,7 @@ const DriverOrderMapMode: React.FC<IProps & ConnectedProps<typeof connector>> = 
           {...props}
         />
       </MapContainer>
-    </section>
+    </PageSection>
   )
 }
 

@@ -1,17 +1,23 @@
 import { PassengerOrderConfig } from './tools/siteConstants/formConfig'
 import {
   parseAvailableModes,
+  parseCarClasses,
+  parseBookingLocationClasses,
   parseCalculationBenefits,
   parseEntries,
   parseLanguages,
   parseMoneyModes,
-} from './tools/utils'
+} from './tools/parse'
 import {
   IPaletteColor,
   TAvailableModes,
   TEntries,
   ILanguage,
   TMoneyModes,
+  ICarClass,
+  IBookingLocationClass,
+  EBookingCommentTypes,
+  IBookingComment,
   IProfitEstimationConfig,
 } from './types/types'
 import shader from 'shader'
@@ -26,6 +32,11 @@ export enum EMapMode {
   YANDEX = 'YANDEX',
 }
 
+export enum EIconsPalettes {
+  Default = 'default',
+  GHA = 'GHA',
+}
+
 const defaultValues = {
   COURIER_CALL_RATE: 10,
   EXTRA_CHARGE_FOR_NIGHT_TIME: 2,
@@ -33,7 +44,7 @@ const defaultValues = {
   START_OF_NIGHT_TIME: '20:00',
   END_OF_NIGHT_TIME: '5:00',
   ENABLE_CUSTOMER_PRICE: false,
-  DEFAULT_PHONE_MASK: '+233(999)-999-999',
+  DEFAULT_PHONE_MASK: '+233(___)-___-___',
   MAP_MODE: EMapMode.OSM,
   OG_IMAGE: null,
   TW_IMAGE: null,
@@ -46,10 +57,19 @@ const defaultValues = {
   SEARCH_RADIUS: 50,
   DEFAULT_COUNTRY: 'GHA',
   PALETTE: '#A90000;#ffc837',
-  ICONS_PALLETE_FOLDER: 'default',
+  ICONS_PALETTE_FOLDER: EIconsPalettes.Default,
   MONEY_MODES: '',
   BIG_TRUCK_TRANSPORT_TYPES: '1-truck;2-wagon',
   BIG_TRUCK_CARGO_TYPES: '1-truck;2-wagon',
+  CAR_CLASSES: {},
+  BOOKING_COMMENTS: Object.fromEntries([
+    ...new Array(7).fill(undefined).map((_, index) => [
+      index + 1,
+      { id: index + 1 },
+    ]),
+    [8, { id: 8, type: EBookingCommentTypes.Plane }],
+  ]),
+  BOOKING_LOCATION_CLASSES: {},
   CALCULATION_BENEFITS: JSON.stringify({}),
   LANGUAGES: {
     1: { iso: 'ru', logo: 'ru', native: 'Русский' },
@@ -82,13 +102,18 @@ class Constants {
     primary: IPaletteColor,
     secondary: IPaletteColor,
   }
-  ICONS_PALLETE_FOLDER: string
+  ICONS_PALETTE_FOLDER: EIconsPalettes
   MONEY_MODES: TMoneyModes
   BIG_TRUCK_TRANSPORT_TYPES: TEntries
   BIG_TRUCK_CARGO_TYPES: TEntries
+  CAR_CLASSES: Record<ICarClass['id'], ICarClass>
+  DEFAULT_CAR_CLASS: ICarClass['id']
+  BOOKING_COMMENTS: Record<IBookingComment['id'], IBookingComment>
+  BOOKING_LOCATION_CLASSES: IBookingLocationClass[]
+  DEFAULT_BOOKING_LOCATION_CLASS: IBookingLocationClass['id']
   CALCULATION_BENEFITS: Record<
-    number, Record<
-      number, IProfitEstimationConfig
+    string, Record<
+      ICarClass['id'], IProfitEstimationConfig
     >
   >
   LANGUAGES: ILanguage[]
@@ -149,7 +174,11 @@ class Constants {
       parseInt,
     )
     this.PASSENGER_ORDER_CONFIG.apply(getConstantValue('passenger_order_config', ''))
-    this.ICONS_PALLETE_FOLDER = getConstantValue('Country_service', defaultValues.ICONS_PALLETE_FOLDER)
+    const countryService = getConstantValue('Country_service', undefined)
+    this.ICONS_PALETTE_FOLDER =
+      Object.values(EIconsPalettes).includes(countryService) ?
+        countryService :
+        defaultValues.ICONS_PALETTE_FOLDER
     this.MONEY_MODES = getConstantValue(
       'mode_money',
       defaultValues.MONEY_MODES,
@@ -165,6 +194,22 @@ class Constants {
       defaultValues.BIG_TRUCK_CARGO_TYPES,
       parseEntries,
     )
+    this.CAR_CLASSES = parseCarClasses(
+      (window as any).data?.car_classes ?? defaultValues.CAR_CLASSES,
+    )
+    this.DEFAULT_CAR_CLASS = Object.keys(this.CAR_CLASSES)?.[0] ?? '-1'
+    this.BOOKING_COMMENTS = (window as any).data?.booking_comments ?
+      Object.fromEntries(
+        Object.entries(defaultValues.BOOKING_COMMENTS)
+          .filter(([id]) => id in (window as any).data.booking_comments),
+      ) :
+      defaultValues.BOOKING_COMMENTS
+    this.BOOKING_LOCATION_CLASSES = parseBookingLocationClasses(
+      (window as any).data?.booking_location_classes ??
+        defaultValues.BOOKING_LOCATION_CLASSES,
+    )
+    this.DEFAULT_BOOKING_LOCATION_CLASS =
+      this.BOOKING_LOCATION_CLASSES[0]?.id ?? '-1'
     this.CALCULATION_BENEFITS = getConstantValue(
       'calculation_benefits',
       defaultValues.CALCULATION_BENEFITS,
@@ -181,9 +226,7 @@ class Constants {
   }
 
   calc_DEFAULT_PHONE_MASK() {
-    let _value = getConstantValue('def_maska_tel', '+233(999)-999-999')
-
-    return _value.replaceAll('_', '9')
+    return getConstantValue('def_maska_tel', defaultValues.DEFAULT_PHONE_MASK)
   }
 }
 

@@ -1,53 +1,54 @@
+@use '../Theme';
+
 $itemWidth: 28px;
 $itemWidthPlusGap: 36px;
-$perView: 3;
 
 .seat-slider {
-    margin-left: $itemWidth;
-    width: calc($itemWidthPlusGap * $perView - 8px);
+  width: calc($itemWidthPlusGap * var(--seat-slider_per-view, 3) - 8px);
 
-    & ul {
-        margin: 0;
-        color: rgb(0, 0, 0, 0.5);
+  &__button {
+    position: absolute;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: $itemWidth;
+    height: 100%;
+    border: none;
+    background-color: white;
+
+    &--left {
+      left: 0;
+      transform: rotate(180deg);
     }
 
-    & ul li {
-        font-size: 10px;
+    &--right {
+      right: 0;
     }
+  }
 
-    &__button {
-        position: absolute;
-        width: $itemWidth;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        top: 0;
-        border: none;
-        background-color: transparent;
+  &__arrow-icon {
+    opacity: .25;
+  }
 
-        &-left {
-            left: -$itemWidthPlusGap;
-            transform: rotate(180deg);
-        }
+  &__slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: $itemWidth;
+    height: $itemWidth;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    font-size: 10px;
+    color: rgb(0, 0, 0, 0.5);
+    transition-property: color, border-color;
+    transition-duration: .2s;
 
-        &-right {
-            right: -$itemWidthPlusGap;
-        }
+    &__active {
+      border-color: color-mix(in srgb, var(#{Theme.$accent}), transparent 20%);
+      font-weight: 700;
+      color: var(#{Theme.$accent})
     }
-
-    &__slide {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: $itemWidth;
-        height: $itemWidth;
-
-        &__active {
-            border: 1px solid;
-            border-color: rgb(255, 36, 0, 0.2);
-            border-radius: 50%;
-        }
-    }
+  }
 
 }

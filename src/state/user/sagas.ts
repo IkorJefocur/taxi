@@ -75,7 +75,7 @@ function* loginSaga(data: TAction) {
 
     if (result.user === null) throw new Error('wrong login response')
 
-    localStorage.setItem('tokens', JSON.stringify(result.tokens))
+    localStorage.setItem('state.user.tokens', JSON.stringify(result.tokens))
 
 
     if(result.user.u_role === EUserRoles.Client || result.user.u_role === EUserRoles.Agent) {
@@ -106,7 +106,7 @@ function* googleLoginSaga(data: TAction) {
 
     if (!result) throw new Error('Wrong login response')
     console.log('GFP-POINT-01: Saving tokens from goole auth to localStorage', result)
-    localStorage.setItem('tokens', JSON.stringify(result.tokens))
+    localStorage.setItem('state.user.tokens', JSON.stringify(result.tokens))
 
     if(result.user.u_role === EUserRoles.Client || result.user.u_role === EUserRoles.Agent) {
       data.payload.navigate('/passenger-order')
@@ -141,7 +141,7 @@ function* registerSaga(data: TAction) {
       token: response.token,
       u_hash: response.u_hash,
     }
-    localStorage.setItem('tokens', JSON.stringify(tokens))
+    localStorage.setItem('state.user.tokens', JSON.stringify(tokens))
 
     if (data.payload?.u_role === 2) {
       if (uploads) {
@@ -174,8 +174,8 @@ function* registerSaga(data: TAction) {
 function* logoutSaga() {
   yield put({ type: ActionTypes.LOGOUT_START })
   try {
-    localStorage.removeItem('user')
-    localStorage.removeItem('tokens')
+    localStorage.removeItem('state.user.user')
+    localStorage.removeItem('state.user.tokens')
 
     yield* call(API.logout)
     yield put({ type: ActionTypes.LOGOUT_SUCCESS })
@@ -198,7 +198,8 @@ function* remindPasswordSaga(data: TAction) {
 
 function* initUserSaga() {
   try {
-    const tokens: ITokens = JSON.parse(localStorage.getItem('tokens') || '{}')
+    const rawTokens = localStorage.getItem('state.user.tokens')
+    const tokens: ITokens = rawTokens !== null ? JSON.parse(rawTokens) : {}
     if (!tokens.token || !tokens.u_hash) {
       // Проверяем язык в куках
       const savedLang = getCookie('user_lang')
@@ -217,7 +218,7 @@ function* initUserSaga() {
 
     const user = yield* call<IUser | null>(API.getAuthorizedUser)
     if (!user) {
-      localStorage.removeItem('tokens')
+      localStorage.removeItem('state.user.tokens')
       return
     }
 
@@ -249,7 +250,7 @@ function* initUserSaga() {
     yield put(setUser(user))
   } catch (error) {
     console.error('Error in initUserSaga:', error)
-    localStorage.removeItem('tokens')
+    localStorage.removeItem('state.user.tokens')
   }
 }
 

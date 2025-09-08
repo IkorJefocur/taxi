@@ -115,6 +115,7 @@ const names = {
   carIcon: 'car-icon.svg',
   peopleIcon: 'people-icon.svg',
   alarmIcon: 'alarm-icon.svg',
+  alarmIconLight: 'alarm-icon-light.svg',
   carNearbyIcon: 'car-nearby-icon.svg',
   msgIcon: 'msg-icon.svg',
   seatSliderArrowRight: 'slider-arrow-right.svg',
@@ -139,7 +140,7 @@ const names = {
 
 export default new Proxy({}, {
   get(target, key: keyof typeof names) {
-    return `/assets/images/${SITE_CONSTANTS.ICONS_PALLETE_FOLDER && `${SITE_CONSTANTS.ICONS_PALLETE_FOLDER}/`
+    return `/assets/images/${SITE_CONSTANTS.ICONS_PALETTE_FOLDER && `${SITE_CONSTANTS.ICONS_PALETTE_FOLDER}/`
       }${names[key]}`
   },
 }) as typeof names

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import Button from '../Button'
 import './styles.scss'
 import L from 'leaflet'
 import Fullscreen from 'react-leaflet-fullscreen-plugin'
@@ -8,17 +7,26 @@ import SITE_CONSTANTS from '../../siteConstants'
 import { t, TRANSLATION } from '../../localization'
 import { IRootState } from '../../state'
 import { modalsActionCreators, modalsSelectors } from '../../state/modals'
-import { MapContainer, Marker, CircleMarker, TileLayer, Popup, Tooltip, Polyline, useMap } from 'react-leaflet'
+import {
+  MapContainer, TileLayer,
+  Marker, CircleMarker, Circle, Popup, Tooltip, Polyline,
+  useMap,
+} from 'react-leaflet'
 import { EMapModalTypes } from '../../state/modals/constants'
-import { clientOrderActionCreators, clientOrderSelectors } from '../../state/clientOrder'
+import {
+  clientOrderActionCreators,
+  clientOrderSelectors,
+} from '../../state/clientOrder'
 import { orderSelectors } from '../../state/order'
 import { userSelectors } from '../../state/user'
-import { EStatuses, IAddressPoint, IRouteInfo, IStaticMarker } from '../../types/types'
+import {
+  EStatuses,
+  IAddressPoint, IRouteInfo, IStaticMarker,
+} from '../../types/types'
 import images from '../../constants/images'
 import { useInterval } from '../../tools/hooks'
 import * as API from '../../API'
 import _ from 'lodash'
-import { defaultMapModal } from '../../state/modals/reducer'
 import { getAttribution, getTileServerUrl } from '../../tools/utils'
 import cn from 'classnames'
 
@@ -53,6 +61,7 @@ interface IProps extends ConnectedProps<typeof connector> {
   isModal?: boolean;
   onClose?: () => void
   containerClassName?: string
+  setCenter?: (coordinates: [lat: number, lng: number]) => void
 }
 
 const Map: React.FC<IProps> = ({
@@ -104,12 +113,17 @@ const MapContent: React.FC<IProps> = ({
   setMessageModal,
   onClose,
   containerClassName,
+  setCenter = () => {},
 }) => {
   const map = useMap()
 
   const [staticMarkers, setStaticMarkers] = useState<IStaticMarker[]>([])
-  const [userCoordinates, setUserCoordinates] = useState<IAddressPoint | null>(null)
-  const [buttonsPopupCoordinates, setButtonPopupCoordinates] = useState<[number, number] | null>(null)
+  const [userCoordinates, setUserCoordinates] =
+    useState<IAddressPoint | null>(null)
+  const [userCoordinatesAccuracy, setUserCoordinatesAccuracy] =
+    useState<number | null>(null)
+  const [buttonsPopupCoordinates, setButtonPopupCoordinates] =
+    useState<[number, number] | null>(null)
   const [routeInfo, setRouteInfo] = useState<IRouteInfo | null>(null)
   const [showRouteInfo, setShowRouteInfo] = useState(false)
 
@@ -187,6 +201,7 @@ const MapContent: React.FC<IProps> = ({
         latitude: e.latlng.lat,
         longitude: e.latlng.lng,
       })
+      setUserCoordinatesAccuracy(e.accuracy)
       if (!defaultCenter)
         map.setView(e.latlng)
     })
@@ -216,6 +231,7 @@ const MapContent: React.FC<IProps> = ({
           latitude: coords.latitude,
           longitude: coords.longitude,
         })
+        setUserCoordinatesAccuracy(coords.accuracy)
       },
       error => console.error(error),
       { enableHighAccuracy: true },
@@ -229,6 +245,17 @@ const MapContent: React.FC<IProps> = ({
   useEffect(() => {
     map?.invalidateSize()
   }, [isOpen])
+
+  useEffect(() => {
+    function moveend() {
+      const { lat, lng } = map.getCenter()
+      setCenter([lat, lng])
+    }
+    map.on('moveend', moveend)
+    return () => {
+      map.off('moveend', moveend)
+    }
+  }, [map, setCenter])
 
   const handleFromClick = (isButtonPopup?: boolean) => {
     if (!setFrom || !map) return
@@ -299,7 +326,17 @@ const MapContent: React.FC<IProps> = ({
         !!userCoordinates?.latitude &&
         !!userCoordinates?.longitude &&
         <CircleMarker
-          radius={10}
+          radius={0}
+          weight={10}
+          center={[userCoordinates.latitude, userCoordinates.longitude]}
+        />
+      }
+      {
+        !!userCoordinates?.latitude &&
+        !!userCoordinates?.longitude &&
+        !!userCoordinatesAccuracy &&
+        <Circle
+          radius={userCoordinatesAccuracy}
           center={[userCoordinates.latitude, userCoordinates.longitude]}
         />
       }

@@ -1,3 +1,5 @@
+@use './assets/fonts/gilroy/styles.css';
+
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Roboto:wght@300;400;500&display=swap");
 @import url('https://fonts.googleapis.com/css2?family=Mulish:wght@200..1000&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
@@ -5,7 +7,6 @@
 body {
   background: #fffbf4;
   margin: 0;
-  //   padding-bottom: 20px;
   height: 100dvh;
   overflow: hidden;
 }
@@ -21,12 +22,6 @@ a {
   main {
     max-width: 900px;
     margin: auto;
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    overflow: hidden;
-    background: #FFFFFF;
-    position: relative;
   }
 
   .loading-frame {
@@ -53,15 +48,6 @@ a {
       font-size: 20px;
       font-family: "Mulish", sans-serif;
       font-weight: bolder;
-    }
-  }
-
-  .main-section {
-    overflow-y: scroll;
-
-    .loading-frame {
-      height: calc(100% - 73px);
-      top: 73px;
     }
   }
 
@@ -119,20 +105,6 @@ a {
     font-size: 20px;
     margin: 0 auto;
   }
-
-  .main__time-picker {
-    position: fixed;
-    display: none;
-    z-index: 0;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-
-    &._visible {
-      display: block;
-      z-index: 800;
-    }
-  }
 }
 
 img {
@@ -155,13 +127,15 @@ img {
 * {
   font-size: 18px;
   box-sizing: border-box;
-  font-family: "Mulish", sans-serif;
+  font-family: Gilroy, sans-serif;
 }
 
 *:not(b) {
-  font-weight: 300;
+  font-weight: 500;
 }
 
 button {
+  border: none;
+  background: none;
   cursor: pointer;
 }

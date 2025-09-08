@@ -1,60 +1,84 @@
-import React, { useEffect, useRef, useState } from 'react'
-import Glide from '@glidejs/glide'
-import '@glidejs/glide/dist/css/glide.core.min.css'
+import React, { useMemo } from 'react'
+import { connect, ConnectedProps } from 'react-redux'
+import SITE_CONSTANTS from '../../siteConstants'
+import { IRootState } from '../../state'
+import {
+  clientOrderSelectors,
+  clientOrderActionCreators,
+} from '../../state/clientOrder'
+import { t, TRANSLATION } from '../../localization'
+import Glide from '../Glide'
 import './styles.scss'
 
-// type IProps = {
+const mapStateToProps = (state: IRootState) => ({
+  carClass: clientOrderSelectors.carClass(state),
+})
 
+const mapDispatchToProps = {
+  setCarClass: clientOrderActionCreators.setCarClass,
+}
 
-// }
+const connector = connect(mapStateToProps, mapDispatchToProps)
 
-const cars = [1, 2, 3, 4, 5, 6]
+interface IProps extends ConnectedProps<typeof connector> {}
 
-export function CarClassSlider() {
+function CarClassSlider({ carClass, setCarClass }: IProps) {
 
-  const [active, setActive] = useState(1)
-
-  const glideElement = useRef<HTMLDivElement>(null)
-
-
-
-  useEffect(() => {
-    if (!glideElement.current) return
-
-    const glide = new Glide('.car-class-slider', {
-      type: 'slider',
-      perView: 4,
-      gap: 8,
-      keyboard: false,
-      // bound: true
-    }).mount()
-
-    return () => {
-      glide.destroy()
-    }
-  }, [glideElement.current])
+  const items = useMemo(() => Object.entries(SITE_CONSTANTS.CAR_CLASSES), [])
 
   return (
-    <div className="glide car-class-slider" ref={glideElement}>
-      <div className="glide__track" data-glide-el="track">
-        <ul className="glide__slides">
-          {cars.map((item) => <li className={'glide__slide'} key={item}>
-            <div onClick={() => setActive(item)} className={`glide__slide car-class-slider__slide ${item === active ? 'car-class-slider__slide__active' : ''}`}>
-              <div className={`car-class-slider__icon  ${item === active ? 'car-class-slider__icon__active' : ''}`}><Car active={item === active}/></div>
-              <span className={`car-class-slider__title  ${item === active ? 'car-class-slider__text-active' : ''}`}>Любой</span>
-              <span className={`car-class-slider__value  ${item === active ? 'car-class-slider__text-active' : ''}`}>{'0.00 GHS'}</span>
+    <Glide
+      className="car-class-slider"
+      perView={4}
+      gap={8}
+      focused={useMemo(
+        () => items.findIndex(([id]) => id === carClass),
+        [items, carClass],
+      )}
+      slides={useMemo(() => items.map(([id, item]) => ({
+        key: id,
+        children: (
+          <div
+            onClick={() => setCarClass(id)}
+            className={`glide__slide car-class-slider__slide ${
+              id === carClass ? 'car-class-slider__slide__active' : ''
+            }`}
+          >
+            <div
+              className={`car-class-slider__icon ${
+                id === carClass ? 'car-class-slider__icon__active' : ''
+              }`}
+            >
+              <Car active={id === carClass}/>
             </div>
-          </li>,
-          )}
-
-        </ul>
-      </div>
-    </div>
+            <span
+              className={`car-class-slider__title ${
+                id === carClass ? 'car-class-slider__text-active' : ''
+              }`}
+            >
+              {t(TRANSLATION.CAR_CLASSES[id])}
+            </span>
+            <span
+              className={`car-class-slider__value ${
+                id === carClass ? 'car-class-slider__text-active' : ''
+              }`}
+            >
+              {new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: 'MAD',
+              }).format(item.courier_call_rate)}
+            </span>
+          </div>
+        ),
+      })), [items, carClass, setCarClass])}
+    />
   )
 }
 
+export default connector(CarClassSlider)
+
 type CarProps = {
-    active: boolean
+  active: boolean
 }
 
 function Car({ active }: CarProps) {

@@ -1,6 +1,7 @@
 import React, { createContext, useState } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import PageSection from '../../components/PageSection'
 import StatusCard from '../../components/Card/OrderCard'
 import Separator from '../../components/separator/Separator'
 import './styles.scss'
@@ -68,7 +69,7 @@ const DriverOrders: React.FC<IProps> = ({
   const activeOrdersWithoutCandidates = activeOrders?.filter(item => !candidateOrders?.includes(item))
 
   return (
-    <section className="driver">
+    <PageSection className="driver">
       {
         (
           SITE_CONSTANTS.LIST_OF_MODES_USED[TABS.WAITING.id] ||
@@ -225,7 +226,7 @@ const DriverOrders: React.FC<IProps> = ({
           ))
         }
       </div>
-    </section>
+    </PageSection>
   )
 }
 

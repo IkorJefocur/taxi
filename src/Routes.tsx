@@ -10,6 +10,7 @@ import { IRootState } from './state'
 import { EStatuses, EUserRoles, IUser } from './types/types'
 import { userSelectors } from './state/user'
 import Sandbox from './pages/Sandbox'
+import PageSection from './components/PageSection'
 
 const PassengerOrder = lazy(() => import('./pages/Passenger'))
 const Order = lazy(() => import('./pages/Order'))
@@ -33,12 +34,12 @@ const AppRoutesWrapper: React.FC<IProps> = ({ status, user }) => {
 }
 
 const UnavailableBase = () => {
-  return <section>
+  return <PageSection>
     <div className="loading-frame">
       <img src={images.error} alt={t(TRANSLATION.ERROR)}/>
       <div className="loading-frame__title">{t(TRANSLATION.DATABASE_IS_UNAVAILABLE)}</div>
     </div>
-  </section>
+  </PageSection>
 }
 
 const HomePageRedirect = () => {

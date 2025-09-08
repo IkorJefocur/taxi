@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef } from 'react'
 import './styles.scss'
 import InputMask, { Props as InputMaskProps } from '@mona-health/react-input-mask'
 import SITE_CONSTANTS from '../../siteConstants'
 import useMergedRef from '@react-hook/merged-ref'
 import { ISelectOption } from '../../types'
 import cn from 'classnames'
-import Button, { EButtonShape } from '../Button'
+import Button, { EButtonShapes } from '../Button'
 import { ESuggestionType, ISuggestion } from '../../types/types'
 import { t, TRANSLATION } from '../../localization'
 import { Helmet } from 'react-helmet-async'
@@ -26,26 +26,28 @@ const getSuggestionClass = (type: ESuggestionType = ESuggestionType.PointOfficia
 
 export enum EInputTypes {
   Default,
+  Number,
   Textarea,
   Select,
   MaskedPhone,
   File,
 }
 
-export enum EInputStyle {
+export enum EInputStyles {
   Default,
   Login,
+  RedDesign,
 }
 
 interface ISideCheckbox {
-  value: boolean,
+  value: boolean
   onClick: () => any
   component: React.ReactNode
 }
 
 interface IProps {
   inputType?: EInputTypes
-  style?: EInputStyle,
+  style?: EInputStyles,
   error?: string | null
   label?: string
   buttons?: (React.ComponentProps<'img'> | React.ComponentProps<typeof Button>)[]
@@ -53,7 +55,7 @@ interface IProps {
   onSuggestionClick?: (value: ISuggestion) => any
   options?: ISelectOption[]
   inputProps?: React.ComponentProps<'input'> | React.ComponentProps<'select'> | React.ComponentProps<'textarea'> | InputMaskProps
-  onChange?: (newValue: string | File[]) => any
+  onChange?: (newValue: string | number | File[] | null) => any
   removeDefaultImage?: (id: number) => any
   fieldWrapperClassName?: string
   oneline?: boolean
@@ -69,37 +71,40 @@ interface IProps {
   defaultFiles?: number[]
 }
 
-const Input: React.FC<IProps> = (
-  {
-    inputType,
-    style = EInputStyle.Default,
-    error,
-    label,
-    buttons,
-    options,
-    inputProps = {},
-    fieldWrapperClassName,
-    suggestions,
-    oneline,
-    showDisablerCheckbox,
-    defaultValue,
-    sideText,
-    fileName,
-    defaultFiles = [],
-    sideCheckbox,
-    compareVariant,
-    hideInput,
-    onChange,
-    removeDefaultImage,
-    onDisableChange,
-    onChangeCompareVariant,
-    onSuggestionClick,
-  },
-) => {
+export default function Input({
+  inputType,
+  style = EInputStyles.Default,
+  error,
+  label,
+  buttons,
+  options,
+  inputProps = {},
+  fieldWrapperClassName,
+  suggestions,
+  oneline,
+  showDisablerCheckbox,
+  defaultValue,
+  sideText,
+  fileName,
+  defaultFiles = [],
+  sideCheckbox,
+  compareVariant,
+  hideInput,
+  onChange,
+  removeDefaultImage,
+  onDisableChange,
+  onChangeCompareVariant,
+  onSuggestionClick,
+}: IProps) {
   const [isFocused, setIsFocused] = useState(false)
   const [isDisabled, setIsDisabled] = useState(inputProps.disabled || false)
   const [isDefaultValueUsed, setIsDefaultValueUsed] = useState(false)
   const [files, setFiles] = useState<File[]>([])
+
+  const prevValue = useRef<string>('')
+  const [bufferedValue, setRawBufferedValue] = useState<string | undefined>()
+  const setBufferedValue =
+    inputProps.value === undefined ? () => {} : setRawBufferedValue
 
   const id = useMemo(() => inputProps.id || Math.random().toString().slice(2), [])
 
@@ -108,7 +113,7 @@ const Input: React.FC<IProps> = (
   if ((inputProps as React.ComponentProps<'input'>).ref) refs.push((inputProps as React.ComponentProps<'input'>).ref)
   if ((inputProps as InputMaskProps).inputRef) {
     refs.push((inputProps as InputMaskProps).inputRef)
-    delete (inputProps as InputMaskProps).inputRef;
+    delete (inputProps as InputMaskProps).inputRef
   }
   const mergedRef = useMergedRef(...refs)
 
@@ -116,7 +121,6 @@ const Input: React.FC<IProps> = (
     if (e.target.files && e.target.files[0]) {
       setFiles(files.concat(Array.from(e.target.files)))
       onChange && onChange(files.concat(Array.from(e.target.files)))
-      // e.target.value = ''
     }
   }
 
@@ -126,30 +130,83 @@ const Input: React.FC<IProps> = (
     onChange && onChange(newFiles)
   }
 
-  const getInputByType = () => {
-    const properties = {
-      className: cn('input', inputProps.className),
-      onFocus: (e: any) => {
-        setIsFocused(true)
-        inputProps.onFocus && inputProps.onFocus(e)
-      },
-      onBlur: (e: any) => {
-        setTimeout(() => setIsFocused(prev => false), 300)
-        inputProps.onBlur && inputProps.onBlur(e)
-      },
-      onChange: (e: any) => {
-        if (inputType === EInputTypes.File) {
-          inputProps.onChange && inputProps.onChange(e as any)
-          addImageToRaw(e)
-        } else {
-          onChange && onChange(e.target.value)
-          inputProps.onChange && inputProps.onChange(e as any)
-        }
-      },
-      id,
-      disabled: isDisabled || isDefaultValueUsed || inputProps.disabled,
-    }
+  const blurTimeoutId = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const properties = {
+    className: cn('input', inputProps.className),
 
+    onFocus: (e: any) => {
+      clearTimeout(blurTimeoutId.current)
+      setIsFocused(true)
+      inputProps.onFocus && inputProps.onFocus(e)
+    },
+
+    onBlur: (e: any) => {
+      blurTimeoutId.current = setTimeout(() =>
+        setIsFocused(prev => false)
+      , 300)
+      inputProps.onBlur && inputProps.onBlur(e)
+    },
+
+    onChange: (e: any) => {
+      if (inputType === EInputTypes.File) {
+        inputProps.onChange && inputProps.onChange(e as any)
+        addImageToRaw(e)
+      }
+
+      else {
+        let { value } = e.target
+        if (inputType === EInputTypes.MaskedPhone)
+          value = value.replace(/[^\d]/g, '')
+        const numberValue = ([
+          EInputTypes.Number,
+          EInputTypes.MaskedPhone,
+        ] as unknown[]).includes(inputType) ?
+          +value :
+          null
+        let valid = true
+
+        if (numberValue !== null) {
+          let normalized = value
+          if (normalized[normalized.length - 1] === '.')
+            normalized = normalized.slice(0, -1)
+
+          valid = false
+          if (numberValue !== 0 && (
+            numberValue.toString() !== normalized ||
+            numberValue < 0 ||
+            isNaN(numberValue) ||
+            numberValue === Infinity
+          ))
+            e.target.value = prevValue.current
+          else if (value !== normalized) {
+            prevValue.current = value
+            setBufferedValue(value)
+          } else
+            valid = true
+        }
+
+        if (valid) {
+          prevValue.current = value
+          setBufferedValue(undefined)
+          if (onChange)
+            onChange(
+              numberValue !== null && value.length > 0 ? numberValue : value,
+            )
+        }
+
+        if (inputProps.onChange)
+          inputProps.onChange(e as any)
+      }
+    },
+
+    id,
+    disabled: isDisabled || isDefaultValueUsed || inputProps.disabled,
+    value: inputProps.value === undefined ?
+      undefined :
+      bufferedValue ?? inputProps.value.toString(),
+  }
+
+  const getInputByType = () => {
     switch (inputType) {
       case EInputTypes.Textarea:
         return (
@@ -174,8 +231,9 @@ const Input: React.FC<IProps> = (
           <InputMask
             alwaysShowMask
             ref={mergedRef}
+            inputMode="decimal"
             {...inputProps as InputMaskProps}
-            mask={SITE_CONSTANTS.DEFAULT_PHONE_MASK}
+            mask={SITE_CONSTANTS.DEFAULT_PHONE_MASK.replaceAll('_', '9')}
             {...properties}
           />
         )
@@ -195,7 +253,7 @@ const Input: React.FC<IProps> = (
                 </div>)
             })}
             {files.map((file: File, index: number) =>
-              (<div
+              <div
                 className="input-file-uploaded"
                 key={index}
                 onClick={(e) => {
@@ -203,7 +261,7 @@ const Input: React.FC<IProps> = (
                 }}
               >
                 <img src={URL.createObjectURL(file)}></img>
-              </div>),
+              </div>,
             )}
             <label className="input-file-add">
               <input
@@ -215,6 +273,15 @@ const Input: React.FC<IProps> = (
             </label>
           </div>
         )
+      case EInputTypes.Number:
+        return (
+          <input
+            ref={mergedRef}
+            inputMode="decimal"
+            {...inputProps as React.ComponentProps<'input'>}
+            {...properties}
+          />
+        )
       default:
         return (
           <input
@@ -225,6 +292,23 @@ const Input: React.FC<IProps> = (
         )
     }
   }
+
+  suggestions = useMemo(() => {
+    if (!suggestions)
+      return suggestions
+    const addressesMet = new Set<string>()
+    const result = []
+    for (const suggestion of suggestions) {
+      if (
+        !suggestion.point?.address ||
+        addressesMet.has(suggestion.point?.address)
+      )
+        continue
+      result.push(suggestion)
+      addressesMet.add(suggestion.point?.address)
+    }
+    return result
+  }, [suggestions])
 
   const handleSuggestionClick = (item: ISuggestion) => {
     setIsFocused(false)
@@ -254,8 +338,9 @@ const Input: React.FC<IProps> = (
           'input__field-wrapper--oneline': oneline || isDefaultValueUsed,
           'input__field-wrapper--margin-disabled': hideInput,
         },
-        style !== EInputStyle.Default && 'input__field-wrapper--style--' + {
-          [EInputStyle.Login]: 'login',
+        style !== EInputStyles.Default && 'input__field-wrapper--style--' + {
+          [EInputStyles.Login]: 'login',
+          [EInputStyles.RedDesign]: 'red-design',
         }[style],
       )
     }
@@ -354,8 +439,8 @@ const Input: React.FC<IProps> = (
                         <Button
                           fixedSize={false}
                           shape={
-                            style === EInputStyle.Login ?
-                              EButtonShape.Flat :
+                            style === EInputStyles.Login ?
+                              EButtonShapes.Flat :
                               undefined
                           }
                           key={index}
@@ -396,5 +481,3 @@ const Input: React.FC<IProps> = (
     </div>
   )
 }
-
-export default Input

@@ -305,19 +305,21 @@ const _checkConfig = (
 }
 export const checkConfig = apiMethod<typeof _checkConfig>(_checkConfig, { authRequired: false })
 
-const _postDrive = (
+async function _postDrive(
   { formData }: IApiMethodArguments,
   data: IOrder,
 ): Promise<IResponseFields & {
-    b_id: IOrder['b_id'],
-    b_driver_code: IOrder['b_driver_code']
-}> => {
+  b_id: IOrder['b_id'],
+  b_driver_code: IOrder['b_driver_code']
+}> {
   addToFormData(formData, {
     data: JSON.stringify(reverseConvertOrder(data)),
   })
 
-  return axios.post(`${Config.API_URL}/drive`, formData)
-    .then(res => res.data)
+  const response = await axios.post(`${Config.API_URL}/drive`, formData)
+  if (response.data.status === 'error')
+    throw response.data
+  return response.data
 }
 export const postDrive = apiMethod<typeof _postDrive>(_postDrive)
 

@@ -31,11 +31,11 @@ export enum ECurrency {
   USD = 'USD'
 }
 
-export enum ECarClasses {
-  Any,
-  Economy,
-  Comfort,
-  Business
+export interface ICarClass {
+  id: string
+  seats: number
+  courier_call_rate: number
+  courier_fare_per_1_km: number
 }
 
 export enum EBookingStates {
@@ -56,9 +56,15 @@ enum EContactClasses {
   WhatsApp
 }
 
-enum EBookingLocationClasses {
-  City = 1,
-  Intercity
+export enum EBookingLocationKinds {
+  City,
+  Intercity,
+  Location
+}
+
+export interface IBookingLocationClass {
+  id: string
+  kind: EBookingLocationKinds
 }
 
 export enum EBookingDriverState {
@@ -116,6 +122,16 @@ export interface IBookingCoordinates extends IBookingCoordinatesLatitude, IBooki
 
 export interface ICarOptions {
   performers_price: number
+}
+
+export enum EBookingCommentTypes {
+  Any,
+  Plane
+}
+
+export interface IBookingComment {
+  id: string
+  type: EBookingCommentTypes
 }
 
 export interface IDriver {
@@ -246,7 +262,7 @@ export interface IOrder
   /** Текст на табличке */
   b_placard?: string
   /** Идентификатор класса машины */
-  b_car_class: ECarClasses
+  b_car_class: number
   /** Идентификатор статуса поезки */
   b_state: EBookingStates
   /** Дата создания поездки */
@@ -268,7 +284,7 @@ export interface IOrder
   /** Контакты для связи */
   b_contact: EContactClasses[]
   /** Идентификатор типа дальности поездки */
-  b_location_class: EBookingLocationClasses
+  b_location_class: string
   /** Оценочное расстояние маршрута в метрах */
   b_distance_estimate?: number
   /** Оценочная цена маршрута */
@@ -464,7 +480,7 @@ export interface ICar {
   /** json данные для дальнейшей обработки */
   details?: any,
   /** Идентификатор класса машины */
-  cc_id: ECarClasses
+  cc_id: number
 }
 
 export enum EUserRoles {

@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react'
+import React, { useCallback, ReactElement } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import cn from 'classnames'
 import { IRootState } from '../../state'
@@ -19,29 +19,38 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
-export enum EButtonShape {
+export enum EButtonShapes {
   Default,
   Flat,
 }
 
-interface IProps extends React.ComponentProps<'button'>, ConnectedProps<typeof connector> {
+export enum EButtonStyles {
+  Default,
+  RedDesign,
+}
+
+interface IProps
+  extends React.ComponentProps<'button'>, ConnectedProps<typeof connector> {
   wrapperProps?: React.ComponentProps<'div'>,
   imageProps?: React.ComponentProps<'img'>,
   fixedSize?: boolean,
-  shape?: EButtonShape,
+  shape?: EButtonShapes,
+  buttonStyle?: EButtonStyles,
   skipHandler?: boolean,
   text?: string,
   svg?: ReactElement,
   label?: string,
   status?: EStatuses,
-  colorType?: EColorTypes
+  colorType?: EColorTypes,
+  checkLogin?: boolean
 }
 
-const Button: React.FC<IProps> = ({
+function Button({
   wrapperProps = {},
   imageProps,
   fixedSize = true,
-  shape = EButtonShape.Default,
+  shape = EButtonShapes.Default,
+  buttonStyle = EButtonStyles.Default,
   skipHandler,
   text,
   svg,
@@ -50,22 +59,32 @@ const Button: React.FC<IProps> = ({
   user,
   setLoginModal,
   colorType = EColorTypes.Default,
+  checkLogin = true,
   ...buttonProps
-}) => {
-  const handleButtonClick = (e: React.PointerEvent<HTMLButtonElement>): void => {
+}: IProps) {
+  const handleButtonClick = useCallback((
+    e: React.PointerEvent<HTMLButtonElement>,
+  ): void => {
     if (skipHandler) return buttonProps.onClick && buttonProps.onClick(e)
+    const loggedIn = !checkLogin || user
 
-    if (buttonProps.type !== 'submit' || (buttonProps.type === 'submit' && !user)) {
+    if (
+      buttonProps.type !== 'submit' ||
+      (buttonProps.type === 'submit' && !loggedIn)
+    ) {
       e.preventDefault()
       e.stopPropagation()
     }
 
-    if (user) {
+    if (loggedIn) {
       if (buttonProps.onClick) buttonProps.onClick(e)
     } else {
       setLoginModal(true)
     }
-  }
+  }, [
+    buttonProps.type, buttonProps.onClick,
+    skipHandler, checkLogin, user, setLoginModal,
+  ])
 
   return (
     <>
@@ -78,13 +97,18 @@ const Button: React.FC<IProps> = ({
             { disabled: buttonProps.disabled },
             { 'button--accent': colorType === EColorTypes.Accent },
             { 'button--size--fixed': fixedSize },
-            shape !== EButtonShape.Default && 'button--shape--' + {
-              [EButtonShape.Flat]: 'flat'
+            shape !== EButtonShapes.Default && 'button--shape--' + {
+              [EButtonShapes.Flat]: 'flat',
             }[shape],
+            buttonStyle !== EButtonStyles.Default && 'button--style--' + {
+              [EButtonStyles.RedDesign]: 'red-design',
+            }[buttonStyle],
             buttonProps.className,
           )}
           style={{
-            background: gradient(),
+            background: buttonStyle === EButtonStyles.Default ?
+              gradient() :
+              undefined,
             ...buttonProps.style,
           }}
           onClick={handleButtonClick}

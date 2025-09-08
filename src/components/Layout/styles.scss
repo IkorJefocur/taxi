@@ -1,0 +1,13 @@
+.layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  height: 100dvh;
+  background: #FFFFFF;
+
+  .loading-frame {
+    height: calc(100% - 73px);
+    top: 73px;
+  }
+}

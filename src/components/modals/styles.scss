@@ -28,7 +28,6 @@
 .modal {
   z-index: 1600;
   width: 90%;
-  background: rgba(255, 255, 255, 0.96);
   box-sizing: border-box;
   box-shadow: 0px 30px 12px rgba(0, 0, 0, 0.04);
   flex-direction: column;
@@ -63,7 +62,15 @@
       line-height: 23px;
       text-align: center;
     }
+  }
 
+  &--style {
+    &--red-design {
+      width: calc(100% - 32px);
+      border-radius: 24px;
+      padding: 8px;
+      box-shadow: 0px 1px 17px rgba(0, 0, 0, 0.16);
+    }
   }
 
   .active {
@@ -138,98 +145,45 @@
 .timer-modal {
   border-radius: 10px;
 
-  > div {
-    div {
-      display: flex;
-      align-items: center;
-      padding: 0 30px;
-      height: 78px;
-      font-weight: 300;
-      font-size: 20px;
-      line-height: 23px;
-      justify-content: space-between;
-      color: #686868;
+  &__button {
+    display: flex;
+    align-items: center;
+    padding: 0 30px;
+    height: 78px;
+    font-weight: 300;
+    font-size: 20px;
+    line-height: 23px;
+    justify-content: space-between;
+    color: #686868;
 
-      label {
-        font-weight: 300;
-        font-size: 28px;
-        line-height: 33px;
-        color: #686868;
-      }
+    &--active {
+      background-color: aliceblue;
     }
   }
 
-  > span {
-    border: 1px solid #BABABA;
-    box-shadow: 0 1px 1px #FFFFFF;
+  &__label {
+    font-weight: 300;
+    font-size: 28px;
+    line-height: 33px;
+    color: #686868;
+  }
+
+  &__separator {
+    display: block;
+    border-bottom: 1px solid #BABABA;
     width: 97%;
     margin: 0 auto;
   }
-}
 
-.comment-modal {
-  box-shadow: 0px 1px 17px rgba(0, 0, 0, 0.16);
+  &__time-picker {
+    position: fixed;
+    display: none;
+    z-index: 1601;
+    background-color: white;
+    box-shadow: 0 0 10px 5px #0005;
 
-  form {
-    fieldset {
-      .wishes {
-        padding: 6px;
-
-        .checkbox {
-          label {
-            font-size: 20px;
-          }
-        }
-      }
-
-      .input-fields {
-        .input-group {
-          margin-bottom: 12px;
-
-          input {
-            display: inline-block;
-            position: relative;
-            width: 100%;
-            height: 54px;
-            padding-left: 17px;
-            text-align: left;
-
-            background: #FFFFFF;
-            border: 1px solid #858585;
-            box-sizing: border-box;
-            border-radius: 14px;
-            font-weight: 300;
-            font-size: 20px;
-            line-height: 23px;
-            color: #000000;
-
-          }
-
-          input::placeholder {
-            text-align: left;
-            letter-spacing: -0.38px;
-            color: #9F9F9F;
-            font-weight: 300;
-            font-size: 20px;
-            line-height: 23px;
-          }
-        }
-
-        .comment-buttons {
-          display: flex;
-
-          .ok-btn {
-            flex-grow: 1;
-          }
-
-          .voice-btn {
-            button {
-              color: black !important;
-              border-radius: 14px;
-            }
-          }
-        }
-      }
+    &--visible {
+      display: block;
     }
   }
 }
@@ -385,38 +339,6 @@
           color: #B9A2A2;
         }
       }
-
-      .input-group {
-        margin-bottom: 12px;
-
-        input {
-          display: inline-block;
-          position: relative;
-          width: 100%;
-          height: 54px;
-          padding-left: 17px;
-          text-align: left;
-
-          background: #FFFFFF;
-          border: 1px solid #858585;
-          box-sizing: border-box;
-          border-radius: 14px;
-          font-weight: 300;
-          font-size: 20px;
-          line-height: 23px;
-          color: #000000;
-
-        }
-
-        input::placeholder {
-          text-align: left;
-          letter-spacing: -0.38px;
-          color: #9F9F9F;
-          font-weight: 300;
-          font-size: 20px;
-          line-height: 23px;
-        }
-      }
     }
   }
 
@@ -494,56 +416,6 @@
           }
         }
 
-        .input-group {
-          width: 100%;
-
-          input {
-            display: inline-block;
-            position: relative;
-            width: 100%;
-            height: 54px;
-            padding-left: 17px;
-            text-align: left;
-
-            background: #FFFFFF;
-            border: 1px solid #858585;
-            box-sizing: border-box;
-            border-radius: 14px;
-
-            font-family: Roboto;
-            font-style: normal;
-            font-weight: 300;
-            font-size: 20px;
-            line-height: 23px;
-            color: #000000;
-
-          }
-
-          input::placeholder {
-            text-align: left;
-            letter-spacing: -0.38px;
-            color: #9F9F9F;
-            font-weight: 300;
-            font-size: 20px;
-            line-height: 23px;
-          }
-
-          label {
-            font-family: Roboto;
-            font-style: normal;
-            font-weight: 300;
-            font-size: 20px;
-            line-height: 23px;
-            color: #6F1717;
-            display: inline-block;
-            text-align: left;
-            margin-bottom: 15px;
-            width: 100%;
-            margin-top: 15px;
-          }
-
-        }
-
         &_save-btn {
           width: 100%;
           margin-bottom: 10px;
@@ -578,11 +450,6 @@
 
           .exp {
             margin-bottom: 15px;
-
-            .input-group {
-              width: 20%;
-            }
-
             justify-content: space-between;
           }
 

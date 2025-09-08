@@ -1,10 +1,10 @@
 import { all, put } from 'redux-saga/effects'
-import { ActionTypes } from './constants'
 import { call, takeEvery } from '../../tools/sagaUtils'
 import * as API from '../../API'
 import { TAction } from '../../types'
 import Config from '../../config'
 import SITE_CONSTANTS, { CURRENCY } from '../../siteConstants'
+import { ActionTypes } from './constants'
 
 export const saga = function* () {
   yield all([

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
+import PageSection from '../../components/PageSection'
 import Button from '../../components/Button'
 import Input from '../../components/Input'
 import { addHiddenOrder } from '../../tools/utils'
@@ -21,7 +22,6 @@ import { modalsActionCreators } from '../../state/modals'
 import { userSelectors } from '../../state/user'
 import { EMapModalTypes } from '../../state/modals/constants'
 import { withLayout } from '../../HOCs/withLayout'
-import moment from 'moment'
 
 const mapStateToProps = (state: IRootState) => ({
   order: orderSelectors.order(state),
@@ -298,7 +298,7 @@ const Order: React.FC<IProps> = ({
 
   return status === EStatuses.Loading && !order ?
     <LoadFrame/> :
-    <section className="order">
+    <PageSection className="order">
       {!!order ?
         (
           <form onSubmit={formHandleSubmit(handleSubmit)}>
@@ -487,7 +487,7 @@ const Order: React.FC<IProps> = ({
         ) :
         t(TRANSLATION.NOT_AVIABLE_ORDER)
       }
-    </section>
+    </PageSection>
 }
 
 export default withLayout(connector(Order))

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import AppRoutes from './Routes'
+import Theme from './components/Theme'
 import CancelOrderModal from './components/modals/CancelModal'
 import TimerModal from './components/modals/PickTimeModal'
 import CommentsModal from './components/modals/CommentsModal'
@@ -116,9 +117,9 @@ const App: React.FC<IProps> = ({
 
   return (
     <React.Fragment key={`${language.id}_${configStatus}`}>
-      {getMetaTags()}
-      <AppRoutes />
-      {<>
+      <Theme>
+        {getMetaTags()}
+        <AppRoutes />
         {/* <PositionTracker/> */}
         <VoteModal />
         <TimerModal />
@@ -141,7 +142,7 @@ const App: React.FC<IProps> = ({
         {user && <ProfileModal />}
         {activeChat && <Chat key={activeChat} />}
         <MessageModal />
-      </>}
+      </Theme>
     </React.Fragment>
   )
 }
