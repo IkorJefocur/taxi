@@ -1,7 +1,7 @@
 import { getCacheVersion } from './API/cacheVersion'
 import store from './state'
 import { setConfigError, setConfigLoaded } from './state/config/actionCreators'
-import { API_URL } from './constants'
+import { DEFAULT_CONFIG_NAME } from './constants'
 
 let _configName: string
 
@@ -76,7 +76,11 @@ class Config {
   }
 
   get API_URL() {
-    return _configName ? `https://ibronevik.ru/taxi/c/${_configName}/api/v1` : API_URL
+    return `${this.SERVER_URL}/api/v1`
+  }
+
+  get SERVER_URL() {
+    return `https://ibronevik.ru/taxi/c/${_configName || DEFAULT_CONFIG_NAME}`
   }
 
   get SavedConfig() {

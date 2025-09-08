@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import Config from '../../../config'
 import { t, TRANSLATION } from '../../../localization'
 import Checkbox from '../../Checkbox'
 import { useForm, useWatch } from 'react-hook-form'
@@ -315,7 +316,7 @@ const LoginForm: React.FC<IProps> = ({
       //     console.log(err)
       //   }}
       // >
-      <a href={`https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&client_id=${googleClientId}&redirect_uri=${'https://ibronevik.ru/taxi/c/gruzvill/google/'}&state&scope=email%20profile&prompt=select_account`}>
+      <a href={`https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&client_id=${googleClientId}&redirect_uri=${Config.SERVER_URL}/google/&state&scope=email%20profile&prompt=select_account`}>
         <GoogleLoginButton />
       </a>
 
