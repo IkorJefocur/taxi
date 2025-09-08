@@ -1,34 +1,29 @@
 import React, { useState, useEffect } from 'react'
-import { connect, ConnectedProps } from 'react-redux'
-import './styles.scss'
+import cn from 'classnames'
 import L from 'leaflet'
-import Fullscreen from 'react-leaflet-fullscreen-plugin'
-import SITE_CONSTANTS from '../../siteConstants'
-import { t, TRANSLATION } from '../../localization'
-import { IRootState } from '../../state'
-import { modalsActionCreators, modalsSelectors } from '../../state/modals'
 import {
   MapContainer, TileLayer,
   Marker, CircleMarker, Circle, Popup, Tooltip, Polyline,
   useMap,
 } from 'react-leaflet'
-import { EMapModalTypes } from '../../state/modals/constants'
-import {
-  clientOrderActionCreators,
-  clientOrderSelectors,
-} from '../../state/clientOrder'
-import { orderSelectors } from '../../state/order'
-import { userSelectors } from '../../state/user'
+import Fullscreen from 'react-leaflet-fullscreen-plugin'
+import { connect, ConnectedProps } from 'react-redux'
 import {
   EStatuses,
   IAddressPoint, IRouteInfo, IStaticMarker,
 } from '../../types/types'
-import images from '../../constants/images'
-import { useInterval } from '../../tools/hooks'
-import * as API from '../../API'
-import _ from 'lodash'
 import { getAttribution, getTileServerUrl } from '../../tools/utils'
-import cn from 'classnames'
+import { useInterval } from '../../tools/hooks'
+import SITE_CONSTANTS from '../../siteConstants'
+import images from '../../constants/images'
+import { t, TRANSLATION } from '../../localization'
+import * as API from '../../API'
+import { IRootState } from '../../state'
+import { modalsActionCreators, modalsSelectors } from '../../state/modals'
+import { EMapModalTypes } from '../../state/modals/constants'
+import { clientOrderSelectors } from '../../state/clientOrder'
+import { orderSelectors } from '../../state/order'
+import './styles.scss'
 
 const defaultZoom = 15
 
@@ -41,15 +36,9 @@ const mapStateToProps = (state: IRootState) => ({
   detailedOrderDestination: orderSelectors.destination(state),
   takePassengerFrom: modalsSelectors.takePassengerModalFrom(state),
   takePassengerTo: modalsSelectors.takePassengerModalTo(state),
-  user: userSelectors.user(state),
 })
 
 const mapDispatchToProps = {
-  setMapModal: modalsActionCreators.setMapModal,
-  setClientFrom: clientOrderActionCreators.setFrom,
-  setClientTo: clientOrderActionCreators.setTo,
-  setTakePassengerModalFrom: modalsActionCreators.setTakePassengerModalFrom,
-  setTakePassengerModalTo: modalsActionCreators.setTakePassengerModalTo,
   setMessageModal: modalsActionCreators.setMessageModal,
 }
 
@@ -64,13 +53,13 @@ interface IProps extends ConnectedProps<typeof connector> {
   setCenter?: (coordinates: [lat: number, lng: number]) => void
 }
 
-const Map: React.FC<IProps> = ({
+function Map({
   isOpen = true,
   defaultCenter,
   isModal,
   containerClassName,
   ...props
-}) => {
+}: IProps) {
   return (
     <div
       className={cn('map-container', containerClassName, { 'map-container--active': isOpen, 'map-container--modal': isModal })}
@@ -92,7 +81,7 @@ const Map: React.FC<IProps> = ({
   )
 }
 
-const MapContent: React.FC<IProps> = ({
+function MapContent({
   isOpen = true,
   type,
   defaultCenter,
@@ -102,19 +91,14 @@ const MapContent: React.FC<IProps> = ({
   detailedOrderDestination,
   takePassengerFrom,
   takePassengerTo,
-  user,
   disableButtons,
   isModal,
-  setClientFrom,
-  setClientTo,
-  setTakePassengerModalFrom,
-  setTakePassengerModalTo,
-  setMapModal,
   setMessageModal,
   onClose,
   containerClassName,
   setCenter = () => {},
-}) => {
+}: IProps) {
+
   const map = useMap()
 
   const [staticMarkers, setStaticMarkers] = useState<IStaticMarker[]>([])
@@ -122,8 +106,6 @@ const MapContent: React.FC<IProps> = ({
     useState<IAddressPoint | null>(null)
   const [userCoordinatesAccuracy, setUserCoordinatesAccuracy] =
     useState<number | null>(null)
-  const [buttonsPopupCoordinates, setButtonPopupCoordinates] =
-    useState<[number, number] | null>(null)
   const [routeInfo, setRouteInfo] = useState<IRouteInfo | null>(null)
   const [showRouteInfo, setShowRouteInfo] = useState(false)
 
@@ -141,24 +123,6 @@ const MapContent: React.FC<IProps> = ({
     case EMapModalTypes.TakePassenger:
       from = takePassengerFrom || null
       to = takePassengerTo || null
-      break
-    default:
-      console.error('Wrong map type:', type)
-      break
-  }
-
-  let setFrom: ((point?: IAddressPoint | null) => any) | null = null,
-    setTo: ((point?: IAddressPoint | null) => any) | null = null
-  switch (type) {
-    case EMapModalTypes.Client:
-      setFrom = point => setClientFrom(point || null)
-      setTo = point => setClientTo(point || null)
-      break
-    case EMapModalTypes.OrderDetails:
-      break
-    case EMapModalTypes.TakePassenger:
-      setFrom = point => setTakePassengerModalFrom(point)
-      setTo = point => setTakePassengerModalTo(point)
       break
     default:
       console.error('Wrong map type:', type)
@@ -210,18 +174,6 @@ const MapContent: React.FC<IProps> = ({
       timeout: Infinity,
       enableHighAccuracy: true,
     })
-
-    map.on('click', (e: L.LeafletMouseEvent) => {
-      if (!(e.originalEvent?.target as HTMLDivElement)?.classList?.contains('map')) return
-
-      const newCoords: [number, number] = [e.latlng.lat, e.latlng.lng]
-      setButtonPopupCoordinates((prev) => {
-        if (_.isEqual(prev, newCoords)) {
-          return null
-        }
-        return newCoords
-      })
-    })
   }, [map])
 
   useInterval(() => {
@@ -257,32 +209,12 @@ const MapContent: React.FC<IProps> = ({
     }
   }, [map, setCenter])
 
-  const handleFromClick = (isButtonPopup?: boolean) => {
-    if (!setFrom || !map) return
+  useEffect(() => {
+    setShowRouteInfo(false)
+    setRouteInfo(null)
 
-    if (!isButtonPopup) {
-      const center = map.getCenter()
-      setFrom({ latitude: center.lat, longitude: center.lng })
+    if (!from?.latitude || !from?.longitude || !to?.latitude || !to?.longitude)
       return
-    }
-
-    if (!buttonsPopupCoordinates) return
-    setFrom({ latitude: buttonsPopupCoordinates[0], longitude: buttonsPopupCoordinates[1] })
-  }
-  const handleToClick = (isButtonPopup?: boolean) => {
-    if (!setTo || !map) return
-
-    if (!isButtonPopup) {
-      const center = map.getCenter()
-      setTo({ latitude: center.lat, longitude: center.lng })
-      return
-    }
-
-    if (!buttonsPopupCoordinates) return
-    setTo({ latitude: buttonsPopupCoordinates[0], longitude: buttonsPopupCoordinates[1] })
-  }
-  const handleRouteClick = () => {
-    if (!from || !to) return
 
     API.makeRoutePoints(from, to)
       .then((info) => {
@@ -294,9 +226,13 @@ const MapContent: React.FC<IProps> = ({
       })
       .catch((error) => {
         console.error(error)
-        setMessageModal({ isOpen: true, message: t(TRANSLATION.ERROR), status: EStatuses.Fail })
+        setMessageModal({
+          isOpen: true,
+          message: t(TRANSLATION.ERROR),
+          status: EStatuses.Fail,
+        })
       })
-  }
+  }, [from, to])
 
   const duration = [
     !!routeInfo?.time.hours && `${routeInfo?.time.hours} h`,
