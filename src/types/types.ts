@@ -262,7 +262,7 @@ export interface IOrder
   /** Текст на табличке */
   b_placard?: string
   /** Идентификатор класса машины */
-  b_car_class: number
+  b_car_class: string
   /** Идентификатор статуса поезки */
   b_state: EBookingStates
   /** Дата создания поездки */

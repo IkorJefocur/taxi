@@ -221,7 +221,7 @@ export const cachedOrderDataValuesKey = 'cachedOrderDataValues'
 /**
  * You need to pass order || ((points || distance) && startDatetime && carClass)
  */
-export const getPayment = (
+export function getPayment(
   order?: IOrder | null,
   points?: [IAddressPoint, IAddressPoint] | null,
   distance?: number,
@@ -231,12 +231,17 @@ export const getPayment = (
   value: number | string,
   text: string,
   type: EPaymentType,
-} => {
-  if (order?.b_options?.customer_price && SITE_CONSTANTS.ENABLE_CUSTOMER_PRICE) {
-    return { value: order.b_options.customer_price, text: '', type: EPaymentType.Customer }
-  }
-  const _distance = distance || calcOrderDistance(points, order) || order?.b_options?.pricingModel?.options?.distance
-  //if (!_distance) return { value: 0, text: '0', type: EPaymentType.Calculated }
+} {
+  if (order?.b_options?.customer_price && SITE_CONSTANTS.ENABLE_CUSTOMER_PRICE)
+    return {
+      value: order.b_options.customer_price,
+      text: '',
+      type: EPaymentType.Customer,
+    }
+  const _distance = distance ??
+    calcOrderDistance(points, order) ??
+    order?.b_options?.pricingModel?.options?.distance
+
   let _orderTime = startDatetime,
     _startOfNightTime = moment(SITE_CONSTANTS.START_OF_NIGHT_TIME, 'h:mm'),
     _endOfNightTime = moment(SITE_CONSTANTS.END_OF_NIGHT_TIME, 'h:mm'),
@@ -247,33 +252,44 @@ export const getPayment = (
     _startOfNightTime = _startOfNightTime.subtract(1, 'days')
   }
 
-  const carClassData =
-    SITE_CONSTANTS.CAR_CLASSES[order?.b_car_class ?? carClass ?? 0]
+  if (carClass === undefined)
+    carClass = order?.b_car_class
+  const carClassData = carClass ? SITE_CONSTANTS.CAR_CLASSES[carClass] : null
   const callRate = carClassData?.courier_call_rate ??
     SITE_CONSTANTS.COURIER_CALL_RATE
   const farePer1Km = carClassData?.courier_fare_per_1_km ??
     SITE_CONSTANTS.COURIER_FARE_PER_1_KM
-  let _value: string | number = 0,
+  let _value: string | number = callRate + farePer1Km * _distance,
     _text = ''
   if (_orderTime?.isAfter(_startOfNightTime) && _orderTime.isBefore(_endOfNightTime)) {
-    _text =  `${SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME} * \
-    ( ${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} ) = ${_value === 0 ? '-' : _value}`
+    _value *= SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME
+    _text = `${SITE_CONSTANTS.EXTRA_CHARGE_FOR_NIGHT_TIME} * \
+      ( ${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} ) = \
+      ${_value === 0 ? '-' : _value}`
   } else {
-    _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = ${_value === 0 ? '-' : _value}`
+    _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = \
+      ${_value === 0 ? '-' : _value}`
   }
-  _value = calculateFinalPrice(order || null) || _value
-
-  console.log('TEXT', _text, _value)
+  _value = order ? calculateFinalPrice(order || null) : _value
 
   return { value: _value, text: _text, type: EPaymentType.Calculated }
 }
 
-export const calcOrderDistance = (points?: (IAddressPoint | null)[] | null, order?: IOrder | null) => {
+export function calcOrderDistance(
+  points?: (IAddressPoint | null)[] | null,
+  order?: IOrder | null,
+) {
   const [from, to] =
     points ||
     [
-      { latitude: order?.b_start_latitude, longitude: order?.b_start_longitude },
-      { latitude: order?.b_destination_latitude, longitude: order?.b_destination_longitude },
+      {
+        latitude: order?.b_start_latitude,
+        longitude: order?.b_start_longitude,
+      },
+      {
+        latitude: order?.b_destination_latitude,
+        longitude: order?.b_destination_longitude,
+      },
     ]
   if (
     from && to &&

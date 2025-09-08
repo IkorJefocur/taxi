@@ -18,6 +18,10 @@
     transition-property: flex-grow, padding;
     cursor: pointer;
 
+    &--disabled {
+      background-color: #EFEFEF;
+    }
+
     &--active {
       flex-grow: 1;
       width: 100%;
