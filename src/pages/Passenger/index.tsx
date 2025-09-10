@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useMemo, useCallback } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import moment from 'moment'
 import { EBookingDriverState, EStatuses, IOrder } from '../../types/types'
@@ -45,8 +45,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> { }
 
-let prevSelectedOrder: IOrder | null | undefined = null
-
 function PassengerOrder({
   activeOrders,
   selectedOrder: selectedOrderID,
@@ -62,8 +60,6 @@ function PassengerOrder({
   setTo,
   setSelectedOrder,
 }: IProps) {
-
-  const [refresh, setRefresh] = useState(false)
 
   const mapCenter = useRef<[lat: number, lng: number]>(null)
   const setMapCenter = useCallback((value: [number, number]) => {
@@ -96,52 +92,63 @@ function PassengerOrder({
     }
   }, [isExpanded])
 
-  const selectedOrder = activeOrders?.find(
-    (item) => item.b_id === selectedOrderID,
-  )
-  const selectedOrderDriver =
+  const selectedOrder = useMemo(() =>
+    activeOrders?.find((item) => item.b_id === selectedOrderID) ?? null
+  , [activeOrders, selectedOrderID])
+  const selectedOrderDriver = useMemo(() =>
     selectedOrder?.drivers &&
     selectedOrder?.drivers.find(
       (item) => item.c_state > EBookingDriverState.Canceled,
     )
-  // *****************************************************getActiveOrders() и  setRefresh => marker-from.svg  каждые 5сек перерендер всей страницы
+  , [selectedOrder])
+  const prevSelectedOrder = useRef<IOrder | null>(null)
+
+  useEffect(() => {
+    if (user)
+      getActiveOrders()
+  }, [user])
   useInterval(() => {
-    user && getActiveOrders()
-    for (const order of activeOrders || []) {
-      if (
-        order.b_voting &&
-        order.b_start_datetime &&
-        (order.b_max_waiting || SITE_CONSTANTS.WAITING_INTERVAL) -
-        moment().diff(order.b_start_datetime, 'seconds') <=
-        0
-      ) {
-        API.cancelDrive(order.b_id)
-        return API.postDrive({
+    if (user)
+      getActiveOrders()
+  }, 5000)
+
+  const prevActiveOrders = useRef<IOrder[]>(activeOrders ?? [])
+  useEffect(() => {
+    for (const order of prevActiveOrders.current)
+      recreateExpiredVotingOrder(order)
+    prevActiveOrders.current = activeOrders ?? []
+  }, [activeOrders])
+
+  const recreateExpiredVotingOrder = async(order: IOrder) => {
+    if (
+      order.b_voting &&
+      order.b_start_datetime &&
+      (order.b_max_waiting || SITE_CONSTANTS.WAITING_INTERVAL) -
+      moment().diff(order.b_start_datetime, 'seconds') <=
+      0
+    ) {
+      API.cancelDrive(order.b_id)
+
+      try {
+        const response = await API.postDrive({
           ...order,
           b_start_datetime: moment(),
           b_max_waiting: undefined,
         })
-          .then((res) => {
-            getActiveOrders()
-            setSelectedOrder(res.b_id)
-            window.scroll(0, 0)
-          })
-          .catch((error) => {
-            console.error(error)
-            setMessageModal({
-              isOpen: true,
-              status: EStatuses.Fail,
-              message: error.message,
-            })
-          })
+        getActiveOrders()
+        setSelectedOrder(response.b_id)
+      }
+
+      catch (error) {
+        console.error(error)
+        setMessageModal({
+          isOpen: true,
+          status: EStatuses.Fail,
+          message: (error as any).message,
+        })
       }
     }
-    setRefresh(!refresh)
-  }, 5000)
-
-  useEffect(() => {
-    if (user) getActiveOrders()
-  }, [user])
+  }
 
   const openCurrentModal = () => {
     if (!selectedOrder) {
@@ -152,33 +159,8 @@ function PassengerOrder({
     }
 
     if (selectedOrder.b_voting && !selectedOrderDriver) {
-      if (
-        selectedOrder.b_start_datetime &&
-        (selectedOrder.b_max_waiting ||
-          SITE_CONSTANTS.WAITING_INTERVAL) -
-        moment().diff(selectedOrder.b_start_datetime, 'seconds') <=
-        0
-      ) {
-        API.cancelDrive(selectedOrder.b_id)
-        return API.postDrive({
-          ...selectedOrder,
-          b_start_datetime: moment(),
-          b_max_waiting: undefined,
-        })
-          .then((res) => {
-            getActiveOrders()
-            setSelectedOrder(res.b_id)
-            window.scroll(0, 0)
-          })
-          .catch((error) => {
-            console.error(error)
-            setMessageModal({
-              isOpen: true,
-              status: EStatuses.Fail,
-              message: error.message,
-            })
-          })
-      } else return setVoteModal(true)
+      setVoteModal(true)
+      return
     }
 
     if (
@@ -219,15 +201,18 @@ function PassengerOrder({
 
   // Used to open rating modal
   useEffect(() => {
-    const prevSelectedOrderDriver = prevSelectedOrder?.drivers?.find(
+    if (!prevSelectedOrder.current)
+      return
+    const prevSelectedOrderDriver = prevSelectedOrder.current.drivers?.find(
       (item) => item.c_state !== EBookingDriverState.Canceled,
     )
     if (!prevSelectedOrderDriver) return
     if (
       prevSelectedOrderDriver.c_state <= EBookingDriverState.Started &&
-      !activeOrders?.find((item) => item.b_id === prevSelectedOrder?.b_id)
+      !activeOrders
+        ?.find((item) => item.b_id === prevSelectedOrder.current?.b_id)
     ) {
-      const id = prevSelectedOrder?.b_id
+      const id = prevSelectedOrder.current.b_id
       API.getOrder(id as string)
         .then((res) => {
           const resDriver = res?.drivers?.find(
@@ -252,7 +237,7 @@ function PassengerOrder({
 
   // Used to open rating modal
   useEffect(() => {
-    prevSelectedOrder = selectedOrder
+    prevSelectedOrder.current = selectedOrder
   }, [selectedOrder])
 
   return (

@@ -99,6 +99,7 @@ const keySelector = (key: keyof IClientOrderState) =>
 const setPointSaga = (type: EPointType) => function* (action: TAction) {
   let value: IAddressPoint = action.payload
   yield* setIntermediatePoint(type, value)
+  let errorHappened = false
 
   if (action.payload.isCurrent && navigator.geolocation) {
     try {
@@ -106,8 +107,9 @@ const setPointSaga = (type: EPointType) => function* (action: TAction) {
       const { latitude, longitude } = position.coords
       value = { ...value, latitude, longitude }
       yield* setIntermediatePoint(type, value)
-    } catch (e) {
-      console.warn('Geolocation error', e)
+    } catch (error) {
+      console.warn('Geolocation error', error)
+      errorHappened = true
     }
   }
 
@@ -136,13 +138,15 @@ const setPointSaga = (type: EPointType) => function* (action: TAction) {
       yield* setIntermediatePoint(type, value)
     } catch (error) {
       console.error(error)
+      errorHappened = true
     }
   }
 
-  setItem(
-    `state.clientOrder.${type === EPointType.From ? 'from' : 'to'}`,
-    value,
-  )
+  if (!errorHappened)
+    setItem(
+      `state.clientOrder.${type === EPointType.From ? 'from' : 'to'}`,
+      value,
+    )
 }
 
 function* setIntermediatePoint(type: EPointType, value: IAddressPoint) {

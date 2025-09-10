@@ -190,7 +190,7 @@ const VotingForm = function VotingForm({
             type="submit"
             checkLogin={false}
             text={t(TRANSLATION.VOTE, { toUpper: false })}
-            // onClick={() => submit(true)}
+            onClick={() => submit(true)}
             disabled={submitting}
           />
           <Button

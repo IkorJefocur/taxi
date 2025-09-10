@@ -1,46 +1,48 @@
-import {
-    EBookingDriverState,
-    EOrderTypes,
-    EPaymentWays,
-    ESuggestionType,
-    EUserRoles,
-    IAddressPoint,
-    IBookingAddresses,
-    IBookingCoordinates,
-    IBookingCoordinatesLatitude,
-    IBookingCoordinatesLongitude,
-    ICar,
-    IOrder,
-    IPlaceResponse,
-    IRouteInfo,
-    ISuggestion,
-    ITokens,
-    ITrip,
-    IUser,
-} from '../types/types'
-import {Stringify, ValueOf} from '../types/index'
-import {addToFormData, apiMethod, IApiMethodArguments, IResponseFields} from '../tools/api'
-import {
-    convertCar,
-    convertOrder,
-    convertTrip,
-    convertUser,
-    getBase64,
-    getHints,
-    reverseConvertOrder,
-    reverseConvertTrip,
-    reverseConvertUser
-} from '../tools/utils'
 import axios from 'axios'
-import Config from '../config'
-import {t, TRANSLATION} from '../localization'
-import {ERegistrationType} from '../state/user/constants'
-import {userSelectors} from '../state/user'
-import store from '../state'
-import {configSelectors} from '../state/config'
-import SITE_CONSTANTS from '../siteConstants'
+import { Stringify, ValueOf } from '../types'
+import {
+  EBookingDriverState,
+  EOrderTypes,
+  EPaymentWays,
+  ESuggestionType,
+  EUserRoles,
+  IAddressPoint,
+  IBookingAddresses,
+  IBookingCoordinates,
+  IBookingCoordinatesLatitude,
+  IBookingCoordinatesLongitude,
+  ICar,
+  IOrder,
+  IPlaceResponse,
+  IRouteInfo,
+  ISuggestion,
+  ITokens,
+  ITrip,
+  IUser,
+} from '../types/types'
+import {
+  convertCar,
+  convertOrder,
+  convertTrip,
+  convertUser,
+  getBase64,
+  getHints,
+  reverseConvertOrder,
+  reverseConvertTrip,
+  reverseConvertUser,
+} from '../tools/utils'
+import {
+  addToFormData, apiMethod, IApiMethodArguments, IResponseFields,
+} from '../tools/api'
 import getCountryISO3 from '../tools/countryISO2To3'
-import {getCacheVersion} from './cacheVersion'
+import SITE_CONSTANTS from '../siteConstants'
+import Config from '../config'
+import { t, TRANSLATION } from '../localization'
+import store from '../state'
+import { configSelectors } from '../state/config'
+import { userSelectors } from '../state/user'
+import { ERegistrationType } from '../state/user/constants'
+import { getCacheVersion } from './cacheVersion'
 
 export { getCacheVersion }
 export {
@@ -312,8 +314,40 @@ async function _postDrive(
   b_id: IOrder['b_id'],
   b_driver_code: IOrder['b_driver_code']
 }> {
+  const defaults: Partial<IOrder> = {
+    b_payment_way: EPaymentWays.Cash,
+  }
+
+  const converted = reverseConvertOrder({ ...defaults, ...data })
   addToFormData(formData, {
-    data: JSON.stringify(reverseConvertOrder(data)),
+    data: JSON.stringify(Object.fromEntries(
+      [
+        'b_start_address',
+        'b_start_latitude',
+        'b_start_longitude',
+        'b_destination_address',
+        'b_destination_latitude',
+        'b_destination_longitude',
+        'b_start_datetime',
+        'b_custom_comment',
+        'b_flight_number',
+        'b_terminal',
+        'b_passengers_count',
+        'b_luggage_count',
+        'b_placard',
+        'b_car_class',
+        'b_payment_way',
+        'b_payment_card',
+        'b_cars_count',
+        'b_max_waiting',
+        'b_options',
+        'b_contact',
+        'b_comments',
+        'b_services',
+        'b_location_class',
+        'b_currency',
+      ].filter(key => key in converted).map(key => [key, converted[key]]),
+    )),
   })
 
   const response = await axios.post(`${Config.API_URL}/drive`, formData)

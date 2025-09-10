@@ -8,10 +8,7 @@ import {
 } from 'react-leaflet'
 import Fullscreen from 'react-leaflet-fullscreen-plugin'
 import { connect, ConnectedProps } from 'react-redux'
-import {
-  EStatuses,
-  IAddressPoint, IRouteInfo, IStaticMarker,
-} from '../../types/types'
+import { IAddressPoint, IRouteInfo, IStaticMarker } from '../../types/types'
 import { getAttribution, getTileServerUrl } from '../../tools/utils'
 import { useInterval } from '../../tools/hooks'
 import SITE_CONSTANTS from '../../siteConstants'
@@ -19,7 +16,7 @@ import images from '../../constants/images'
 import { t, TRANSLATION } from '../../localization'
 import * as API from '../../API'
 import { IRootState } from '../../state'
-import { modalsActionCreators, modalsSelectors } from '../../state/modals'
+import { modalsSelectors } from '../../state/modals'
 import { EMapModalTypes } from '../../state/modals/constants'
 import { clientOrderSelectors } from '../../state/clientOrder'
 import { orderSelectors } from '../../state/order'
@@ -38,11 +35,7 @@ const mapStateToProps = (state: IRootState) => ({
   takePassengerTo: modalsSelectors.takePassengerModalTo(state),
 })
 
-const mapDispatchToProps = {
-  setMessageModal: modalsActionCreators.setMessageModal,
-}
-
-const connector = connect(mapStateToProps, mapDispatchToProps)
+const connector = connect(mapStateToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {
   isOpen?: boolean;
@@ -93,7 +86,6 @@ function MapContent({
   takePassengerTo,
   disableButtons,
   isModal,
-  setMessageModal,
   onClose,
   containerClassName,
   setCenter = () => {},
@@ -226,11 +218,6 @@ function MapContent({
       })
       .catch((error) => {
         console.error(error)
-        setMessageModal({
-          isOpen: true,
-          message: t(TRANSLATION.ERROR),
-          status: EStatuses.Fail,
-        })
       })
   }, [from, to])
 
