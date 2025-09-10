@@ -57,7 +57,7 @@ interface IProps extends ConnectedProps<typeof connector> {
   setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>
   syncFrom: () => void
   syncTo: () => void
-  onSubmit: () => void
+  onSubmit: (data: Awaited<ReturnType<typeof API.postDrive>>) => void
   minimizedPartRef: React.Ref<HTMLElement>
   noSwipeElementsRef: React.Ref<HTMLElement[]>
 }
@@ -121,7 +121,7 @@ const VotingForm = function VotingForm({
       setFromError(t(TRANSLATION.MAP_FROM_NOT_SPECIFIED_ERROR))
       error = true
     }
-    if (!to?.address) {
+    if (!voting && !to?.address) {
       setToError(t(TRANSLATION.MAP_TO_NOT_SPECIFIED_ERROR))
       error = true
     }
@@ -155,13 +155,13 @@ const VotingForm = function VotingForm({
 
     setSubmitting(true)
     try {
-      await API.postDrive({
+      const data = await API.postDrive({
         b_start_address: from!.address,
         b_start_latitude: from!.latitude,
         b_start_longitude: from!.longitude,
-        b_destination_address: to!.address,
-        b_destination_latitude: to!.latitude,
-        b_destination_longitude: to!.longitude,
+        b_destination_address: to?.address,
+        b_destination_latitude: to?.latitude,
+        b_destination_longitude: to?.longitude,
         ...commentObj,
         b_contact: phone! + '',
         b_start_datetime: startTime,
@@ -175,7 +175,7 @@ const VotingForm = function VotingForm({
 
       resetClientOrder()
       getActiveOrders()
-      onSubmit()
+      onSubmit(data)
     } catch (error) {
       setSubmitError(
         (error as any)?.message?.toString() ||

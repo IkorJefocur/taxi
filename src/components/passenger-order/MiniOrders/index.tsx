@@ -7,7 +7,6 @@ import { EBookingDriverState, EColorTypes, IOrder } from '../../../types/types'
 import cn from 'classnames'
 import { t, TRANSLATION } from '../../../localization'
 import images from '../../../constants/images'
-import { CURRENCY } from '../../../siteConstants'
 import Button from '../../Button'
 import ChatToggler from '../../Chat/Toggler'
 import { clientOrderActionCreators } from '../../../state/clientOrder'
@@ -76,8 +75,13 @@ const PassengerMiniOrders: React.FC<IProps> = ({
               </span>
               <span className={'order-amount colored' + (payment.type === EPaymentType.Customer ? ' _blue' : '')}>
                 {payment.type === EPaymentType.Customer ? '⥮' : '~'}
-                {payment.value}
-                {CURRENCY.NAME}
+                {typeof payment.value === 'number' ?
+                  new Intl.NumberFormat(undefined, {
+                    style: 'currency',
+                    currency: 'MAD',
+                  }).format(payment.value) :
+                  payment.value
+                }
               </span>
               <Button
                 type="button"

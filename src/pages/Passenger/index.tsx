@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import moment from 'moment'
 import { EBookingDriverState, EStatuses, IOrder } from '../../types/types'
@@ -45,7 +45,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> { }
 
-function PassengerOrder({
+function Passenger({
   activeOrders,
   selectedOrder: selectedOrderID,
   user,
@@ -101,7 +101,11 @@ function PassengerOrder({
       (item) => item.c_state > EBookingDriverState.Canceled,
     )
   , [selectedOrder])
+
   const prevSelectedOrder = useRef<IOrder | null>(null)
+  useEffect(() => {
+    prevSelectedOrder.current = selectedOrder
+  }, [selectedOrder])
 
   useEffect(() => {
     if (user)
@@ -163,16 +167,14 @@ function PassengerOrder({
       return
     }
 
-    if (
-      ['96', '95'].some((item) =>
-        selectedOrder?.b_comments?.includes(item),
-      ) &&
-      !selectedOrderDriver
-    ) {
-      setCandidatesModal(true)
-      return
-    }
+    onDriverStateChange()
+  }
 
+  useEffect(() => {
+    onDriverStateChange()
+  }, [selectedOrderDriver?.c_state])
+
+  const onDriverStateChange = () => {
     if (
       !selectedOrderDriver ||
       selectedOrderDriver.c_state === EBookingDriverState.Finished
@@ -197,6 +199,12 @@ function PassengerOrder({
       setDriverModal(false)
       setOnTheWayModal(true)
     }
+  }
+
+  const [orderReselected, setOrderReselected] = useState(false)
+  if (orderReselected) {
+    openCurrentModal()
+    setOrderReselected(false)
   }
 
   // Used to open rating modal
@@ -225,20 +233,27 @@ function PassengerOrder({
     }
   }, [selectedOrder])
 
-  useEffect(() => {
-    openCurrentModal()
-  }, [selectedOrderID, selectedOrderDriver?.c_state])
-
   const handleOrderClick = (order: IOrder) => {
-    if (selectedOrderID === order.b_id) {
-      openCurrentModal()
-    } else setSelectedOrder(order.b_id)
+    setSelectedOrder(order.b_id)
+    setOrderReselected(true)
   }
 
-  // Used to open rating modal
+  const submittedOrderId = useRef<IOrder['b_id'] | null>(null)
+  const onSubmit = (data: { b_id: IOrder['b_id'] }) => {
+    submittedOrderId.current = data.b_id
+    setSelectedOrder(data.b_id)
+    setIsExpanded(false)
+  }
   useEffect(() => {
-    prevSelectedOrder.current = selectedOrder
-  }, [selectedOrder])
+    if (submittedOrderId.current === null)
+      return
+    for (const order of activeOrders ?? [])
+      if (order.b_id === submittedOrderId.current) {
+        if (order.b_id === selectedOrderID)
+          openCurrentModal()
+        submittedOrderId.current = null
+      }
+  }, [activeOrders])
 
   return (
     <Layout>
@@ -269,7 +284,7 @@ function PassengerOrder({
               setIsExpanded={setIsExpanded}
               syncFrom={setFromAsMapCenter}
               syncTo={setToAsMapCenter}
-              onSubmit={() => setIsExpanded(false)}
+              onSubmit={onSubmit}
               minimizedPartRef={minimizedPartRef}
               noSwipeElementsRef={formSlidersRef}
             />
@@ -281,4 +296,4 @@ function PassengerOrder({
   )
 }
 
-export default connector(PassengerOrder)
+export default connector(Passenger)

@@ -353,7 +353,8 @@ async function _postDrive(
   const response = await axios.post(`${Config.API_URL}/drive`, formData)
   if (response.data.status === 'error')
     throw response.data
-  return response.data
+  const result = response.data.data
+  return { ...result, b_id: result.b_id.toString() }
 }
 export const postDrive = apiMethod<typeof _postDrive>(_postDrive)
 

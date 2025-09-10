@@ -15,7 +15,6 @@ import SITE_CONSTANTS/**, { MAP_MODE } */ from '../siteConstants'
 import { t, TRANSLATION } from '../localization'
 import { ISelectOption } from '../types'
 import images from '../constants/images'
-import { calculateFinalPrice } from '../components/modals/RatingModal'
 
 const hints = [
   'Roman Ridge',
@@ -270,7 +269,6 @@ export function getPayment(
     _text = `${callRate} + ${farePer1Km} * ${_distance}${t(TRANSLATION.KM)} = \
       ${_value === 0 ? '-' : _value}`
   }
-  _value = order ? calculateFinalPrice(order || null) : _value
 
   return { value: _value, text: _text, type: EPaymentType.Calculated }
 }
