@@ -266,6 +266,7 @@ function PassengerOrder({
 
             <VotingForm
               isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
               syncFrom={setFromAsMapCenter}
               syncTo={setToAsMapCenter}
               onSubmit={() => setIsExpanded(false)}

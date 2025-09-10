@@ -1,5 +1,6 @@
 import React, {
-  useState, useRef, useEffect, useMemo, useCallback, useImperativeHandle,
+  useState, useRef, useLayoutEffect, useEffect,
+  useMemo, useCallback, useImperativeHandle,
 } from 'react'
 import { connect, ConnectedProps, useStore } from 'react-redux'
 import moment from 'moment'
@@ -15,7 +16,7 @@ import { t, TRANSLATION } from '../../localization'
 import { IRootState } from '../../state'
 import { modalsActionCreators } from '../../state/modals'
 import { userSelectors } from '../../state/user'
-import { ordersActionCreators } from '../../state/orders'
+import { ordersSelectors, ordersActionCreators } from '../../state/orders'
 import {
   clientOrderSelectors,
   clientOrderActionCreators,
@@ -31,6 +32,7 @@ import PriceInput from '../../components/PriceInput'
 import './voting-form.scss'
 
 const mapStateToProps = (state: IRootState) => ({
+  activeOrders: ordersSelectors.activeOrders(state),
   from: clientOrderSelectors.from(state),
   to: clientOrderSelectors.to(state),
   comments: clientOrderSelectors.comments(state),
@@ -52,6 +54,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {
   isExpanded: boolean
+  setIsExpanded: React.Dispatch<React.SetStateAction<boolean>>
   syncFrom: () => void
   syncTo: () => void
   onSubmit: () => void
@@ -60,6 +63,7 @@ interface IProps extends ConnectedProps<typeof connector> {
 }
 
 const VotingForm = function VotingForm({
+  activeOrders,
   from,
   to,
   comments,
@@ -73,6 +77,7 @@ const VotingForm = function VotingForm({
   setPhone,
   resetClientOrder,
   isExpanded,
+  setIsExpanded,
   syncFrom,
   syncTo,
   onSubmit,
@@ -88,12 +93,20 @@ const VotingForm = function VotingForm({
     seatSliderRef.current!,
   ].filter(Boolean))
 
+  const available = useMemo(() =>
+    !activeOrders?.some(order => order.b_voting)
+  , [activeOrders])
+
   const [fromError, setFromError] = useState<string | null>(null)
-  useEffect(() => { setFromError(null) }, [from])
+  useLayoutEffect(() => { setFromError(null) }, [from])
   const [toError, setToError] = useState<string | null>(null)
-  useEffect(() => { setToError(null) }, [to])
+  useLayoutEffect(() => { setToError(null) }, [to])
   const [phoneError, setPhoneError] = useState<string | null>(null)
-  useEffect(() => { setPhoneError(null) }, [phone])
+  useLayoutEffect(() => { setPhoneError(null) }, [phone])
+  useEffect(() => {
+    if (phoneError)
+      setIsExpanded(true)
+  }, [phoneError])
 
   const store = useStore<IRootState>()
   const submit = useCallback(async(voting = false) => {
@@ -191,7 +204,7 @@ const VotingForm = function VotingForm({
             checkLogin={false}
             text={t(TRANSLATION.VOTE, { toUpper: false })}
             onClick={() => submit(true)}
-            disabled={submitting}
+            disabled={!available || submitting}
           />
           <Button
             wrapperProps={{ className: 'passenger-voting-form__order-button' }}
@@ -200,10 +213,10 @@ const VotingForm = function VotingForm({
             checkLogin={false}
             text={t(TRANSLATION.TO_ORDER, { toUpper: false })}
             onClick={() => submit()}
-            disabled={submitting}
+            disabled={!available || submitting}
           />
         </>
-      , [submitting, submit])}
+      , [available, submitting, submit])}
       {submitError &&
         <span className="passenger-voting-form__order-button-error">
           {submitError}
