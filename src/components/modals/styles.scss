@@ -189,6 +189,7 @@
 }
 
 .driver-modal {
+  $b: &;
   box-shadow: 0px 1px 17px rgba(0, 0, 0, 0.16);
 
   form {
@@ -205,7 +206,7 @@
         margin-bottom: 15px;
       }
 
-      span {
+      span:not(#{$b}__registration-plate) {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -292,6 +293,13 @@
     button {
       background: linear-gradient(90deg, #FF8008 0%, #FFC837 100%);
     }
+  }
+
+  &__registration-plate {
+    display: inline;
+    overflow-x: auto;
+    max-width: 16ch;
+    white-space: nowrap;
   }
 }
 

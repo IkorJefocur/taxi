@@ -79,6 +79,8 @@ const DriverModal: React.FC<IProps> = ({
   //   }
   // }, [seconds, countUp, clicked])
 
+  const registrationPlate = car?.registration_plate.split(' ')
+
   return (
     <Overlay
       isOpen={isOpen}
@@ -105,9 +107,16 @@ const DriverModal: React.FC<IProps> = ({
                 <img src={images.stars} alt={t(TRANSLATION.STARS)}/>
               </div>
               <div className="colored">
-                <img src={images.subwayIdCard} alt={t(TRANSLATION.REGISTRATION_PLATE)}/>
-                <span>{car?.registration_plate.slice(0, car?.registration_plate.indexOf(' '))}</span>
-                <span>{car?.registration_plate.slice(car?.registration_plate.indexOf(' '))}</span>
+                <img
+                  src={images.subwayIdCard}
+                  alt={t(TRANSLATION.REGISTRATION_PLATE)}
+                />
+                <span className="driver-modal__registration-plate">
+                  {registrationPlate?.[0]}
+                </span>
+                <span className="driver-modal__registration-plate">
+                  {registrationPlate?.slice(1).join(' ')}
+                </span>
               </div>
             </div>
             <div className="driver-info_div">
