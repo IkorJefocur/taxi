@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import cn from 'classnames'
 import { connect, ConnectedProps } from 'react-redux'
 import moment from 'moment'
-import { getPayment } from '../../tools/utils'
+import { getPayment, formatCurrency } from '../../tools/utils'
 import { IRootState } from '../../state'
 import {
   clientOrderSelectors,
@@ -61,12 +61,7 @@ function PriceInput({
             value: `${
               t(TRANSLATION.COST)
             }: ${
-              typeof payment === 'number' ?
-                new Intl.NumberFormat(undefined, {
-                  style: 'currency',
-                  currency: 'MAD',
-                }).format(payment) :
-                payment
+              typeof payment === 'number' ? formatCurrency(payment) : payment
             }`,
           }}
           fieldWrapperClassName={cn('price-input__segment', {

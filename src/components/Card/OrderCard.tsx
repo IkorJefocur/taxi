@@ -1,18 +1,26 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { t, TRANSLATION } from '../../localization'
-import { CURRENCY } from '../../siteConstants'
+import { createPortal } from 'react-dom'
+import cn from 'classnames'
 import {
   EBookingDriverState,
   EOrderProfitRank,
   IAddressPoint,
   IOrder,
-  IUser
+  IUser,
 } from '../../types/types'
-import './styles.scss'
 import images from '../../constants/images'
-import { dateFormatDate, dateShowFormat, formatCommentWithEmoji, getOrderCount, getPayment, shortenAddress } from '../../tools/utils'
-import cn from 'classnames'
-import { createPortal } from 'react-dom'
+import { CURRENCY } from '../../siteConstants'
+import { t, TRANSLATION } from '../../localization'
+import {
+  dateFormatDate,
+  dateShowFormat,
+  formatCommentWithEmoji,
+  getOrderCount,
+  getPayment,
+  shortenAddress,
+  formatCurrency,
+} from '../../tools/utils'
+import './styles.scss'
 
 import * as API from '../../API'
 import CardModal from '../modals/CardModal'
@@ -164,11 +172,7 @@ const OrderCard: React.FC<IOrderCardProps> = ({
 
         {order.profit &&
           <span className="status-card__profit">
-            {new Intl.NumberFormat(undefined, {
-              signDisplay: 'always',
-              style: 'currency',
-              currency: 'MAD',
-            }).format(order.profit)}
+            {formatCurrency(order.profit, { signDisplay: 'always' })}
           </span>
         }
       </div>

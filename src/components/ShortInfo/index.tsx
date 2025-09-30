@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect, ConnectedProps } from 'react-redux'
+import { formatCurrency } from '../../tools/utils'
 import { IRootState } from '../../state'
 import { clientOrderSelectors } from '../../state/clientOrder'
 import { t, TRANSLATION } from '../../localization'
@@ -28,12 +29,7 @@ function ShortInfo({ time, seats, carClass, customerPrice }: IProps) {
     { name: images.carIcon, value: t(TRANSLATION.CAR_CLASSES[carClass]) },
     {
       name: images.moneyIcon,
-      value: customerPrice !== null ?
-        new Intl.NumberFormat(undefined, {
-          style: 'currency',
-          currency: 'MAD',
-        }).format(customerPrice) :
-        null,
+      value: customerPrice !== null ? formatCurrency(customerPrice) : null,
     },
     { name: images.callIcon, value: '' },
     { name: images.msgIcon, value: '' },

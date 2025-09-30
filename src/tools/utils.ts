@@ -1,6 +1,7 @@
-import moment, { Moment } from 'moment'
-import { findBestMatch } from 'string-similarity'
 import _ from 'lodash'
+import { findBestMatch } from 'string-similarity'
+import moment, { Moment } from 'moment'
+import { ISelectOption } from '../types'
 import {
   EStatuses,
   IOrder,
@@ -11,10 +12,9 @@ import {
   TBlockObject,
   ITrip,
 } from '../types/types'
-import SITE_CONSTANTS/**, { MAP_MODE } */ from '../siteConstants'
-import { t, TRANSLATION } from '../localization'
-import { ISelectOption } from '../types'
 import images from '../constants/images'
+import SITE_CONSTANTS, { CURRENCY } from '../siteConstants'
+import { t, TRANSLATION } from '../localization'
 
 const hints = [
   'Roman Ridge',
@@ -891,3 +891,21 @@ export const getBase64 = (file: any) => new Promise((resolve, reject) => {
   reader.onload = () => resolve(reader.result)
   reader.onerror = error => reject(error)
 })
+
+export function formatCurrency(
+  value: number,
+  { signDisplay = 'auto', currencyDisplay = 'symbol' }: {
+    signDisplay?: 'auto' | 'always' | 'exceptZero' | 'negative' | 'never',
+    currencyDisplay?: 'code' | 'symbol' | 'narrowSymbol' | 'name' | 'none'
+  } = {},
+) {
+  const result = new Intl.NumberFormat(undefined, {
+    signDisplay,
+    style: 'currency',
+    currency: CURRENCY.NAME,
+    currencyDisplay: currencyDisplay !== 'none' ? currencyDisplay : 'code',
+  }).format(value)
+  return currencyDisplay === 'none' ?
+    result.replace(CURRENCY.NAME, '') :
+    result
+}

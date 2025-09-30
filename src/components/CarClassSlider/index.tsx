@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import SITE_CONSTANTS from '../../siteConstants'
+import { formatCurrency } from '../../tools/utils'
 import { IRootState } from '../../state'
 import {
   clientOrderSelectors,
@@ -63,10 +64,7 @@ function CarClassSlider({ carClass, setCarClass }: IProps) {
                 id === carClass ? 'car-class-slider__text-active' : ''
               }`}
             >
-              {new Intl.NumberFormat(undefined, {
-                style: 'currency',
-                currency: 'MAD',
-              }).format(item.courier_call_rate)}
+              {formatCurrency(item.courier_call_rate)}
             </span>
           </div>
         ),

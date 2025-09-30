@@ -5,6 +5,7 @@ import {
   formatCommentWithEmoji,
   getOrderCount,
   getPayment,
+  formatCurrency,
 } from "../../tools/utils"
 import {
   EBookingDriverState,
@@ -674,11 +675,7 @@ const CardModal: React.FC<CardModalProps> = ({ active, avatarSize, avatar, order
             <p>{t(TRANSLATION.CALCULATION) + ': ' + calculateFinalPriceFormula(order)}</p>
             {order?.profit &&
               <p className='status-card__profit'>
-                {new Intl.NumberFormat(undefined, {
-                  signDisplay: 'always',
-                  style: 'currency',
-                  currency: 'MAD',
-                }).format(order.profit)}
+                {formatCurrency(order.profit, { signDisplay: 'always' })}
               </p>
             }
           </div>

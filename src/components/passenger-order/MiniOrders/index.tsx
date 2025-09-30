@@ -2,7 +2,13 @@ import React from 'react'
 import { ConnectedProps, connect } from 'react-redux'
 import { IRootState } from '../../../state'
 import { ordersSelectors } from '../../../state/orders'
-import { EPaymentType, getOrderCount, getOrderIcon, getPayment } from '../../../tools/utils'
+import {
+  EPaymentType,
+  getOrderCount,
+  getOrderIcon,
+  getPayment,
+  formatCurrency,
+} from '../../../tools/utils'
 import { EBookingDriverState, EColorTypes, IOrder } from '../../../types/types'
 import cn from 'classnames'
 import { t, TRANSLATION } from '../../../localization'
@@ -76,10 +82,7 @@ const PassengerMiniOrders: React.FC<IProps> = ({
               <span className={'order-amount colored' + (payment.type === EPaymentType.Customer ? ' _blue' : '')}>
                 {payment.type === EPaymentType.Customer ? '⥮' : '~'}
                 {typeof payment.value === 'number' ?
-                  new Intl.NumberFormat(undefined, {
-                    style: 'currency',
-                    currency: 'MAD',
-                  }).format(payment.value) :
+                  formatCurrency(payment.value) :
                   payment.value
                 }
               </span>

@@ -19,7 +19,13 @@ import {
 } from '../../types/types'
 import { useCachedState } from '../../tools/hooks'
 import images from '../../constants/images'
-import { dateFormatTime, getAngle, getAttribution, getTileServerUrl } from '../../tools/utils'
+import {
+  dateFormatTime,
+  getAngle,
+  getAttribution,
+  getTileServerUrl,
+  formatCurrency,
+} from '../../tools/utils'
 import { EDriverTabs, OrderAddressContext } from '.'
 import SITE_CONSTANTS from '../../siteConstants'
 import CardModal from '../../components/modals/CardModal'
@@ -289,12 +295,10 @@ const DriverOrderMapModeContent: React.FC<IContentProps> = ({
                           />
                           <div class='order-profit-estimation'>${
                             item.profit !== undefined ?
-                              new Intl.NumberFormat(undefined, {
+                              formatCurrency(item.profit, {
                                 signDisplay: 'always',
-                                style: 'currency',
-                                currency: 'MAD',
-                                currencyDisplay: 'code',
-                              }).format(item.profit).replace('MAD', '') :
+                                currencyDisplay: 'none',
+                              }) :
                               '+?'
                           }</div>
                         </div>
