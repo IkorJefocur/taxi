@@ -37,70 +37,109 @@ const record = Record<IClientOrderState>({
     getItem('state.clientOrder.customerPrice', defaultRecord.customerPrice),
 })
 
-export default function(state = new record(), action: TAction) {
+export default function reducer(
+  state = new record(),
+  action: TAction,
+  performedActions = new Set<string>(),
+) {
   const { type, payload } = action
-  const actionTypes = new Set<string>([type])
+  if (performedActions.has(type))
+    return state
+  performedActions.add(type)
 
-  if (actionTypes.has(configConstants.ActionTypes.SET_CONFIG_SUCCESS)) {
+  if (type === configConstants.ActionTypes.SET_CONFIG_SUCCESS) {
     CONFIG = calculateConfig()
     defaultRecord.carClass = SITE_CONSTANTS.DEFAULT_CAR_CLASS
     defaultRecord.locationClass = SITE_CONSTANTS.DEFAULT_BOOKING_LOCATION_CLASS
-    actionTypes.add(ActionTypes.SET_CAR_CLASS)
-    actionTypes.add(ActionTypes.SET_SEATS)
-    actionTypes.add(ActionTypes.SET_COMMENTS)
-    actionTypes.add(ActionTypes.SET_LOCATION_CLASS)
+    state = reducer(state, {
+      type: ActionTypes.SET_CAR_CLASS,
+      payload: state.carClass,
+    }, performedActions)
+    state = reducer(state, {
+      type: ActionTypes.SET_SEATS,
+      payload: state.seats,
+    }, performedActions)
+    state = reducer(state, {
+      type: ActionTypes.SET_COMMENTS,
+      payload: state.comments,
+    }, performedActions)
+    state = reducer(state, {
+      type: ActionTypes.SET_LOCATION_CLASS,
+      payload: state.locationClass,
+    }, performedActions)
+    return state
   }
 
-  if (actionTypes.has(ActionTypes.SET_CAR_CLASS)) {
-    let carClass = type === ActionTypes.SET_CAR_CLASS ? payload : state.carClass
-    carClass = carClass in SITE_CONSTANTS.CAR_CLASSES ?
-      carClass :
+  if (type === ActionTypes.SET_CAR_CLASS) {
+    const carClass = payload in SITE_CONSTANTS.CAR_CLASSES ?
+      payload :
       defaultRecord.carClass
     const carClassData = SITE_CONSTANTS.CAR_CLASSES[carClass]
     state = state
       .set('carClass', carClass)
-      .set('seats', Math.min(state.seats, carClassData.seats))
+    state = reducer(state, {
+      type: ActionTypes.SET_SEATS,
+      payload: Math.min(state.seats, carClassData.seats),
+    }, performedActions)
+    state = reducer(state, {
+      type: ActionTypes.SET_LOCATION_CLASS,
+      payload:
+        carClassData.booking_location_classes === null ||
+        carClassData.booking_location_classes.includes(state.locationClass) ?
+          state.locationClass :
+          SITE_CONSTANTS.BOOKING_LOCATION_CLASSES.find(lc =>
+            carClassData.booking_location_classes!.includes(lc.id),
+          )?.id ?? defaultRecord.locationClass,
+    }, performedActions)
+    return state
   }
 
-  if (actionTypes.has(ActionTypes.SET_SEATS)) {
-    const seats = Math.min(
-      type === ActionTypes.SET_SEATS ? payload : state.seats,
-      CONFIG.maxSeats,
-    )
+  if (type === ActionTypes.SET_SEATS) {
+    const seats = Math.min(payload, CONFIG.maxSeats)
     state = state
       .set('seats', seats)
-      .set(
-        'carClass',
-        SITE_CONSTANTS.CAR_CLASSES[state.carClass].seats < seats ?
-          (
-            Object.entries(SITE_CONSTANTS.CAR_CLASSES)
-              .find(([, cc]) => cc.seats >= seats)?.[0]
-          ) ?? defaultRecord.carClass :
-          state.carClass,
-      )
+    state = reducer(state, {
+      type: ActionTypes.SET_CAR_CLASS,
+      payload: SITE_CONSTANTS.CAR_CLASSES[state.carClass].seats < seats ?
+        (
+          Object.values(SITE_CONSTANTS.CAR_CLASSES)
+            .find(cc => cc.seats >= seats)?.id
+        ) ?? defaultRecord.carClass :
+        state.carClass,
+    }, performedActions)
+    return state
   }
 
-  if (actionTypes.has(ActionTypes.SET_COMMENTS)) {
-    let comments = type === ActionTypes.SET_COMMENTS ? payload : state.comments
-    comments = {
-      ...comments,
-      ids: comments.ids
-        .filter((id: string) => id in SITE_CONSTANTS.BOOKING_COMMENTS),
-    }
-    state = state
-      .set('comments', comments)
+  if (type === ActionTypes.SET_COMMENTS) {
+    return state
+      .set('comments', {
+        ...payload,
+        ids: payload.ids
+          .filter((id: string) => id in SITE_CONSTANTS.BOOKING_COMMENTS),
+      })
   }
 
-  if (actionTypes.has(ActionTypes.SET_LOCATION_CLASS)) {
-    let locationClass =
-      type === ActionTypes.SET_LOCATION_CLASS ? payload : state.locationClass
-    locationClass = SITE_CONSTANTS.BOOKING_LOCATION_CLASSES.some(
-      ({ id }) => id === locationClass,
+  if (type === ActionTypes.SET_LOCATION_CLASS) {
+    const locationClass = SITE_CONSTANTS.BOOKING_LOCATION_CLASSES.some(
+      ({ id }) => id === payload,
     ) ?
-      locationClass :
+      payload :
       defaultRecord.locationClass
+    const carClassData = SITE_CONSTANTS.CAR_CLASSES[state.carClass]
     state = state
       .set('locationClass', locationClass)
+    state = reducer(state, {
+      type: ActionTypes.SET_CAR_CLASS,
+      payload:
+        carClassData.booking_location_classes === null ||
+        carClassData.booking_location_classes.includes(locationClass) ?
+          state.carClass :
+          Object.values(SITE_CONSTANTS.CAR_CLASSES).find(cc =>
+            cc.booking_location_classes === null ||
+            cc.booking_location_classes.includes(locationClass),
+          )?.id ?? defaultRecord.carClass,
+    }, performedActions)
+    return state
   }
 
   switch (type) {

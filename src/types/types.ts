@@ -36,6 +36,7 @@ export interface ICarClass {
   seats: number
   courier_call_rate: number
   courier_fare_per_1_km: number
+  booking_location_classes: IBookingLocationClass['id'][] | null
 }
 
 export enum EBookingStates {

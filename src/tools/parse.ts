@@ -46,6 +46,7 @@ export function parseCarClasses(carClasses: any): Record<number, ICarClass> {
       seats: parseInt(carClass.seats),
       courier_call_rate: parseFloat(carClass.courier_call_rate),
       courier_fare_per_1_km: parseFloat(carClass.courier_fare_per_1_km),
+      booking_location_classes: carClass.booking_location_classes,
     }
   return value
 }
