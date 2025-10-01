@@ -14,7 +14,7 @@ import {
 import { ordersSelectors, ordersActionCreators } from '../../state/orders'
 import { modalsActionCreators } from '../../state/modals'
 import { userSelectors } from '../../state/user'
-import PassengerMiniOrders from '../../components/passenger-order/MiniOrders'
+import PassengerMiniOrders from '../../components/MiniOrders'
 import Map from '../../components/Map'
 import Layout from '../../components/Layout'
 import PageSection from '../../components/PageSection'

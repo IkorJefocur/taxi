@@ -1,22 +1,22 @@
 import React from 'react'
 import { ConnectedProps, connect } from 'react-redux'
-import { IRootState } from '../../../state'
-import { ordersSelectors } from '../../../state/orders'
+import cn from 'classnames'
+import { EBookingDriverState, EColorTypes, IOrder } from '../../types/types'
+import images from '../../constants/images'
 import {
   EPaymentType,
   getOrderCount,
   getOrderIcon,
   getPayment,
   formatCurrency,
-} from '../../../tools/utils'
-import { EBookingDriverState, EColorTypes, IOrder } from '../../../types/types'
-import cn from 'classnames'
-import { t, TRANSLATION } from '../../../localization'
-import images from '../../../constants/images'
-import Button from '../../Button'
-import ChatToggler from '../../Chat/Toggler'
-import { clientOrderActionCreators } from '../../../state/clientOrder'
-import { modalsActionCreators } from '../../../state/modals'
+} from '../../tools/utils'
+import { IRootState } from '../../state'
+import { ordersSelectors } from '../../state/orders'
+import { clientOrderActionCreators } from '../../state/clientOrder'
+import { modalsActionCreators } from '../../state/modals'
+import { t, TRANSLATION } from '../../localization'
+import Button from '../Button'
+import ChatToggler from '../Chat/Toggler'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
@@ -43,7 +43,7 @@ const PassengerMiniOrders: React.FC<IProps> = ({
   if (!activeOrders?.length) return null
 
   return (
-    <div className="passenger-order__mini-orders">
+    <div className="mini-orders">
       {
         activeOrders.map(order => {
           const payment = getPayment(order)
