@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import moment from 'moment'
-import { EBookingDriverState, EStatuses, IOrder } from '../../types/types'
-import SITE_CONSTANTS from '../../siteConstants'
+import { EBookingDriverState, IOrder } from '../../types/types'
 import { useInterval } from '../../tools/hooks'
 import { useSwipe } from '../../tools/swipe'
 import * as API from '../../API'
@@ -116,44 +114,6 @@ function Passenger({
       getActiveOrders()
   }, 5000)
 
-  const prevActiveOrders = useRef<IOrder[]>(activeOrders ?? [])
-  useEffect(() => {
-    for (const order of prevActiveOrders.current)
-      recreateExpiredVotingOrder(order)
-    prevActiveOrders.current = activeOrders ?? []
-  }, [activeOrders])
-
-  const recreateExpiredVotingOrder = async(order: IOrder) => {
-    if (
-      order.b_voting &&
-      order.b_start_datetime &&
-      (order.b_max_waiting || SITE_CONSTANTS.WAITING_INTERVAL) -
-      moment().diff(order.b_start_datetime, 'seconds') <=
-      0
-    ) {
-      API.cancelDrive(order.b_id)
-
-      try {
-        const response = await API.postDrive({
-          ...order,
-          b_start_datetime: moment(),
-          b_max_waiting: undefined,
-        })
-        getActiveOrders()
-        setSelectedOrder(response.b_id)
-      }
-
-      catch (error) {
-        console.error(error)
-        setMessageModal({
-          isOpen: true,
-          status: EStatuses.Fail,
-          message: (error as any).message,
-        })
-      }
-    }
-  }
-
   const openCurrentModal = () => {
     if (!selectedOrder) {
       setVoteModal(false)
@@ -202,10 +162,12 @@ function Passenger({
   }
 
   const [orderReselected, setOrderReselected] = useState(false)
-  if (orderReselected) {
-    openCurrentModal()
-    setOrderReselected(false)
-  }
+  useEffect(() => {
+    if (orderReselected) {
+      openCurrentModal()
+      setOrderReselected(false)
+    }
+  }, [orderReselected])
 
   // Used to open rating modal
   useEffect(() => {

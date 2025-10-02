@@ -1,17 +1,21 @@
-import { setSelectedOrder } from '../clientOrder/actionCreators'
+import { all, race, fork, take, takeEvery, put } from 'redux-saga/effects'
+import moment from 'moment'
+import { TAction } from '../../types'
+import {
+  EUserRoles,
+  EOrderTypes, IOrder,
+  EBookingStates,
+} from '../../types/types'
+import SITE_CONSTANTS from '../../siteConstants'
+import * as API from '../../API'
 import { getCurrentPosition } from '../../tools/utils'
-import { getAreasBetweenPoints } from '../areas/actionCreators'
+import { select, call } from '../../tools/sagaUtils'
+import { calculateFinalPrice } from '../../components/modals/RatingModal'
 import { getCar } from '../user/actionCreators'
 import { user } from '../user/selectors'
-import { all, takeEvery, put } from 'redux-saga/effects'
-import * as API from '../../API'
+import { setSelectedOrder } from '../clientOrder/actionCreators'
+import { getAreasBetweenPoints } from '../areas/actionCreators'
 import { ActionTypes } from './constants'
-import { TAction } from '../../types'
-import { EOrderTypes, IOrder, EBookingStates } from '../../types/types'
-import { select, call } from '../../tools/sagaUtils'
-import moment from 'moment'
-import { calculateFinalPrice } from '../../components/modals/RatingModal'
-
 
 // Helper function to update duration and price for completed orders
 const updateCompletedOrdersDuration = (orders: IOrder[]) => {
@@ -38,10 +42,15 @@ export const saga = function* () {
 
 function* getActiveOrdersSaga({ payload: { estimate } }: TAction) {
   try {
-    const orders = yield* getOrdersSaga(EOrderTypes.Active)
+    let orders = yield* getOrdersSaga(EOrderTypes.Active)
+
+    orders = yield* cancelExpiredOrdersSaga(orders)
+    if (orders.length === 1)
+      yield put(setSelectedOrder(orders[0].b_id))
+    if (orders.length === 0)
+      yield put(setSelectedOrder(null))
     yield put({ type: ActionTypes.GET_ACTIVE_ORDERS_SUCCESS, payload: orders })
-    if (orders.length === 1) yield put(setSelectedOrder(orders[0].b_id))
-    if (orders.length === 0) yield put(setSelectedOrder(null))
+
     try {
       const geolocation = estimate ?
         yield* getOrdersTakerGeolocationSaga(orders) :
@@ -57,7 +66,25 @@ function* getActiveOrdersSaga({ payload: { estimate } }: TAction) {
         payload: error,
       })
     }
-  } catch (error) {
+
+    yield fork(function*() {
+      while (orders.length > 0) {
+        const [keptOrders] = yield race([
+          call(cancelOrdersOnNextExpireSaga, orders),
+          take(ActionTypes.GET_ACTIVE_ORDERS_REQUEST),
+        ])
+        if (keptOrders === undefined)
+          break
+        orders = keptOrders
+        yield put({
+          type: ActionTypes.GET_ACTIVE_ORDERS_SUCCESS,
+          payload: orders,
+        })
+      }
+    })
+  }
+
+  catch (error) {
     console.error(error)
     yield put({ type: ActionTypes.GET_ACTIVE_ORDERS_FAIL, payload: error })
   }
@@ -121,6 +148,53 @@ function* getOrdersSaga(
 
   const _orders = yield* call<IOrder[]>(API.getOrders, orderType)
   return updateCompletedOrdersDuration(_orders)
+}
+
+function* cancelOrdersOnNextExpireSaga(orders: IOrder[]) {
+  const nextCancel = orders.reduce((value, order) =>
+    order.b_voting &&
+    order.b_start_datetime ?
+      Math.min(
+        +order.b_start_datetime +
+          (order.b_max_waiting || SITE_CONSTANTS.WAITING_INTERVAL),
+        value,
+      ) :
+      value
+  , Infinity) * 1000 - +moment()
+  yield call(() => new Promise(resolve => setTimeout(resolve, nextCancel)))
+  return yield* cancelExpiredOrdersSaga(orders)
+}
+
+function* cancelExpiredOrdersSaga(orders: IOrder[]) {
+  const currentUser = yield* select<ReturnType<typeof user>>(user)
+  if (!currentUser || currentUser.u_role !== EUserRoles.Client)
+    return orders
+
+  const ordersToCancel: IOrder[] = []
+  const keptOrders: IOrder[] = []
+  for (const order of orders)
+    (
+      (
+        order.b_voting &&
+        order.b_start_datetime &&
+        (order.b_max_waiting || SITE_CONSTANTS.WAITING_INTERVAL) <=
+          moment().diff(order.b_start_datetime, 'seconds')
+      ) ?
+        ordersToCancel :
+        keptOrders
+    ).push(order)
+
+  yield fork(function*() {
+    for (const order of ordersToCancel) {
+      try {
+        yield* call(API.cancelDrive, order.b_id)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  })
+
+  return keptOrders
 }
 
 function* getOrdersTakerGeolocationSaga(
