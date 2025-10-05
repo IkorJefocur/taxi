@@ -1,7 +1,6 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import cn from 'classnames'
 import { connect, ConnectedProps } from 'react-redux'
-import SITE_CONSTANTS from '../../siteConstants'
 import { EBookingLocationKinds } from '../../types/types'
 import { IRootState } from '../../state'
 import {
@@ -12,6 +11,7 @@ import { t, TRANSLATION } from '../../localization'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
+  locationClasses: clientOrderSelectors.availableLocationClasses(state),
   locationClass: clientOrderSelectors.locationClass(state),
 })
 
@@ -23,10 +23,26 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {}
 
-function BoundaryButtons({ locationClass, setLocationClass }: IProps) {
+function BoundaryButtons({
+  locationClasses,
+  locationClass,
+  setLocationClass,
+}: IProps) {
+
+  const disabled = locationClasses === null
+  const prevLocationClasses = useRef(locationClasses ?? [])
+  if (locationClasses === null)
+    locationClasses = prevLocationClasses.current
+  else
+    prevLocationClasses.current = locationClasses
+
   return (
-    <div className="boundary-buttons">
-      {SITE_CONSTANTS.BOOKING_LOCATION_CLASSES.map(({ id, kind }) => {
+    <div
+      className={cn('boundary-buttons', {
+        'boundary-buttons--disabled': disabled,
+      })}
+    >
+      {locationClasses.map(({ id, kind }) => {
         const selected = id === locationClass
         return (
           <div

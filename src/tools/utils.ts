@@ -16,6 +16,11 @@ import images from '../constants/images'
 import SITE_CONSTANTS, { CURRENCY } from '../siteConstants'
 import { t, TRANSLATION } from '../localization'
 
+export function firstItem<T>(value: Iterable<T>): T | undefined {
+  for (const item of value)
+    return item
+}
+
 const hints = [
   'Roman Ridge',
   'Kanda',

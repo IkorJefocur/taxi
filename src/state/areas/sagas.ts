@@ -38,7 +38,7 @@ export function* saga() {
 function* getAreaSaga(action: TAction) {
   const id: IArea['id'] = action.payload
   try {
-    const area = yield* call<IArea>(API.getArea, id)
+    const area = yield* call(API.getArea, id)
     yield put({ type: ActionTypes.GET_AREA_SUCCESS, payload: area })
   } catch (e) {
     console.error(e)
@@ -49,12 +49,12 @@ function* getAreaSaga(action: TAction) {
 function* getAreasBetweenPointsSaga(action: TAction) {
   const points: [number, number][] = action.payload
   try {
-    const ids = yield* call<IArea['id'][]>(
+    const ids = yield* call(
       API.getAreasIdsBetweenPoints,
       points,
     )
     for (const id of ids)
-      if (!(yield* select<IArea | undefined>(area, id)))
+      if (!(yield* select(area, id)))
         yield put(getArea(id))
   } catch (e) {
     console.error(e)

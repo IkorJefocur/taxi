@@ -1,13 +1,22 @@
-import { select as sagaSelect, call as sagaCall, takeEvery as sagaTakeEvery } from 'redux-saga/effects'
+import {
+  Tail, SelectEffect, CallEffect, SagaReturnType,
+  select as sagaSelect,
+  call as sagaCall,
+  takeEvery as sagaTakeEvery,
+} from 'redux-saga/effects'
 
-export function* select<T>(fn: any, ...args: any[]) {
-  const res: T = yield sagaSelect(fn, ...args)
-  return res
+export function* select<Fn extends(...args: any[]) => any>(
+  fn: Fn,
+  ...args: Tail<Parameters<Fn>>
+): Generator<SelectEffect, ReturnType<Fn>> {
+  return yield sagaSelect(fn, ...args)
 }
 
-export function* call<T>(fn: any, ...args: any[]) {
-  const res: T = yield sagaCall(fn, ...args)
-  return res
+export function* call<Fn extends(...args: any[]) => any>(
+  fn: Fn,
+  ...args: Parameters<Fn>
+): Generator<CallEffect<SagaReturnType<Fn>>, SagaReturnType<Fn>> {
+  return yield sagaCall(fn, ...args)
 }
 
 export const takeEvery: any = sagaTakeEvery

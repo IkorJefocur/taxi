@@ -1,7 +1,7 @@
 import { shortenAddress } from './../../tools/utils'
 import { all, takeEvery, put } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
-import { EPointType, IAddressPoint, IPlaceResponse } from '../../types/types'
+import { EPointType, IAddressPoint } from '../../types/types'
 import { TAction } from '../../types'
 import { call } from '../../tools/sagaUtils'
 import * as API from '../../API'
@@ -17,7 +17,7 @@ const setPointSaga = (type: EPointType) => function* (data: TAction) {
   const value: IAddressPoint = { ...data.payload }
   try {
     if (!(value.address || value.shortAddress) && value.latitude && value.longitude) {
-      const address = yield* call<IPlaceResponse>(
+      const address = yield* call(
         API.reverseGeocode,
         value.latitude.toString(),
         value.longitude.toString(),

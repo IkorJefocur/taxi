@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import SITE_CONSTANTS from '../../siteConstants'
+import cn from 'classnames'
 import images from '../../constants/images'
 import { IRootState } from '../../state'
 import {
@@ -11,6 +11,7 @@ import Glide from '../Glide'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
+  maxSeats: clientOrderSelectors.maxAvailableSeats(state),
   seats: clientOrderSelectors.seats(state),
 })
 
@@ -22,27 +23,28 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {}
 
-function SeatSlider({ seats, setSeats }: IProps) {
+function SeatSlider({ maxSeats, seats, setSeats }: IProps) {
 
-  const seatNumber = useMemo(() => {
-    let value = 1
-    for (const carClass of Object.values(SITE_CONSTANTS.CAR_CLASSES))
-      if (carClass.seats > value)
-        value = carClass.seats
-    return value
-  }, [])
+  const disabled = maxSeats === null
+  const prevMaxSeats = useRef(maxSeats ?? 0)
+  if (maxSeats === null)
+    maxSeats = prevMaxSeats.current
+  else
+    prevMaxSeats.current = maxSeats
   const items = useMemo(
-    () => Array(seatNumber).fill(0).map((_, idx) => idx + 1),
-    [seatNumber],
+    () => new Array(maxSeats).fill(0).map((_, idx) => idx + 1),
+    [maxSeats],
   )
 
   const [position, setPosition] = useState<number>(0)
 
   return (
     <Glide
-      className="seat-slider"
+      className={cn('seat-slider', {
+        'seat-slider--disabled': disabled,
+      })}
       style={{
-        '--seat-slider_per-view': '5',
+        '--seat-slider--per-view': '5',
       } as React.CSSProperties}
       perView={5}
       gap={8}

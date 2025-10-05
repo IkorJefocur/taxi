@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useRef, useMemo } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import SITE_CONSTANTS from '../../siteConstants'
+import cn from 'classnames'
 import { formatCurrency } from '../../tools/utils'
 import { IRootState } from '../../state'
 import {
@@ -12,6 +12,7 @@ import Glide from '../Glide'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
+  carClasses: clientOrderSelectors.availableCarClasses(state),
   carClass: clientOrderSelectors.carClass(state),
 })
 
@@ -23,52 +24,47 @@ const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {}
 
-function CarClassSlider({ carClass, setCarClass }: IProps) {
+function CarClassSlider({ carClasses, carClass, setCarClass }: IProps) {
 
-  const items = useMemo(() => Object.entries(SITE_CONSTANTS.CAR_CLASSES), [])
+  const disabled = carClasses === null
+  const prevCarClasses = useRef(carClasses ?? [])
+  if (carClasses === null)
+    carClasses = prevCarClasses.current
+  else
+    prevCarClasses.current = carClasses
 
   return (
     <Glide
-      className="car-class-slider"
+      className={cn('car-class-slider', {
+        'car-class-slider--disabled': disabled,
+      })}
       perView={4}
       gap={8}
       focused={useMemo(
-        () => items.findIndex(([id]) => id === carClass),
-        [items, carClass],
+        () => carClasses.findIndex(cc => cc.id === carClass),
+        [carClasses, carClass],
       )}
-      slides={useMemo(() => items.map(([id, item]) => ({
-        key: id,
+      slides={useMemo(() => carClasses.map(cc => ({
+        key: cc.id,
         children: (
           <div
-            onClick={() => setCarClass(id)}
-            className={`glide__slide car-class-slider__slide ${
-              id === carClass ? 'car-class-slider__slide__active' : ''
-            }`}
+            onClick={() => setCarClass(cc.id)}
+            className={cn('glide__slide car-class-slider__slide', {
+              'car-class-slider__slide--active': cc.id === carClass,
+            })}
           >
-            <div
-              className={`car-class-slider__icon ${
-                id === carClass ? 'car-class-slider__icon__active' : ''
-              }`}
-            >
-              <Car active={id === carClass}/>
+            <div className="car-class-slider__icon">
+              <Car active={cc.id === carClass} />
             </div>
-            <span
-              className={`car-class-slider__title ${
-                id === carClass ? 'car-class-slider__text-active' : ''
-              }`}
-            >
-              {t(TRANSLATION.CAR_CLASSES[id])}
+            <span className="car-class-slider__title">
+              {t(TRANSLATION.CAR_CLASSES[cc.id])}
             </span>
-            <span
-              className={`car-class-slider__value ${
-                id === carClass ? 'car-class-slider__text-active' : ''
-              }`}
-            >
-              {formatCurrency(item.courier_call_rate)}
+            <span className="car-class-slider__value">
+              {formatCurrency(cc.courier_call_rate)}
             </span>
           </div>
         ),
-      })), [items, carClass, setCarClass])}
+      })), [carClasses, carClass, setCarClass])}
     />
   )
 }

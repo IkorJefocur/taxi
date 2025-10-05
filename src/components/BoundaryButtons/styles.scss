@@ -7,6 +7,10 @@ $red: #FF2400;
   align-items: center;
   margin-left: 16px;
 
+  &--disabled {
+    pointer-events: none;
+  }
+
   &__item {
     display: flex;
     align-items: center;
@@ -19,11 +23,20 @@ $red: #FF2400;
     background-color: #E7E7E7;
     white-space: nowrap;
     cursor: pointer;
-    transition: max-width 0.5s ease-in-out;
+    transition: 0.5s ease-in-out;
+    transition-property: max-width, background-color;
 
     &--active {
       background-color: $red;
       max-width: 100%;
+    }
+  }
+
+  &--disabled &__item {
+    background-color: #AAAAAA;
+
+    &--active {
+      background-color: #AAAAAA;
     }
   }
 

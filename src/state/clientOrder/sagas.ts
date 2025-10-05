@@ -1,11 +1,12 @@
-import { all, takeEvery, put } from 'redux-saga/effects'
-import { getCurrentPosition, shortenAddress } from '../../tools/utils'
-import { EPointType, IAddressPoint, IPlaceResponse } from '../../types/types'
+import { all, takeEvery, takeLatest, put } from 'redux-saga/effects'
 import { TAction } from '../../types'
-import { getPhoneNumberError } from '../../tools/utils'
+import { EPointType, IAddressPoint } from '../../types/types'
+import * as API from '../../API'
+import {
+  getCurrentPosition, shortenAddress, getPhoneNumberError,
+} from '../../tools/utils'
 import { getItem, setItem, removeItem } from '../../tools/localStorage'
 import { call, select } from '../../tools/sagaUtils'
-import * as API from '../../API'
 import { IRootState } from '..'
 import { configConstants } from '../config'
 import { IClientOrderState, ActionTypes } from './constants'
@@ -13,30 +14,34 @@ import { moduleSelector } from './selectors'
 
 export const saga = function* () {
   yield all([
-    takeEvery(ActionTypes.SET_FROM_REQUEST, setPointSaga(EPointType.From)),
-    takeEvery(ActionTypes.SET_TO_REQUEST, setPointSaga(EPointType.To)),
+    takeLatest(ActionTypes.SET_FROM_REQUEST, setPointSaga),
+    takeLatest(ActionTypes.SET_TO_REQUEST, setPointSaga),
     takeEvery(
       configConstants.ActionTypes.SET_CONFIG_SUCCESS,
-      reloadStorageSaga,
+      loadFromStorageSaga,
     ),
     takeEvery([
       ActionTypes.SET_CAR_CLASS,
       ActionTypes.SET_SEATS,
-    ], setCarDataSaga),
+      ActionTypes.SET_LOCATION_CLASS,
+      ActionTypes.SET_FROM_POLYGONS,
+      ActionTypes.SET_TO_POLYGONS,
+    ], dumpSelectsToStorageSaga),
     takeEvery(ActionTypes.SET_COMMENTS, setCommentsSaga),
     takeEvery(ActionTypes.SET_TIME, setTimeSaga),
-    takeEvery(ActionTypes.SET_LOCATION_CLASS, setLocationClassSaga),
     takeEvery(ActionTypes.SET_PHONE, setPhoneSaga),
     takeEvery(ActionTypes.SET_CUSTOMER_PRICE, setCustomerPriceSaga),
     takeEvery(ActionTypes.RESET, resetSaga),
   ])
 }
 
-function* reloadStorageSaga() {
+function* loadFromStorageSaga() {
   const actions: [
     typeof ActionTypes[keyof typeof ActionTypes],
     keyof IClientOrderState
   ][] = [
+    [ActionTypes.SET_FROM_REQUEST, 'from'],
+    [ActionTypes.SET_TO_REQUEST, 'to'],
     [ActionTypes.SET_CAR_CLASS, 'carClass'],
     [ActionTypes.SET_SEATS, 'seats'],
     [ActionTypes.SET_COMMENTS, 'comments'],
@@ -50,8 +55,12 @@ function* reloadStorageSaga() {
       yield put({ type, payload })
 }
 
-function* setCarDataSaga() {
-  const keys: (keyof IClientOrderState)[] = ['carClass', 'seats']
+function* dumpSelectsToStorageSaga() {
+  const keys: (keyof IClientOrderState)[] = [
+    'carClass',
+    'seats',
+    'locationClass',
+  ]
   for (const key of keys)
     setItem(
       `state.clientOrder.${key}`,
@@ -66,12 +75,8 @@ function* setTimeSaga() {
   const value = yield* select(keySelector('time'))
   setItem('state.clientOrder.time', value)
 }
-function* setLocationClassSaga() {
-  const value = yield* select(keySelector('locationClass'))
-  setItem('state.clientOrder.locationClass', value)
-}
 function* setPhoneSaga() {
-  const value = yield* select<number | null>(keySelector('phone'))
+  const value = yield* select(keySelector('phone'))
   if (!getPhoneNumberError(value))
     setItem('state.clientOrder.phone', value)
 }
@@ -93,65 +98,89 @@ function resetSaga() {
     removeItem(`state.clientOrder.${key}`)
 }
 
-const keySelector = (key: keyof IClientOrderState) =>
+const keySelector = <K extends keyof IClientOrderState>(key: K) =>
   (state: IRootState) => moduleSelector(state)[key]
 
-const setPointSaga = (type: EPointType) => function* (action: TAction) {
+function* setPointSaga(action: TAction) {
+  const type = action.type === ActionTypes.SET_TO_REQUEST ?
+    EPointType.To :
+    EPointType.From
+  const setAction = type === EPointType.To ?
+    ActionTypes.SET_TO :
+    ActionTypes.SET_FROM
+
   let value: IAddressPoint = action.payload
-  yield* setIntermediatePoint(type, value)
-  let errorHappened = false
+  yield put({ type: setAction, payload: value })
+  setItem(
+    `state.clientOrder.${type === EPointType.From ? 'from' : 'to'}`,
+    value,
+  )
 
   if (action.payload.isCurrent && navigator.geolocation) {
     try {
-      const position = yield* call<GeolocationPosition>(getCurrentPosition)
+      const position = yield* call(getCurrentPosition)
       const { latitude, longitude } = position.coords
       value = { ...value, latitude, longitude }
-      yield* setIntermediatePoint(type, value)
+      yield put({ type: setAction, payload: value })
     } catch (error) {
       console.warn('Geolocation error', error)
-      errorHappened = true
     }
   }
 
-  if (
-    !(value.address || value.shortAddress) &&
-    value.latitude && value.longitude
-  ) {
-    try {
-      const address = yield* call<IPlaceResponse>(
-        API.reverseGeocode,
-        value.latitude.toString(),
-        value.longitude.toString(),
-      )
-      value = {
-        ...value,
-        address: address.display_name,
-        shortAddress: shortenAddress(
-          address.display_name,
-          address.address.city ||
-          address.address.country ||
-          address.address.village ||
-          address.address.town ||
-          address.address.state,
-        ),
+  yield all([
+    call(function*() {
+      if (
+        !(value.address || value.shortAddress) &&
+        value.latitude && value.longitude
+      ) {
+        try {
+          const address = yield* call(
+            API.reverseGeocode,
+            value.latitude.toString(),
+            value.longitude.toString(),
+          )
+          value = {
+            ...value,
+            address: address.display_name,
+            shortAddress: shortenAddress(
+              address.display_name,
+              address.address.city ||
+              address.address.country ||
+              address.address.village ||
+              address.address.town ||
+              address.address.state,
+            ),
+          }
+          yield put({ type: setAction, payload: value })
+        } catch (error) {
+          console.error(error)
+        }
       }
-      yield* setIntermediatePoint(type, value)
-    } catch (error) {
-      console.error(error)
-      errorHappened = true
-    }
-  }
+    }),
 
-  if (!errorHappened)
-    setItem(
-      `state.clientOrder.${type === EPointType.From ? 'from' : 'to'}`,
-      value,
-    )
-}
+    call(function*() {
+      if (value.latitude && value.longitude) {
+        try {
+          const polygons = yield* call(API.getPolygonsIdsOnPoint, [
+            value.latitude,
+            value.longitude,
+          ])
+          yield put({
+            type: type === EPointType.To ?
+              ActionTypes.SET_TO_POLYGONS :
+              ActionTypes.SET_FROM_POLYGONS,
+            payload: polygons,
+          })
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }),
+  ])
 
-function* setIntermediatePoint(type: EPointType, value: IAddressPoint) {
   yield put({
-    type: type === EPointType.From ? ActionTypes.SET_FROM : ActionTypes.SET_TO,
-    payload: value,
+    type: type === EPointType.To ?
+      ActionTypes.SET_TO_SUCCESS :
+      ActionTypes.SET_FROM_SUCCESS,
   })
 }

@@ -4,7 +4,11 @@ $itemWidth: 28px;
 $itemWidthPlusGap: 36px;
 
 .seat-slider {
-  width: calc($itemWidthPlusGap * var(--seat-slider_per-view, 3) - 8px);
+  width: calc($itemWidthPlusGap * var(--seat-slider--per-view, 3) - 8px);
+
+  &--disabled {
+    pointer-events: none;
+  }
 
   &__button {
     position: absolute;
@@ -48,6 +52,15 @@ $itemWidthPlusGap: 36px;
       border-color: color-mix(in srgb, var(#{Theme.$accent}), transparent 20%);
       font-weight: 700;
       color: var(#{Theme.$accent})
+    }
+  }
+
+  &--disabled &__slide {
+    color: #00000033;
+
+    &__active {
+      border-color: transparent;
+      color: rgb(0, 0, 0, 0.5);
     }
   }
 

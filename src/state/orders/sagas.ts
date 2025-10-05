@@ -143,10 +143,10 @@ function* getHistoryOrdersSaga({ payload: { estimate } }: TAction) {
 function* getOrdersSaga(
   orderType: EOrderTypes,
 ): Generator<any, IOrder[], any> {
-  const userID = (yield* select<ReturnType<typeof user>>(user))?.u_id
+  const userID = (yield* select(user))?.u_id
   if (!userID) throw new Error()
 
-  const _orders = yield* call<IOrder[]>(API.getOrders, orderType)
+  const _orders = yield* call(API.getOrders, orderType)
   return updateCompletedOrdersDuration(_orders)
 }
 
@@ -166,7 +166,7 @@ function* cancelOrdersOnNextExpireSaga(orders: IOrder[]) {
 }
 
 function* cancelExpiredOrdersSaga(orders: IOrder[]) {
-  const currentUser = yield* select<ReturnType<typeof user>>(user)
+  const currentUser = yield* select(user)
   if (!currentUser || currentUser.u_role !== EUserRoles.Client)
     return orders
 
@@ -201,7 +201,7 @@ function* getOrdersTakerGeolocationSaga(
   orders: IOrder[],
 ): Generator<any, [lat: number, lng: number] | undefined, any> {
   if (orders.length > 0) {
-    const position = yield* call<GeolocationPosition>(getCurrentPosition)
+    const position = yield* call(getCurrentPosition)
     const { latitude, longitude } = position.coords
     const geolocation: [number, number] = [latitude, longitude]
 

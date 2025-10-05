@@ -2,7 +2,7 @@ import { shortenAddress } from './../../tools/utils'
 import { isEqual } from 'lodash'
 import { all, takeEvery, put } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
-import { IOrder, IUser } from '../../types/types'
+import { IOrder } from '../../types/types'
 import { TAction } from '../../types'
 import { select, call } from '../../tools/sagaUtils'
 import * as API from '../../API'
@@ -10,7 +10,7 @@ import { orderSelectors } from '.'
 import store from '../'
 import moment from 'moment'
 import { EBookingStates } from '../../types/types'
-import {calculateFinalPrice} from "../../components/modals/RatingModal";
+import { calculateFinalPrice } from '../../components/modals/RatingModal'
 
 
 export const saga = function* () {
@@ -23,9 +23,9 @@ function* getOrderSaga(data: TAction) {
   yield put({ type: ActionTypes.GET_ORDER_START })
 
   try {
-    const currentOrder = yield* select<IOrder>(orderSelectors.order)
+    const currentOrder = yield* select(orderSelectors.order)
 
-    const order = yield* call<IOrder>(API.getOrder, data.payload)
+    const order = (yield* call(API.getOrder, data.payload))!
 
     // Update duration and price for completed orders
     if (order?.b_state === EBookingStates.Completed && order?.b_options?.pricingModel) {
@@ -155,9 +155,7 @@ function* getOrderSaga(data: TAction) {
         })
       }
 
-      const client = yield* call<IUser>(
-        API.getUser, order.u_id,
-      )
+      const client = yield* call(API.getUser, order.u_id)
       yield put({ type: ActionTypes.SET_CLIENT, payload: client })
     }
 

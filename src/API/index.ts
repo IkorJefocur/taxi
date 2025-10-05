@@ -49,6 +49,9 @@ export {
   getAreasIdsBetweenPoints,
   getArea,
 } from './way'
+export {
+  getPolygonsIdsOnPoint,
+} from './polygon'
 
 export enum EBookingActions {
     SetConfirmState = 'set_confirm_state',

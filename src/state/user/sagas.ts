@@ -7,8 +7,8 @@ import { uploadRegisterFiles, uploadFiles } from './helpers'
 import { call, takeEvery } from '../../tools/sagaUtils'
 import { t, TRANSLATION } from '../../localization'
 import * as API from './../../API'
-import { PromiseReturn, TAction } from '../../types'
-import { EStatuses, EUserRoles, ITokens, IUser, ICar } from '../../types/types'
+import { TAction } from '../../types'
+import { EStatuses, EUserRoles, ITokens } from '../../types/types'
 import { setUser } from './actionCreators'
 import { clearOrders } from '../orders/actionCreators'
 import SITE_CONSTANTS from '../../siteConstants'
@@ -49,7 +49,7 @@ export const saga = function* () {
 function* loginSaga(data: TAction) {
   yield put({ type: ActionTypes.LOGIN_START })
   try {
-    const result = yield* call<PromiseReturn<ReturnType<typeof API.login>>>(API.login, data.payload)
+    const result = yield* call(API.login, data.payload)
     if (!result) throw new Error('wrong login response')
 
     if(result.data === 'wrong login') {
@@ -102,7 +102,7 @@ function* googleLoginSaga(data: TAction) {
   yield put({ type: ActionTypes.GOOGLE_LOGIN_START })
   try {
 
-    const result = yield* call<PromiseReturn<ReturnType<typeof API.googleLogin>>>(API.googleLogin, data.payload)
+    const result = yield* call(API.googleLogin, data.payload)
 
     if (!result) throw new Error('Wrong login response')
     console.log('GFP-POINT-01: Saving tokens from goole auth to localStorage', result)
@@ -131,7 +131,7 @@ function* registerSaga(data: TAction) {
   yield put({ type: ActionTypes.REGISTER_START })
   try {
     const { uploads, u_details, ...payload } = data.payload
-    let response = yield* call<any>(API.register, { ...payload, st: 1 })
+    let response: any = yield* call(API.register, { ...payload, st: 1 })
     console.log(response)
     if(response.error) {
       yield put({ type: ActionTypes.REGISTER_FAIL, payload: response.error })
@@ -145,12 +145,12 @@ function* registerSaga(data: TAction) {
 
     if (data.payload?.u_role === 2) {
       if (uploads) {
-        yield* call<any>(uploadRegisterFiles, { filesToUpload: uploads, response, u_details })
+        yield* call(uploadRegisterFiles, { filesToUpload: uploads, response, u_details })
       } else {
         const { passport_photo, driver_license_photo, license_photo, ...details } = u_details
         const files = { passport_photo, driver_license_photo, license_photo }
         const t = { ...tokens, u_id: response.u_id }
-        yield* call<any>(uploadFiles, { files, u_details: details, tokens: t })
+        yield* call(uploadFiles, { files, u_details: details, tokens: t })
       }
     }
     yield put({ type: ActionTypes.REGISTER_SUCCESS, payload: response })
@@ -216,7 +216,7 @@ function* initUserSaga() {
     }
     yield put({ type: ActionTypes.SET_TOKENS, payload: tokens })
 
-    const user = yield* call<IUser | null>(API.getAuthorizedUser)
+    const user = yield* call(API.getAuthorizedUser)
     if (!user) {
       localStorage.removeItem('state.user.tokens')
       return
@@ -256,7 +256,7 @@ function* initUserSaga() {
 
 function* whatsappSignUpSaga(data: TAction) {
   try {
-    const result = yield* call<PromiseReturn<ReturnType<typeof API.whatsappSignUp>>>(API.whatsappSignUp, data.payload)
+    const result = yield* call(API.whatsappSignUp, data.payload)
     if (!result) throw new Error('Wrong whatsappSignUp response')
 
     yield put(setRefCodeModal({ isOpen: false }))
@@ -279,7 +279,7 @@ function* whatsappSignUpSaga(data: TAction) {
 
 function* getCarSaga() {
   try {
-    const cars = yield* call<ICar[]>(API.getUserCars)
+    const cars = yield* call(API.getUserCars)
     yield put({ type: ActionTypes.GET_CAR_SUCCESS, payload: cars[0] })
   } catch (error) {
     console.error(error)

@@ -2,6 +2,10 @@
   width: 100%;
   height: 64px;
 
+  &--disabled {
+    pointer-events: none;
+  }
+
   &__slide {
     display: flex;
     flex-direction: column;
@@ -10,8 +14,10 @@
     height: 64px;
     padding: 8px 4px;
     overflow: hidden;
+  }
 
-    &__active {
+  &:not(&--disabled) &__slide {
+    &--active {
       border: solid 1px rgb(255, 36, 0, 0.2);
       border-radius: 16px;
     }
@@ -20,10 +26,10 @@
   &__icon {
     margin-left: -18px;
     transition: margin-left 0.2s ease-in-out;
+  }
 
-    &__active {
-      margin-left: 0;
-    }
+  &__slide--active &__icon {
+    margin-left: 0;
   }
 
   &__title {
@@ -32,13 +38,17 @@
     color: rgb(0, 0, 0, 0.5);
   }
 
+  &__slide--active &__title {
+    color: #000000;
+  }
+
   &__value {
     font-size: 10px;
     font-weight: 500;
     color: rgb(0, 0, 0, 0.5);
   }
 
-  &__text-active {
+  &__slide--active &__value {
     color: #000000;
   }
 
