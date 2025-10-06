@@ -2,7 +2,6 @@ import {
   Tail, SelectEffect, CallEffect, SagaReturnType,
   select as sagaSelect,
   call as sagaCall,
-  takeEvery as sagaTakeEvery,
 } from 'redux-saga/effects'
 
 export function* select<Fn extends(...args: any[]) => any>(
@@ -18,5 +17,3 @@ export function* call<Fn extends(...args: any[]) => any>(
 ): Generator<CallEffect<SagaReturnType<Fn>>, SagaReturnType<Fn>> {
   return yield sagaCall(fn, ...args)
 }
-
-export const takeEvery: any = sagaTakeEvery

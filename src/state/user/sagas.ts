@@ -1,10 +1,13 @@
 import { ActionTypes as ConfigActionTypes } from './../config/constants'
 import { Channel } from 'redux-saga'
-import { all, fork, take, put, actionChannel } from 'redux-saga/effects'
+import {
+  all, fork, take, takeEvery,
+  put, actionChannel,
+} from 'redux-saga/effects'
 import { setLoginModal, setMessageModal, setRefCodeModal } from '../modals/actionCreators'
 import { ActionTypes } from './constants'
 import { uploadRegisterFiles, uploadFiles } from './helpers'
-import { call, takeEvery } from '../../tools/sagaUtils'
+import { call } from '../../tools/sagaUtils'
 import { t, TRANSLATION } from '../../localization'
 import * as API from './../../API'
 import { TAction } from '../../types'

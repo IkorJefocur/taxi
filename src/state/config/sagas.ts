@@ -1,5 +1,5 @@
-import { all, put } from 'redux-saga/effects'
-import { call, takeEvery } from '../../tools/sagaUtils'
+import { all, takeEvery, put } from 'redux-saga/effects'
+import { call } from '../../tools/sagaUtils'
 import * as API from '../../API'
 import { TAction } from '../../types'
 import Config from '../../config'

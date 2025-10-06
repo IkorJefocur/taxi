@@ -100,11 +100,6 @@ function Passenger({
     )
   , [selectedOrder])
 
-  const prevSelectedOrder = useRef<IOrder | null>(null)
-  useEffect(() => {
-    prevSelectedOrder.current = selectedOrder
-  }, [selectedOrder])
-
   useEffect(() => {
     if (user)
       getActiveOrders()
@@ -169,31 +164,40 @@ function Passenger({
     }
   }, [orderReselected])
 
-  // Used to open rating modal
+  const prevActiveOrders = useRef<IOrder[]>([])
   useEffect(() => {
-    if (!prevSelectedOrder.current)
-      return
-    const prevSelectedOrderDriver = prevSelectedOrder.current.drivers?.find(
-      (item) => item.c_state !== EBookingDriverState.Canceled,
-    )
-    if (!prevSelectedOrderDriver) return
-    if (
-      prevSelectedOrderDriver.c_state <= EBookingDriverState.Started &&
-      !activeOrders
-        ?.find((item) => item.b_id === prevSelectedOrder.current?.b_id)
-    ) {
-      const id = prevSelectedOrder.current.b_id
-      API.getOrder(id as string)
-        .then((res) => {
-          const resDriver = res?.drivers?.find(
-            (item) => item.c_state !== EBookingDriverState.Canceled,
-          )
-          if (resDriver?.c_state === EBookingDriverState.Finished)
-            setRatingModal({ isOpen: true, orderID: id })
-        })
-        .catch((error) => console.error(error))
-    }
-  }, [selectedOrder])
+    (async() => {
+
+      const activeOrdersIds = new Set(
+        activeOrders?.map(order => order.b_id) ?? [],
+      )
+      for (const order of prevActiveOrders.current) {
+        if (activeOrdersIds.has(order.b_id))
+          continue
+
+        const driver = order.drivers
+          ?.find(item => item.c_state !== EBookingDriverState.Canceled)
+        if (!driver)
+          return
+
+        if (driver.c_state <= EBookingDriverState.Started) {
+          try {
+            const res = await API.getOrder(order.b_id)
+            const resDriver = res?.drivers
+              ?.find(item => item.c_state !== EBookingDriverState.Canceled)
+            if (resDriver?.c_state === EBookingDriverState.Finished) {
+              setRatingModal({ isOpen: true, orderID: order.b_id })
+              break
+            }
+          } catch (error) {
+            console.error(error)
+          }
+        }
+      }
+
+    })()
+    prevActiveOrders.current = activeOrders ?? []
+  }, [activeOrders])
 
   const handleOrderClick = (order: IOrder) => {
     setSelectedOrder(order.b_id)
