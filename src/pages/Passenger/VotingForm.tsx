@@ -4,10 +4,7 @@ import React, {
 } from 'react'
 import { connect, ConnectedProps, useStore } from 'react-redux'
 import moment from 'moment'
-import {
-  EPointType, EPaymentWays, EServices,
-  IOptions,
-} from '../../types/types'
+import { EPointType, EPaymentWays, IOptions } from '../../types/types'
 import images from '../../constants/images'
 import SITE_CONSTANTS from '../../siteConstants'
 import { getPhoneNumberError } from '../../tools/utils'
@@ -169,8 +166,8 @@ const VotingForm = function VotingForm({
         b_car_class: carClass,
         b_payment_way: EPaymentWays.Cash,
         b_max_waiting: voting ? SITE_CONSTANTS.WAITING_INTERVAL : 7200,
-        b_services: voting ? [EServices.Voting.toString()] : [],
         b_options: options,
+        b_voting: voting,
       })
 
       resetClientOrder()

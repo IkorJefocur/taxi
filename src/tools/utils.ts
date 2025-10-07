@@ -21,6 +21,13 @@ export function firstItem<T>(value: Iterable<T>): T | undefined {
     return item
 }
 
+export function cloneFormData(formData: FormData) {
+  const result = new FormData()
+  for (const [key, value] of formData)
+    result.append(key, value)
+  return result
+}
+
 const hints = [
   'Roman Ridge',
   'Kanda',
@@ -440,6 +447,7 @@ export const reverseConvertOrder = (order: IOrder): any => {
       ],
       customKeys: {
         drivers: () => order.drivers?.map(item => reverseConvertDriver(item)),
+        b_services: () => order.b_services?.map(item => item.toString()),
       },
     },
   )
