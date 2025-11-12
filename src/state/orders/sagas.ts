@@ -129,7 +129,10 @@ function* getReadyOrdersSaga(
 
   const prev = (yield* select(readyOrders)) ?? []
   try {
-    const response = yield* call(API.getOrders, EOrderTypes.Ready)
+    const response = yield* call(
+      API.getOrders, EOrderTypes.Ready,
+      { carClasses: true, locationClasses: true },
+    )
 
     if (
       response.code === '404' &&
