@@ -82,3 +82,6 @@ export const setDeleteFilesModal = (payload: IModalsState['deleteFilesModal']): 
 export const setIsShowSwitchersMenu = (payload: IModalsState['isShowSwitchersMenu']): TAction => {
   return { type: ActionTypes.SET_SHOW_SWITCHERS_MENU, payload }
 }
+export const setOrderCardModal = (
+  payload: IModalsState['orderCardModal'],
+): TAction => ({ type: ActionTypes.SET_ORDER_CARD_MODAL, payload })

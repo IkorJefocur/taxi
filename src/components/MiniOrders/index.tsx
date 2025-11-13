@@ -31,19 +31,21 @@ const mapDispatchToProps = {
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {
+  className?: string
   handleOrderClick: (order: IOrder) => any
 }
 
-const PassengerMiniOrders: React.FC<IProps> = ({
+function MiniOrders({
   activeOrders,
   setSelectedOrder,
   setCancelModal,
+  className,
   handleOrderClick,
-}) => {
+}: IProps) {
   if (!activeOrders?.length) return null
 
   return (
-    <div className="mini-orders">
+    <div className={cn('mini-orders', className)}>
       {
         activeOrders.map(order => {
           const payment = getPayment(order)
@@ -111,4 +113,4 @@ const PassengerMiniOrders: React.FC<IProps> = ({
   )
 }
 
-export default connector(PassengerMiniOrders)
+export default connector(MiniOrders)

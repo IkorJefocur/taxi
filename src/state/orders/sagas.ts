@@ -179,7 +179,7 @@ function* getReadyOrdersSaga(
 function* getHistoryOrdersSaga({ payload: { estimate } = {} }: TAction) {
   const prev = (yield* select(historyOrders)) ?? []
   try {
-    const response = yield* call(API.getOrders, EOrderTypes.Active)
+    const response = yield* call(API.getOrders, EOrderTypes.History)
     if (response.code !== '200')
       throw response
     const orders = response.data.booking.map(updateCompletedOrderDuration)

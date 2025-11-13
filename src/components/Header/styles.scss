@@ -6,61 +6,17 @@ $red: #FF2400;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  // height: $height;
   width: 100%;
   border-radius: 0 0 16px 16px;
   padding: 8px 16px;
   box-sizing: border-box;
-  z-index: 10;
-
-  // @media (max-width: 768px) {
-  //     padding: 0 10px;
-  // }
+  background: #FFFFFF;
 
   .api {
     margin-right: 15px;
 
     @media (max-width: 768px) {
       margin-right: 0;
-    }
-  }
-
-  .langs-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 35px;
-    width: 50px;
-    border-radius: 5px;
-    position: relative;
-    cursor: pointer;
-
-    img:nth-child(1) {
-      height: 18px;
-      width: 26px
-    }
-
-    img:nth-child(2) {
-      margin-left: 4px;
-    }
-
-    .languages {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      overflow: auto;
-      z-index: 100;
-      border-radius: 5px;
-      position: absolute;
-      padding: 7px;
-      top: 35px;
-      text-align: left;
-
-      img {
-        margin: 5px;
-        height: 18px;
-        width: 26px
-      }
     }
   }
 
@@ -75,27 +31,6 @@ $red: #FF2400;
       font-size: 18px;
     }
   }
-
-  // .avatar {
-  //     box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.35);
-  //     width: 50px;
-  //     height: 50px;
-  //     background-color: rgb(247, 247, 247);
-  //     background-position: center;
-  //     background-repeat: no-repeat;
-  //     border-radius: 50%;
-  //     padding: 10px;
-  //     cursor: pointer;
-  //     margin-left: 20px;
-
-  //     @media (max-width: 768px) {
-  //         padding: 5px;
-  //         width: 40px;
-  //         height: 40px;
-  //         background-size: 25px;
-  //         margin-left: 5px;
-  //     }
-  // }
 
   .avatar {
     width: 32px;
@@ -146,12 +81,12 @@ $red: #FF2400;
       border-top-right-radius: 15px;
       padding: 0;
       box-shadow: 0 0 5px darken(#fff, 50);
+      z-index: 1;
 
       &--active {
         opacity: 1;
         transform: scale(1);
         max-height: 500px;
-        z-index: 1;
       }
     }
 
@@ -199,7 +134,7 @@ $red: #FF2400;
       right: 0;
       margin-right: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      z-index: 10;
+      z-index: 1;
     }
 
     &__language-flag {

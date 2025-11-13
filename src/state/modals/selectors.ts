@@ -41,3 +41,7 @@ export const deleteFilesModalDeleteFiles = createSelector(
   moduleSelector, state => state.deleteFilesModal.handleDeleteFiles,
 )
 export const isShowSwitchersMenu = createSelector(moduleSelector, state => state.isShowSwitchersMenu)
+export const orderCardModal = (state: IRootState) =>
+  moduleSelector(state).orderCardModal
+export const isOrderCardModalOpen = (state: IRootState) =>
+  orderCardModal(state).isOpen

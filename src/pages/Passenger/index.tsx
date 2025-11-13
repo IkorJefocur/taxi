@@ -12,7 +12,7 @@ import {
 import { ordersSelectors, ordersActionCreators } from '../../state/orders'
 import { modalsActionCreators } from '../../state/modals'
 import { userSelectors } from '../../state/user'
-import PassengerMiniOrders from '../../components/MiniOrders'
+import MiniOrders from '../../components/MiniOrders'
 import Map from '../../components/Map'
 import Layout from '../../components/Layout'
 import PageSection from '../../components/PageSection'
@@ -199,17 +199,17 @@ function Passenger({
     prevActiveOrders.current = activeOrders ?? []
   }, [activeOrders])
 
-  const handleOrderClick = (order: IOrder) => {
+  const handleOrderClick = useCallback((order: IOrder) => {
     setSelectedOrder(order.b_id)
     setOrderReselected(true)
-  }
+  }, [setSelectedOrder])
 
   const submittedOrderId = useRef<IOrder['b_id'] | null>(null)
-  const onSubmit = (data: { b_id: IOrder['b_id'] }) => {
+  const onSubmit = useCallback((data: { b_id: IOrder['b_id'] }) => {
     submittedOrderId.current = data.b_id
     setSelectedOrder(data.b_id)
     setIsExpanded(false)
-  }
+  }, [setSelectedOrder, setIsExpanded])
   useEffect(() => {
     if (submittedOrderId.current === null)
       return
@@ -225,12 +225,19 @@ function Passenger({
     <Layout>
       <PageSection className="passenger" scrollable={false}>
 
-        <PassengerMiniOrders handleOrderClick={handleOrderClick} />
+        {useMemo(() =>
+          <MiniOrders
+            className="passenger__mini-orders"
+            handleOrderClick={handleOrderClick}
+          />
+        , [handleOrderClick])}
 
-        <Map
-          containerClassName="passenger__form-map-container"
-          setCenter={setMapCenter}
-        />
+        {useMemo(() =>
+          <Map
+            containerClassName="passenger__form-map-container"
+            setCenter={setMapCenter}
+          />
+        , [setMapCenter])}
 
         <div className="passenger__form-placeholder" />
 
@@ -238,22 +245,28 @@ function Passenger({
           ref={formContainerRef}
           className="passenger__form-container"
         >
-          <BoundaryButtons />
+          {useMemo(() => <BoundaryButtons />, [])}
           <div
             className="passenger__draggable"
             ref={draggableRef}
           >
             <div className="passenger__swipe-line"></div>
 
-            <VotingForm
-              isExpanded={isExpanded}
-              setIsExpanded={setIsExpanded}
-              syncFrom={setFromAsMapCenter}
-              syncTo={setToAsMapCenter}
-              onSubmit={onSubmit}
-              minimizedPartRef={minimizedPartRef}
-              noSwipeElementsRef={formSlidersRef}
-            />
+            {useMemo(() =>
+              <VotingForm
+                isExpanded={isExpanded}
+                setIsExpanded={setIsExpanded}
+                syncFrom={setFromAsMapCenter}
+                syncTo={setToAsMapCenter}
+                onSubmit={onSubmit}
+                minimizedPartRef={minimizedPartRef}
+                noSwipeElementsRef={formSlidersRef}
+              />
+            , [
+              isExpanded, setIsExpanded,
+              setFromAsMapCenter, setToAsMapCenter,
+              onSubmit,
+            ])}
           </div>
         </div>
 

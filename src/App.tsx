@@ -1,42 +1,19 @@
 import React, { useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import AppRoutes from './Routes'
-import Theme from './components/Theme'
-import CancelOrderModal from './components/modals/CancelModal'
-import TimerModal from './components/modals/PickTimeModal'
-import CommentsModal from './components/modals/CommentsModal'
-import DriverModal from './components/modals/DriverModal'
-import RatingModal from './components/modals/RatingModal'
-import OnTheWayModal from './components/modals/OnTheWayModal'
-import TieCardModal from './components/modals/TieCardModal'
-import CardDetailsModal from './components/modals/CardDetailsModal'
-import VoteModal from './components/modals/VoteModal'
-import PlaceModal from './components/modals/SeatsModal'
-import LoginModal from './components/modals/LoginModal'
-import AlarmModal from './components/modals/AlarmModal'
-import MapModal from './components/modals/MapModal'
-import TakePassengerModal from './components/modals/TakePassengerModal'
-import CancelDriverOrderModal from './components/modals/DriverCancelModal'
-import ProfileModal from './components/modals/ProfileModal'
-import CandidatesModal from './components/modals/CandidatesModal'
-import MessageModal from './components/modals/MessageModal'
-import SITE_CONSTANTS from './siteConstants'
 import { Helmet } from 'react-helmet-async'
-import { configSelectors } from './state/config'
-import { userActionCreators, userSelectors } from './state/user'
-import './App.scss'
-import { IRootState } from './state'
+import SITE_CONSTANTS from './siteConstants'
 import * as API from './API'
-import { modalsSelectors } from './state/modals'
-import Chat from './components/Chat'
-import WACodeModal from './components/modals/LoginModal/WACodeModal'
-import RefCodeModal from './components/modals/LoginModal/RefCodeModal'
+import { IRootState } from './state'
+import { configSelectors } from './state/config'
+import { userActionCreators } from './state/user'
+import Theme from './components/Theme'
+import { ModalHost } from './components/modals'
+import AppRoutes from './Routes'
+import './App.scss'
 
 const mapStateToProps = (state: IRootState) => ({
   language: configSelectors.language(state),
   configStatus: configSelectors.status(state),
-  activeChat: modalsSelectors.activeChat(state),
-  user: userSelectors.user(state),
 })
 
 const mapDispatchToProps = {
@@ -50,8 +27,6 @@ interface IProps extends ConnectedProps<typeof connector> {
 
 const App: React.FC<IProps> = ({
   language,
-  activeChat,
-  user,
   configStatus,
   initUser,
 }) => {
@@ -120,28 +95,7 @@ const App: React.FC<IProps> = ({
       <Theme>
         {getMetaTags()}
         <AppRoutes />
-        {/* <PositionTracker/> */}
-        <VoteModal />
-        <TimerModal />
-        <CommentsModal />
-        <DriverModal />
-        <OnTheWayModal />
-        <CancelOrderModal />
-        <RatingModal />
-        <TieCardModal />
-        <CardDetailsModal />
-        <WACodeModal />
-        <RefCodeModal />
-        <PlaceModal />
-        <AlarmModal />
-        <TakePassengerModal />
-        <CancelDriverOrderModal />
-        <MapModal />
-        <LoginModal />
-        <CandidatesModal />
-        {user && <ProfileModal />}
-        {activeChat && <Chat key={activeChat} />}
-        <MessageModal />
+        <ModalHost />
       </Theme>
     </React.Fragment>
   )

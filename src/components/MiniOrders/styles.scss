@@ -1,11 +1,8 @@
 @import '../../tools/mixins';
 
 .mini-orders {
-  position: absolute;
-  z-index: 10;
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
   overflow-x: auto;
   gap: 20px;
   padding: 5px;

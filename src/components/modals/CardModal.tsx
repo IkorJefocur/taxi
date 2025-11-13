@@ -40,6 +40,7 @@ import { EDriverTabs } from '../../pages/Driver'
 import Button from '../Button'
 import Input from '../Input'
 import { Loader } from '../loader/Loader'
+import '../Card/styles.scss'
 import { calculateFinalPrice, calculateFinalPriceFormula } from './RatingModal'
 
 const bookingStates: Record<number, keyof typeof EBookingStates> = {
@@ -53,6 +54,7 @@ const bookingStates: Record<number, keyof typeof EBookingStates> = {
 
 const mapStateToProps = (state: IRootState) => ({
   user: userSelectors.user(state),
+  modal: modalsSelectors.orderCardModal(state),
   activeChat: modalsSelectors.activeChat(state),
 })
 
@@ -63,6 +65,7 @@ const mapDispatchToProps = {
   getOrderStart: ordersDetailsActionCreators.getOrderStart,
   getOrderDestination: ordersDetailsActionCreators.getOrderDestination,
   setSelectedOrderId: orderActionCreators.setSelectedOrderId,
+  setModal: modalsActionCreators.setOrderCardModal,
   setCancelDriverOrderModal: modalsActionCreators.setDriverCancelModal,
   setRatingModal: modalsActionCreators.setRatingModal,
   setAlarmModal: modalsActionCreators.setAlarmModal,
@@ -79,21 +82,25 @@ interface IFormValues {
   performers_price: number
 }
 
-interface IProps extends ConnectedProps<typeof connector> {
-  active: boolean
-  avatarSize: string
-  avatar: string
-  orderId: IOrder['b_id']
-  closeModal: () => void
+interface IProps extends ConnectedProps<typeof connector> {}
+
+function CardModal({ modal, ...props }: IProps) {
+  return 'orderId' in modal &&
+    <CardModalContent {...modal} {...props} />
 }
 
-function CardModal({
-  active,
-  avatarSize,
-  avatar,
-  user,
+interface IContentProps extends Omit<ConnectedProps<typeof connector>,
+  'modal'
+> {
+  isOpen: boolean
+  orderId: IOrder['b_id']
+}
+
+function CardModalContent({
+  isOpen: active,
   orderId,
-  closeModal,
+  setModal,
+  user,
   activeChat,
   watchOrder,
   takeOrder,
@@ -107,7 +114,11 @@ function CardModal({
   setMessageModal,
   setAlarmModal,
   setActiveChat,
-}: IProps) {
+}: IContentProps) {
+
+  const avatar = images.avatar
+  const avatarSize = '48px'
+  const closeModal = () => setModal({ isOpen: false, orderId })
 
   useEffect(() => watchOrder(orderId), [orderId])
   const order = useSelector(ordersSelectors.order, orderId) ?? null
@@ -176,12 +187,14 @@ function CardModal({
   const onStartedClick = () => orderMutation(async() => {
     await setOrderState(orderId, EBookingDriverState.Started)
     navigate('/driver-order?tab=map')
+    closeModal()
   })
 
   const onCompleteOrderClick = () => orderMutation(async() => {
     await setOrderState(orderId, EBookingDriverState.Finished)
     navigate(`/driver-order?tab=${EDriverTabs.Lite}`)
     setRatingModal({ isOpen: true })
+    closeModal()
   })
 
   async function orderMutation(mutation: () => Promise<void>) {

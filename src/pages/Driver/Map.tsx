@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { connect, ConnectedProps } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import './styles.scss'
-import { MapContainer, Marker, TileLayer, Polyline, useMap } from 'react-leaflet'
 import L from 'leaflet'
+import {
+  MapContainer, Marker, TileLayer, Polyline,
+  useMap,
+} from 'react-leaflet'
 import Fullscreen from 'react-leaflet-fullscreen-plugin'
-import PageSection from '../../components/PageSection'
-import Button from '../../components/Button'
-import { t, TRANSLATION } from '../../localization'
-import { useInterval } from '../../tools/hooks'
-import * as API from '../../API'
 import {
   EBookingDriverState,
   EOrderProfitRank,
@@ -25,40 +23,35 @@ import {
   getTileServerUrl,
   formatCurrency,
 } from '../../tools/utils'
-import { EDriverTabs } from '.'
+import { useInterval } from '../../tools/hooks'
 import SITE_CONSTANTS from '../../siteConstants'
-import CardModal from '../../components/modals/CardModal'
-import { createPortal } from 'react-dom'
-import { connect, ConnectedProps } from 'react-redux'
-import { modalsActionCreators } from '../../state/modals'
+import * as API from '../../API'
 import { orderActionCreators } from '../../state/order'
+import { modalsActionCreators } from '../../state/modals'
+import { t, TRANSLATION } from '../../localization'
+import PageSection from '../../components/PageSection'
+import Button from '../../components/Button'
+import { EDriverTabs } from '.'
+import './styles.scss'
 
-interface IProps {
+const cachedDriverMapStateKey = 'cachedDriverMapState'
+
+const mapDispatchToProps = {
+  getOrder: orderActionCreators.getOrder,
+  setRatingModal: modalsActionCreators.setRatingModal,
+  setMessageModal: modalsActionCreators.setMessageModal,
+  setOrderCardModal: modalsActionCreators.setOrderCardModal,
+}
+
+const connector = connect(null, mapDispatchToProps)
+
+interface IProps extends ConnectedProps<typeof connector> {
   user: IUser,
   activeOrders: IOrder[] | null,
   readyOrders: IOrder[] | null,
 }
 
-const mapDispatchToProps = {
-  setRatingModal: modalsActionCreators.setRatingModal,
-  setMessageModal: modalsActionCreators.setMessageModal,
-  getOrder: orderActionCreators.getOrder,
-}
-
-const connector = connect(null, mapDispatchToProps)
-
-interface IContentProps extends IProps {
-  locate: boolean,
-  setZoom: (zoom: number) => void
-  setPosition: (position: L.LatLngExpression) => void
-  setRatingModal: typeof modalsActionCreators.setRatingModal
-  setMessageModal: typeof modalsActionCreators.setMessageModal
-  getOrder: typeof orderActionCreators.getOrder
-}
-
-const cachedDriverMapStateKey = 'cachedDriverMapState'
-
-function DriverOrderMapMode(props: IProps & ConnectedProps<typeof connector>) {
+function DriverOrderMapMode(props: IProps) {
   const [position, setPosition] = useCachedState<L.LatLngExpression | undefined>(
     `${cachedDriverMapStateKey}.position`,
   )
@@ -76,13 +69,19 @@ function DriverOrderMapMode(props: IProps & ConnectedProps<typeof connector>) {
         attributionControl={false}
       >
         <DriverOrderMapModeContent
+          {...props}
           locate={!position}
           {...{ setPosition, setZoom }}
-          {...props}
         />
       </MapContainer>
     </PageSection>
   )
+}
+
+interface IContentProps extends IProps {
+  locate: boolean,
+  setZoom: (zoom: number) => void
+  setPosition: (position: L.LatLngExpression) => void
 }
 
 function DriverOrderMapModeContent({
@@ -92,12 +91,11 @@ function DriverOrderMapModeContent({
   locate,
   setPosition,
   setZoom,
+  getOrder,
   setRatingModal,
   setMessageModal,
-  getOrder,
+  setOrderCardModal,
 }: IContentProps) {
-
-  const [choosedOrder, setChoosedOrder] = useState<IOrder|null>(null)
 
   const navigate = useNavigate()
   const map = useMap()
@@ -213,9 +211,6 @@ function DriverOrderMapModeContent({
       })
   }
 
-  let avatar = images.avatar
-  let avatarSize = '48px'
-
   return (
     <>
       <TileLayer
@@ -299,8 +294,8 @@ function DriverOrderMapModeContent({
                   </div>`,
               })}
               eventHandlers={{
-                // click: () => navigate(`/driver-order/${item.b_id}`),
-                click: () => setChoosedOrder(item),
+                click: () =>
+                  setOrderCardModal({ isOpen: true, orderId: item.b_id }),
               }}
               key={item.b_id}
             />,
@@ -330,16 +325,6 @@ function DriverOrderMapModeContent({
           />
         )
       }
-      {choosedOrder !== null && createPortal(
-        <CardModal
-          active={choosedOrder !== null}
-          avatar={avatar}
-          avatarSize={avatarSize}
-          orderId={choosedOrder?.b_id || ''}
-          closeModal={() => setChoosedOrder(null)}
-        />,
-        document.body,
-      )}
       {/* {
         !!activeOrders?.length && (
           <div

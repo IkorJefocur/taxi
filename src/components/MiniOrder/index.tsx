@@ -1,5 +1,4 @@
-import React, { useState } from 'react'
-import { createPortal } from 'react-dom'
+import React from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import cn from 'classnames'
 import {
@@ -17,7 +16,6 @@ import {
 import { IRootState } from '../../state'
 import { modalsActionCreators, modalsSelectors } from '../../state/modals'
 import { t, TRANSLATION } from '../../localization'
-import CardModal from '../modals/CardModal'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
@@ -26,6 +24,7 @@ const mapStateToProps = (state: IRootState) => ({
 
 const mapDispatchToProps = {
   setActiveChat: modalsActionCreators.setActiveChat,
+  setOrderCardModal: modalsActionCreators.setOrderCardModal,
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
@@ -43,9 +42,9 @@ function MiniOrder({
   onClick,
   activeChat,
   setActiveChat,
+  setOrderCardModal,
   isHistory,
 }: IProps) {
-  const [activeModal, setActiveModal] = useState(false)
 
   const payment = getPayment(order)
   const driver = order?.drivers?.find(item => item.c_state !== EBookingDriverState.Canceled)
@@ -88,7 +87,7 @@ function MiniOrder({
           [EOrderProfitRank.High]: 'high',
         }[order.profitRank]}`,
       )}
-      onClick={() => setActiveModal(true)}
+      onClick={() => setOrderCardModal({ isOpen: true, orderId: order.b_id })}
     >
       <span className="colored">№{order.b_id}</span>
 
@@ -125,17 +124,6 @@ function MiniOrder({
         </div>
       </div>
     </div>
-
-    {activeModal && createPortal(
-      <CardModal
-        active={activeModal}
-        avatar={images.avatar}
-        avatarSize="48px"
-        orderId={order.b_id}
-        closeModal={() => setActiveModal(false)}
-      />,
-      document.body,
-    )}
   </>)
 }
 

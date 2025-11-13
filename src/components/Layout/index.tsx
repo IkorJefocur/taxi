@@ -2,7 +2,7 @@ import React from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { IRootState } from '../../state'
 import { configSelectors } from '../../state/config'
-import HeaderNew from '../headerNew'
+import Header from '../Header'
 import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
@@ -19,8 +19,8 @@ function Layout({
 }: React.PropsWithChildren<IProps>) {
   return (
     <main className="layout">
-      <HeaderNew key={configStatus} />
-      {children}
+      <Header key={configStatus} className="layout__header" />
+      <div className="layout__content">{children}</div>
     </main>
   )
 }

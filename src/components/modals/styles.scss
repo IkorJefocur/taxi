@@ -10,14 +10,14 @@
 
   &__wrapper {
     position: fixed;
+    z-index: 0;
+    display: none;
     justify-content: center;
     align-items: center;
-    display: none;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 1500;
 
     &--active {
       display: flex;
@@ -26,7 +26,7 @@
 }
 
 .modal {
-  z-index: 1600;
+  position: relative;
   width: 90%;
   box-sizing: border-box;
   box-shadow: 0px 30px 12px rgba(0, 0, 0, 0.04);
@@ -89,7 +89,6 @@
 .message-window {
   padding: 0 30px;
   border: 2px solid #BBA387;
-  z-index: 601;
 
   button {
     cursor: pointer;
@@ -178,7 +177,6 @@
   &__time-picker {
     position: fixed;
     display: none;
-    z-index: 1601;
     background-color: white;
     box-shadow: 0 0 10px 5px #0005;
 
@@ -502,7 +500,6 @@
 
 .whatsapp-modal {
   //height: 374px;
-  z-index: 610;
 
   .groupped-buttons {
     display: flex;
@@ -678,65 +675,6 @@
 
 .profile-modal {
   max-width: 500px;
-
-  .language-switcher {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-
-    .langs-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 35px;
-      width: 50px;
-      border-radius: 5px;
-      position: relative;
-      cursor: pointer;
-      background: #FFFFFF;
-      border: 1px solid #858585;
-      box-sizing: border-box;
-
-      img:nth-child(1) {
-        height: 18px;
-        width: 26px;
-      }
-
-      img:nth-child(2) {
-        margin-left: 4px;
-        width: 10px;
-        height: 10px;
-      }
-
-      .languages {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        overflow: auto;
-        z-index: 500;
-        border-radius: 5px;
-        position: absolute;
-        padding: 7px;
-        top: 35px;
-        text-align: left;
-        background: #FFFFFF;
-        border: 1px solid #858585;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        min-width: 50px;
-
-        img {
-          margin: 5px;
-          height: 18px;
-          width: 26px;
-          cursor: pointer;
-
-          &:hover {
-            opacity: 0.8;
-          }
-        }
-      }
-    }
-  }
 
   .avatar {
     display: flex;

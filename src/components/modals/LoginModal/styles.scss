@@ -96,10 +96,8 @@
     text-transform: capitalize !important;
   }
 
-  
-
   .loading-frame {
-    z-index: 1201;
+    z-index: 1;
     backdrop-filter: blur(5px);
 
     img{

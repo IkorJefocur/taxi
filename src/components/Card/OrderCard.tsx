@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
+import React, { useEffect } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import cn from 'classnames'
 import {
@@ -24,13 +23,14 @@ import {
   ordersDetailsSelectors,
   ordersDetailsActionCreators,
 } from '../../state/ordersDetails'
+import { modalsActionCreators } from '../../state/modals'
 import { t, TRANSLATION } from '../../localization'
 import { Loader } from '../loader/Loader'
-import CardModal from '../modals/CardModal'
 import './styles.scss'
 
 const mapDispatchToProps = {
   getOrderStart: ordersDetailsActionCreators.getOrderStart,
+  setOrderCardModal: modalsActionCreators.setOrderCardModal,
 }
 
 const connector = connect(undefined, mapDispatchToProps)
@@ -46,6 +46,7 @@ interface IProps extends ConnectedProps<typeof connector> {
 
 function OrderCard({
   getOrderStart,
+  setOrderCardModal,
   order,
   user,
   className,
@@ -53,8 +54,6 @@ function OrderCard({
   style,
   onClick,
 }: IProps) {
-
-  const [activeModal, setActiveModal] = useState(false)
 
   useEffect(() => {
     getOrderStart(order)
@@ -84,9 +83,6 @@ function OrderCard({
 
   const driver = order.drivers?.find((item: any) => item.c_state > EBookingDriverState.Canceled)
 
-  let avatar = images.avatar
-  let avatarSize = '48px'
-
   return (<>
     <div
       className={cn(
@@ -101,7 +97,7 @@ function OrderCard({
       )}
       style={style}
       // onClick={onClick}
-      onClick={() => setActiveModal(true)}
+      onClick={() => setOrderCardModal({ isOpen: true, orderId: order.b_id })}
     >
       {/* {showChat && user ?
         (
@@ -207,17 +203,6 @@ function OrderCard({
         // </div>
       }
     </div>
-
-    {activeModal && createPortal(
-      <CardModal
-        active={activeModal}
-        avatar={avatar}
-        avatarSize={avatarSize}
-        orderId={order.b_id}
-        closeModal={() => setActiveModal(false)}
-      />,
-      document.body,
-    )}
   </>)
 }
 
