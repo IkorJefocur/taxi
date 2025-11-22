@@ -3,7 +3,10 @@ import { IOrder } from '../../types/types'
 import { IResponse } from '../../types/api'
 import * as API from '../../API'
 import { IDispatch } from '..'
-import { watch as watchGeolocation } from '../geolocation/actionCreators'
+import {
+  watch as watchGeolocation,
+  activateSending as activateGeolocationSending,
+} from '../geolocation/actionCreators'
 import { ActionTypes } from './constants'
 
 const READY_ORDERS_GEOLOCATION_INTERVAL = 1000 * 60 * 60
@@ -18,9 +21,11 @@ export const watchReadyOrders = () => (dispatch: IDispatch) => {
   const unwatch = dispatch(watchGeolocation({
     interval: READY_ORDERS_GEOLOCATION_INTERVAL,
   }))
+  const deactivateSending = dispatch(activateGeolocationSending())
   dispatch({ type: ActionTypes.WATCH_READY_ORDERS })
   return () => {
     dispatch({ type: ActionTypes.UNWATCH_READY_ORDERS })
+    deactivateSending()
     unwatch()
   }
 }
