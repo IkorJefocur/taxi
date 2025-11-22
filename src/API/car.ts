@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ICar, IUser } from '../types/types'
+import { EBookingLocationKinds, ICar, IUser } from '../types/types'
 import { IResponse } from '../types/api'
 import { convertCar } from '../tools/convert'
 import { addToFormData, apiMethod, IApiMethodArguments } from '../tools/api'
@@ -58,12 +58,35 @@ export const getCars = apiMethod<typeof _getCars>(_getCars)
 
 export const createUserCar = apiMethod(async(
   { formData }: IApiMethodArguments,
-  fields: TCreateCar,
-  isUserPrimaryCar = true,
+  fields: TCreateCar & {
+    country?: keyof typeof SITE_CONSTANTS.COUNTRIES
+  },
 ): Promise<IResponse<'200', ICreateCarResponse> | IResponse<'404', {}>> => {
-  addToFormData(formData, { data: JSON.stringify(fields) })
-  const { data } = await axios.post(`${Config.API_URL}/car`, formData)
-  return data
+  const { country, ...formFields } = fields
+  addToFormData(formData, { data: JSON.stringify(formFields) })
+  const { data: response } = await axios.post(`${Config.API_URL}/car`, formData)
+  if (country)
+    await setDefaultCarLicenses(response.data.created_car.c_id, country)
+  return response
+})
+
+const setDefaultCarLicenses = apiMethod(async(
+  { formData }: IApiMethodArguments,
+  id: ICar['c_id'],
+  country: keyof typeof SITE_CONSTANTS.COUNTRIES,
+): Promise<void> => {
+  const locationClass = SITE_CONSTANTS.BOOKING_LOCATION_CLASSES
+    .find(lc => lc.kind === EBookingLocationKinds.Intercity)!
+  addToFormData(formData, { data: JSON.stringify({
+    licenses: [{
+      en: 'license',
+      b_l_c: [{
+        location: locationClass.id,
+        value: country,
+      }],
+    }],
+  }) })
+  await axios.post(`${Config.API_URL}/car/${id}`, formData)
 })
 
 const _getUserCars = (
@@ -100,7 +123,6 @@ export const editCar = apiMethod(async(
     'details' |
     'cc_id'
   >>,
-  isUserPrimaryCar = true,
 ): Promise<IResponse<'200', {}> | IResponse<'404', {}>> => {
   addToFormData(formData, { data: JSON.stringify(fields) })
   const { data } = await axios.post(`${Config.API_URL}/car/${id}`, formData)

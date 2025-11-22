@@ -1,5 +1,6 @@
 import moment from 'moment'
 import {
+  ICity,
   ICarClass,
   EBookingLocationKinds, IBookingLocationClass,
   TAvailableModes,
@@ -36,6 +37,12 @@ export function parseMoneyModes(modes: string) {
 
     return sum
   }, {})
+}
+
+export function parseCities(cities: any): Record<ICity['id'], ICity> {
+  return Object.fromEntries(Object.entries(cities).map(
+    ([id, city]: any) => [id, ({ id, ...city })],
+  ))
 }
 
 export function parseCarClasses(carClasses: any): Record<number, ICarClass> {

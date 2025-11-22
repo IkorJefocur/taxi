@@ -31,6 +31,11 @@ export enum ECurrency {
   USD = 'USD'
 }
 
+export interface ICity {
+  id: string
+  country: string
+}
+
 export interface ICarClass {
   id: string
   seats: number

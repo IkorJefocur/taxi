@@ -1,6 +1,7 @@
 import { PassengerOrderConfig } from './tools/siteConstants/formConfig'
 import {
   parseAvailableModes,
+  parseCities,
   parseCarClasses,
   parseBookingLocationClasses,
   parseCalculationBenefits,
@@ -14,6 +15,7 @@ import {
   TEntries,
   ILanguage,
   TMoneyModes,
+  ICity,
   ICarClass,
   IBookingLocationClass,
   EBookingCommentTypes,
@@ -55,7 +57,9 @@ const defaultValues = {
   PASSENGER_ORDER_CONFIG: new PassengerOrderConfig(),
   DEFAULT_POSITION: '5.5560200,-0.1969000',
   SEARCH_RADIUS: 50,
+  COUNTRIES: { GHA: {} },
   DEFAULT_COUNTRY: 'GHA',
+  CITIES: {},
   PALETTE: '#A90000;#ffc837',
   ICONS_PALETTE_FOLDER: EIconsPalettes.Default,
   MONEY_MODES: '',
@@ -97,7 +101,9 @@ class Constants {
   PASSENGER_ORDER_CONFIG: PassengerOrderConfig
   DEFAULT_POSITION: [number, number]
   SEARCH_RADIUS: number
+  COUNTRIES: Record<string, {}>
   DEFAULT_COUNTRY: string
+  CITIES: Record<ICity['id'], ICity>
   PALETTE: {
     primary: IPaletteColor,
     secondary: IPaletteColor,
@@ -142,7 +148,11 @@ class Constants {
       (value) => parseAvailableModes(value),
     )
     this.THE_LANGUAGE_OF_THE_SERVICE = getConstantValue('the_language_of_the_service', defaultValues.THE_LANGUAGE_OF_THE_SERVICE)
+    this.COUNTRIES = getConstantValue('countries', defaultValues.COUNTRIES)
     this.DEFAULT_COUNTRY = getConstantValue('Country_service', defaultValues.DEFAULT_COUNTRY)
+    this.CITIES = parseCities(
+      (window as any).data?.cities ?? defaultValues.CITIES,
+    )
     this.PALETTE = getConstantValue(
       'palette',
       defaultValues.PALETTE,

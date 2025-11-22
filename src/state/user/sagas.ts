@@ -140,7 +140,11 @@ function* registerSaga(data: TAction) {
     yield put(setLoginModal(false))
 
     const carResponse = u_car && payload.u_role === EUserRoles.Driver ?
-      (yield* putResolve(createUserCar(u_car))) :
+      (yield* putResolve(createUserCar({
+        ...u_car,
+        country: SITE_CONSTANTS.CITIES[payload.u_city ?? u_details.city]
+          ?.country,
+      }))) :
       null
 
     const isCarError = carResponse?.status === 'error'
