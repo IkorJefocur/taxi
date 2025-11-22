@@ -99,7 +99,10 @@ function Passenger({
     )
   , [selectedOrder])
 
-  useEffect(watchActiveOrders, [])
+  useEffect(() => {
+    if (user)
+      return watchActiveOrders()
+  }, [user])
 
   const openCurrentModal = () => {
     if (!selectedOrder) {

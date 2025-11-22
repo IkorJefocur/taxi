@@ -61,9 +61,19 @@ const Driver: React.FC<IProps> = ({
 
   const ordersAddressRef = useRef<{ [orderId:string]: IAddressPoint }>({})
 
-  useEffect(watchActiveOrders, [])
-  useEffect(watchReadyOrders, [])
-  useEffect(watchHistoryOrders, [])
+  useEffect(() => {
+    if (user) {
+      const unwatch = [
+        watchActiveOrders(),
+        watchReadyOrders(),
+        watchHistoryOrders(),
+      ]
+      return () => {
+        for (const fn of unwatch)
+          fn()
+      }
+    }
+  }, [user])
 
   if (user?.u_role !== EUserRoles.Driver) {
     return (
