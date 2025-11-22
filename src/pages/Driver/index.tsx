@@ -5,7 +5,7 @@ import DriverMap from './Map'
 import { t, TRANSLATION } from '../../localization'
 import { connect, ConnectedProps } from 'react-redux'
 import { IRootState } from '../../state'
-import { useInterval, useQuery } from '../../tools/hooks'
+import { useQuery } from '../../tools/hooks'
 import './styles.scss'
 import { ordersSelectors, ordersActionCreators } from '../../state/orders'
 import { modalsActionCreators } from '../../state/modals'
@@ -24,17 +24,17 @@ const mapStateToProps = (state: IRootState) => ({
 })
 
 const mapDispatchToProps = {
-  ...ordersActionCreators,
+  watchActiveOrders: ordersActionCreators.watchActiveOrders,
+  watchReadyOrders: ordersActionCreators.watchReadyOrders,
+  watchHistoryOrders: ordersActionCreators.watchHistoryOrders,
   setLoginModal: modalsActionCreators.setLoginModal,
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
 
-
 export const OrderAddressContext = createContext<{ ordersAddressRef: React.RefObject<{
   [orderId: string]: IAddressPoint;
 }> }|null>(null)
-
 
 export enum EDriverTabs {
   Map = 'map',
@@ -42,17 +42,16 @@ export enum EDriverTabs {
   Detailed = 'detailed'
 }
 
-interface IProps extends ConnectedProps<typeof connector> {
+interface IProps extends ConnectedProps<typeof connector> {}
 
-}
 const Driver: React.FC<IProps> = ({
   activeOrders,
   readyOrders,
   historyOrders,
   user,
-  getActiveOrders,
-  getHistoryOrders,
-  getReadyOrders,
+  watchActiveOrders,
+  watchHistoryOrders,
+  watchReadyOrders,
   setLoginModal,
 }) => {
 
@@ -62,35 +61,21 @@ const Driver: React.FC<IProps> = ({
 
   const ordersAddressRef = useRef<{ [orderId:string]: IAddressPoint }>({})
 
-  useInterval(() => {
-    user && getActiveOrders({ estimate: true })
-  }, 2000)
-
-  useInterval(() => {
-    user && getReadyOrders({ estimate: true })
-  }, 3000)
-
-  useInterval(() => {
-    user && getHistoryOrders()
-  }, 10000)
-
-  useEffect(() => {
-    if (user) {
-      getActiveOrders({ estimate: true })
-      getReadyOrders({ estimate: true })
-      getHistoryOrders()
-    }
-  }, [user])
+  useEffect(watchActiveOrders, [])
+  useEffect(watchReadyOrders, [])
+  useEffect(watchHistoryOrders, [])
 
   if (user?.u_role !== EUserRoles.Driver) {
-    return <ErrorFrame
-      renderImage={() => (
-        <div className="errorIcon" onClick={() => setLoginModal(true)}>
-          <img src={images.avatar} alt={t(TRANSLATION.ERROR)} style={{ marginTop: '50px' }}/>
-        </div>
-      )}
-      title={t(TRANSLATION.UNAUTHORIZED_ACCESS)}
-    />
+    return (
+      <ErrorFrame
+        renderImage={() => (
+          <div className="errorIcon" onClick={() => setLoginModal(true)}>
+            <img src={images.avatar} alt={t(TRANSLATION.ERROR)} style={{ marginTop: '50px' }}/>
+          </div>
+        )}
+        title={t(TRANSLATION.UNAUTHORIZED_ACCESS)}
+      />
+    )
   }
 
   return (

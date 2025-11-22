@@ -1,17 +1,16 @@
 import React, { useState } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
-import Button from '../Button'
-import './styles.scss'
-import * as API from '../../API'
-import { t, TRANSLATION } from '../../localization'
-import { modalsActionCreators, modalsSelectors } from '../../state/modals'
-import { IRootState } from '../../state'
-import { clientOrderSelectors } from '../../state/clientOrder'
-import { ArrayValue } from '../../types'
 import cn from 'classnames'
-import Overlay from './Overlay'
-import { ordersActionCreators } from '../../state/orders'
+import { ArrayValue } from '../../types'
 import SITE_CONSTANTS from '../../siteConstants'
+import { t, TRANSLATION } from '../../localization'
+import { IRootState } from '../../state'
+import { modalsActionCreators, modalsSelectors } from '../../state/modals'
+import { clientOrderSelectors } from '../../state/clientOrder'
+import { ordersActionCreators } from '../../state/orders'
+import Button from '../Button'
+import Overlay from './Overlay'
+import './styles.scss'
 
 const mapStateToProps = (state: IRootState) => ({
   selectedOrder: clientOrderSelectors.selectedOrder(state),
@@ -23,7 +22,7 @@ const mapDispatchToProps = {
   setVoteModal: modalsActionCreators.setVoteModal,
   setDriverModal: modalsActionCreators.setDriverModal,
   setOnTheWayModal: modalsActionCreators.setOnTheWayModal,
-  getActiveOrders: ordersActionCreators.getActiveOrders,
+  cancelOrder: ordersActionCreators.cancel,
 }
 
 const connector = connect(mapStateToProps, mapDispatchToProps)
@@ -38,7 +37,7 @@ const CancelOrderModal: React.FC<IProps> = ({
   setVoteModal,
   setDriverModal,
   setOnTheWayModal,
-  getActiveOrders,
+  cancelOrder,
 }) => {
   const REASONS = [
     { id: 0, label: t(TRANSLATION.MISTAKENLY_ORDERED) },
@@ -51,10 +50,11 @@ const CancelOrderModal: React.FC<IProps> = ({
   const [reason, setReason] = useState<ArrayValue<typeof REASONS_IDS>>(REASONS[0].id)
 
   function onDenial() {
-    if (selectedOrder) {
-      API.cancelDrive(selectedOrder, REASONS.find(item => item.id === reason)?.label)
-        .finally(() => getActiveOrders())
-    }
+    if (selectedOrder)
+      cancelOrder(
+        selectedOrder,
+        REASONS.find(item => item.id === reason)?.label,
+      )
     setCancelModal(false)
     setVoteModal(false)
     setDriverModal(false)

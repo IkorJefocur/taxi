@@ -1,79 +1,20 @@
+import { List as ImmutableList, is } from 'immutable'
 import { createSelector, weakMapMemoize } from 'reselect'
 import { IOrder, ICar } from '../../types/types'
 import { estimateOrder } from '../../tools/order'
-import { IWayGraph } from '../../tools/maps'
+import {
+  IWayGraph,
+  calculateDistance, geopositionToPoint,
+} from '../../tools/maps'
 import { IRootState } from '../'
+import { geoposition } from '../geolocation/selectors'
 import { userPrimaryCar } from '../cars/selectors'
 import { wayGraph } from '../areas/selectors'
 import { moduleName } from './constants'
 
+const GEOLOCATION_CHANGE_THRESHOLD_METERS = 100
+
 export const moduleSelector = (state: IRootState) => state[moduleName]
-
-const pureActiveOrders = createSelector(
-  moduleSelector,
-  state => state.activeOrders,
-)
-const pureReadyOrders = createSelector(
-  moduleSelector,
-  state => state.readyOrders,
-)
-const pureHistoryOrders = createSelector(
-  moduleSelector,
-  state => state.historyOrders,
-)
-
-const activeOrdersTakerGeolocation = createSelector(
-  moduleSelector,
-  state => state.activeOrdersTakerGeolocation,
-)
-const readyOrdersTakerGeolocation = createSelector(
-  moduleSelector,
-  state => state.readyOrdersTakerGeolocation,
-)
-const historyOrdersTakerGeolocation = createSelector(
-  moduleSelector,
-  state => state.historyOrdersTakerGeolocation,
-)
-
-const estimatedOrder = createSelector(
-  [
-    (order) => order,
-    (_, geolocation) => geolocation,
-    (_, __, car) => car,
-    (_, __, ___, graph) => graph,
-  ],
-  (
-    order: IOrder,
-    geolocation: [number, number],
-    car: ICar,
-    graph: IWayGraph,
-  ) => ({
-    ...order,
-    ...estimateOrder(order, car, geolocation, graph),
-  }),
-  { memoize: weakMapMemoize },
-)
-const estimatedOrders = (
-  orders: IOrder[] | null,
-  geolocation: [number, number] | undefined,
-  car: ICar | null | undefined,
-  graph: IWayGraph,
-): IOrder[] | null =>
-  orders && geolocation && car ?
-    orders.map(order => estimatedOrder(order, geolocation, car, graph)) :
-    orders
-export const activeOrders = createSelector(
-  [pureActiveOrders, activeOrdersTakerGeolocation, userPrimaryCar, wayGraph],
-  estimatedOrders,
-)
-export const readyOrders = createSelector(
-  [pureReadyOrders, readyOrdersTakerGeolocation, userPrimaryCar, wayGraph],
-  estimatedOrders,
-)
-export const historyOrders = createSelector(
-  [pureHistoryOrders, historyOrdersTakerGeolocation, userPrimaryCar, wayGraph],
-  estimatedOrders,
-)
 
 const ordersData = (state: IRootState) => moduleSelector(state).orders
 export const orders = createSelector(
@@ -95,3 +36,76 @@ export const orderMutates = (state: IRootState, id: IOrder['b_id']) => {
   const orderData = ordersData(state).get(id)
   return !!(orderData?.mutations || orderData?.stale)
 }
+
+const estimatedOrder = createSelector(
+  [
+    (order) => order,
+    (_, geolocation) => geolocation,
+    (_, __, car) => car,
+    (_, __, ___, graph) => graph,
+  ],
+  (
+    order: IOrder,
+    geolocation: [number, number],
+    car: ICar,
+    graph: IWayGraph,
+  ) => ({
+    ...order,
+    ...estimateOrder(order, car, geolocation, graph),
+  }),
+  { memoize: weakMapMemoize },
+)
+const estimatedOrders = (
+  orders: ImmutableList<IOrder> | undefined,
+  geolocation: [number, number] | undefined,
+  car: ICar | null | undefined,
+  graph: IWayGraph,
+): ImmutableList<IOrder> | null =>
+  orders && geolocation && car ?
+    orders.map(order => estimatedOrder(order, geolocation, car, graph)) :
+    (orders ?? null)
+const approximatedCoords = createSelector(
+  geoposition,
+  geoposition => geoposition && geopositionToPoint(geoposition),
+  { memoizeOptions: {
+    resultEqualityCheck: (oldValue, newValue) => !!(
+      oldValue === newValue || (oldValue && newValue && (
+        (oldValue[0] === newValue[0] && oldValue[1] === newValue[1]) ||
+        calculateDistance(oldValue, newValue) <
+          GEOLOCATION_CHANGE_THRESHOLD_METERS
+      ))
+    ),
+  } },
+)
+
+const ordersGroupSelector = (
+  idsSelector: (state: IRootState) => ImmutableList<IOrder['b_id']> | null,
+) => createSelector(
+  [ordersData, idsSelector],
+  (orders, ids) => ids?.map(id => orders.get(id)!.partial!).filter(Boolean),
+  { memoizeOptions: { resultEqualityCheck: is } },
+)
+
+const activeOrdersIds = (state: IRootState) =>
+  moduleSelector(state).activeOrders
+const pureActiveOrders = ordersGroupSelector(activeOrdersIds)
+export const activeOrders = createSelector(
+  pureActiveOrders,
+  (orders): IOrder[] | null => orders?.toArray() ?? null,
+)
+
+const readyOrdersIds = (state: IRootState) =>
+  moduleSelector(state).readyOrders
+const pureReadyOrders = ordersGroupSelector(readyOrdersIds)
+export const readyOrders = createSelector(
+  [pureReadyOrders, approximatedCoords, userPrimaryCar, wayGraph],
+  (...args): IOrder[] | null => estimatedOrders(...args)?.toArray() ?? null,
+)
+
+const historyOrdersIds = (state: IRootState) =>
+  moduleSelector(state).historyOrders
+const pureHistoryOrders = ordersGroupSelector(historyOrdersIds)
+export const historyOrders = createSelector(
+  pureHistoryOrders,
+  (orders): IOrder[] | null => orders?.toArray() ?? null,
+)

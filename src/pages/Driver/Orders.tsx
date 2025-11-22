@@ -1,25 +1,27 @@
 import React, { useState } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import cn from 'classnames'
+import {
+  EBookingDriverState, EColorTypes,
+  IUser, IOrder,
+} from '../../types/types'
+import SITE_CONSTANTS from '../../siteConstants'
+import * as API from '../../API'
+import { modalsActionCreators } from '../../state/modals'
+import { userActionCreators } from '../../state/user'
+import { IUserState } from '../../state/user/constants'
+import { t, TRANSLATION } from '../../localization'
 import PageSection from '../../components/PageSection'
 import StatusCard from '../../components/Card/OrderCard'
 import Separator from '../../components/separator/Separator'
-import './styles.scss'
-import { t, TRANSLATION } from '../../localization'
 import Button from '../../components/Button'
 import images from '../../constants/images'
-import { IUserState } from '../../state/user/constants'
-import { IOrdersState } from '../../state/orders/constants'
-import { modalsActionCreators } from '../../state/modals'
-import { EBookingDriverState, EColorTypes, IUser } from '../../types/types'
-import { EDriverTabs } from '.'
 import MiniOrder from '../../components/MiniOrder'
 import { statuses } from '../../constants/miniOrders'
-import * as API from '../../API'
-import { userActionCreators } from '../../state/user'
-import cn from 'classnames'
-import SITE_CONSTANTS from '../../siteConstants'
 import { TABS } from '../../components/passenger-order/tabs-switcher'
+import { EDriverTabs } from '.'
+import './styles.scss'
 
 const mapDispatchToProps = {
   setTakePassengerModal: modalsActionCreators.setTakePassengerModal,
@@ -30,9 +32,9 @@ const connector = connect(null, mapDispatchToProps)
 
 interface IProps extends ConnectedProps<typeof connector> {
   user: IUserState['user'],
-  activeOrders: IOrdersState['activeOrders'],
-  historyOrders: IOrdersState['historyOrders'],
-  readyOrders: IOrdersState['readyOrders'],
+  activeOrders: IOrder[] | null,
+  historyOrders: IOrder[] | null,
+  readyOrders: IOrder[] | null,
   type: Omit<EDriverTabs, EDriverTabs.Map>,
 }
 const DriverOrders: React.FC<IProps> = ({

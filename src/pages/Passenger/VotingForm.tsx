@@ -1,5 +1,5 @@
 import React, {
-  useState, useRef, useLayoutEffect,
+  useState, useRef, useEffect, useLayoutEffect,
   useMemo, useCallback, useImperativeHandle,
 } from 'react'
 import { connect, ConnectedProps, useStore } from 'react-redux'
@@ -42,7 +42,8 @@ const mapDispatchToProps = {
   setPickTimeModal: modalsActionCreators.setPickTimeModal,
   setCommentsModal: modalsActionCreators.setCommentsModal,
   setLoginModal: modalsActionCreators.setLoginModal,
-  getActiveOrders: ordersActionCreators.getActiveOrders,
+  watchActiveOrders: ordersActionCreators.watchActiveOrders,
+  createOrder: ordersActionCreators.create,
   setPhone: clientOrderActionCreators.setPhone,
   resetClientOrder: clientOrderActionCreators.reset,
 }
@@ -70,7 +71,8 @@ const VotingForm = function VotingForm({
   setPickTimeModal,
   setCommentsModal,
   setLoginModal,
-  getActiveOrders,
+  watchActiveOrders,
+  createOrder,
   setPhone,
   resetClientOrder,
   isExpanded,
@@ -90,6 +92,7 @@ const VotingForm = function VotingForm({
     seatSliderRef.current!,
   ].filter(Boolean))
 
+  useEffect(watchActiveOrders, [])
   const available = useMemo(() =>
     !activeOrders?.some(order => order.b_voting)
   , [activeOrders])
@@ -149,7 +152,7 @@ const VotingForm = function VotingForm({
 
     setSubmitting(true)
     try {
-      const data = await API.postDrive({
+      const data = await createOrder({
         b_start_address: from!.address,
         b_start_latitude: from!.latitude,
         b_start_longitude: from!.longitude,
@@ -168,7 +171,6 @@ const VotingForm = function VotingForm({
       })
 
       resetClientOrder()
-      getActiveOrders()
       onSubmit(data)
     } catch (error) {
       setSubmitError(
@@ -180,7 +182,7 @@ const VotingForm = function VotingForm({
     setSubmitting(false)
   }, [
     from, to, comments, time, phone, user,
-    store, setLoginModal, getActiveOrders,
+    store, setLoginModal, createOrder,
     setIsExpanded, onSubmit,
   ])
 

@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { EBookingDriverState, IOrder } from '../../types/types'
-import { useInterval } from '../../tools/hooks'
 import { useSwipe } from '../../tools/swipe'
 import * as API from '../../API'
 import { IRootState } from '../../state'
@@ -33,7 +32,7 @@ const mapDispatchToProps = {
   setOnTheWayModal: modalsActionCreators.setOnTheWayModal,
   setRatingModal: modalsActionCreators.setRatingModal,
   setCandidatesModal: modalsActionCreators.setCandidatesModal,
-  getActiveOrders: ordersActionCreators.getActiveOrders,
+  watchActiveOrders: ordersActionCreators.watchActiveOrders,
   setFrom: clientOrderActionCreators.setFrom,
   setTo: clientOrderActionCreators.setTo,
   setSelectedOrder: clientOrderActionCreators.setSelectedOrder,
@@ -53,7 +52,7 @@ function Passenger({
   setOnTheWayModal,
   setRatingModal,
   setCandidatesModal,
-  getActiveOrders,
+  watchActiveOrders,
   setFrom,
   setTo,
   setSelectedOrder,
@@ -100,14 +99,7 @@ function Passenger({
     )
   , [selectedOrder])
 
-  useEffect(() => {
-    if (user)
-      getActiveOrders()
-  }, [user])
-  useInterval(() => {
-    if (user)
-      getActiveOrders()
-  }, 5000)
+  useEffect(watchActiveOrders, [])
 
   const openCurrentModal = () => {
     if (!selectedOrder) {

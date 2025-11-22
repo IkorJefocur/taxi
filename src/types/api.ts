@@ -3,7 +3,7 @@ export interface IResponse<
   TData extends unknown
 > {
   code: TCode
-  status: string
+  status: 'success' | 'error'
   message: string
   data: TData
 }

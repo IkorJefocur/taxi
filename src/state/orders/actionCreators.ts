@@ -1,17 +1,34 @@
-import { TAction } from '../../types'
+import { ParametersExceptFirst, TAction } from '../../types'
 import { IOrder } from '../../types/types'
+import { IResponse } from '../../types/api'
 import * as API from '../../API'
 import { IDispatch } from '..'
+import { watch as watchGeolocation } from '../geolocation/actionCreators'
 import { ActionTypes } from './constants'
 
-export const getActiveOrders = (payload: GetOrdersParams = {}): TAction =>
-  ({ type: ActionTypes.GET_ACTIVE_ORDERS_REQUEST, payload })
-export const getReadyOrders = (payload: GetOrdersParams = {}): TAction =>
-  ({ type: ActionTypes.GET_READY_ORDERS_REQUEST, payload })
-export const getHistoryOrders = (payload: GetOrdersParams = {}): TAction =>
-  ({ type: ActionTypes.GET_HISTORY_ORDERS_REQUEST, payload })
-export interface GetOrdersParams {
-  estimate?: boolean
+const READY_ORDERS_GEOLOCATION_INTERVAL = 1000 * 60 * 60
+
+export const watchActiveOrders = () => (dispatch: IDispatch) => {
+  dispatch({ type: ActionTypes.WATCH_ACTIVE_ORDERS })
+  return () => {
+    dispatch({ type: ActionTypes.UNWATCH_ACTIVE_ORDERS })
+  }
+}
+export const watchReadyOrders = () => (dispatch: IDispatch) => {
+  const unwatch = dispatch(watchGeolocation({
+    interval: READY_ORDERS_GEOLOCATION_INTERVAL,
+  }))
+  dispatch({ type: ActionTypes.WATCH_READY_ORDERS })
+  return () => {
+    dispatch({ type: ActionTypes.UNWATCH_READY_ORDERS })
+    unwatch()
+  }
+}
+export const watchHistoryOrders = () => (dispatch: IDispatch) => {
+  dispatch({ type: ActionTypes.WATCH_HISTORY_ORDERS })
+  return () => {
+    dispatch({ type: ActionTypes.UNWATCH_HISTORY_ORDERS })
+  }
 }
 
 export const watchOrder = (
@@ -25,29 +42,54 @@ export const watchOrder = (
 
 export const clearOrders = (): TAction => ({ type: ActionTypes.CLEAR })
 
+export const create = (
+  ...params: Parameters<typeof API.postDrive>
+) => async(dispatch: IDispatch) => {
+  const record = await API.postDrive(...params)
+  dispatch({ type: ActionTypes.CREATE_SUCCESS, payload: record.b_id })
+  return record
+}
+export const cancel = (
+  id: IOrder['b_id'],
+  ...params: ParametersExceptFirst<typeof API.cancelDrive>
+) => APIMutationThunk(() => API.cancelDrive(id, ...params), id, true)
+
 export const take = (
   id: IOrder['b_id'],
-  ...params: Parameters<
-    typeof API.takeOrder
-  > extends [any, ...infer Rest] ? Rest : never
-) => mutationThunk(() => API.takeOrder(id, ...params), id)
+  ...params: ParametersExceptFirst<typeof API.takeOrder>
+) => mutationThunk(() => API.takeOrder(id, ...params), id, false)
 export const setState = (
   id: IOrder['b_id'],
-  ...params: Parameters<
-    typeof API.setOrderState
-  > extends [any, ...infer Rest] ? Rest : never
-) => mutationThunk(() => API.setOrderState(id, ...params), id)
+  ...params: ParametersExceptFirst<typeof API.setOrderState>
+) => APIMutationThunk(() => API.setOrderState(id, ...params), id)
 
-const mutationThunk = <TReturn>(
+function mutationThunk<TReturn>(
   mutation: () => Promise<TReturn>,
   id: IOrder['b_id'],
-) => async(
-    dispatch: IDispatch,
-  ): Promise<TReturn> => {
-    dispatch({ type: ActionTypes.START_MUTATION, payload: id })
+  isDelete = false,
+  isFail: (value: TReturn) => boolean = () => false,
+) {
+  return async(dispatch: IDispatch): Promise<TReturn> => {
+    dispatch({ type: ActionTypes.MUTATION_START, payload: id })
     try {
-      return await mutation()
-    } finally {
-      dispatch({ type: ActionTypes.END_MUTATION, payload: id })
+      const result = await mutation()
+      dispatch({
+        type: isFail(result) ?
+          ActionTypes.MUTATION_FAIL :
+          isDelete ?
+            ActionTypes.DELETE_SUCCESS :
+            ActionTypes.UPDATE_SUCCESS,
+        payload: id,
+      })
+      return result
+    } catch (error) {
+      dispatch({ type: ActionTypes.MUTATION_FAIL, payload: id })
+      throw error
     }
   }
+}
+const APIMutationThunk = <TReturn extends IResponse<string, unknown>>(
+  mutation: () => Promise<TReturn>,
+  id: IOrder['b_id'],
+  isDelete = false,
+) => mutationThunk(mutation, id, isDelete, value => value.code !== '200')

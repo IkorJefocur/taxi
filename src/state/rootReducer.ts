@@ -1,5 +1,7 @@
 import { combineReducers } from 'redux'
 
+import { moduleName as geolocationModule } from './geolocation/constants'
+import geolocationReducer from './geolocation/reducer'
 import { moduleName as userModule } from './user/constants'
 import userReducer from './user/reducer'
 import { moduleName as carsModule } from './cars/constants'
@@ -20,6 +22,7 @@ import { moduleName as areasModule } from './areas/constants'
 import areasReducer from './areas/reducer'
 
 const rootReducer = combineReducers({
+  [geolocationModule]: geolocationReducer,
   [userModule]: userReducer,
   [carsModule]: carsReducer,
   [ordersModule]: ordersReducer,

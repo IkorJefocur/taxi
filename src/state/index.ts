@@ -1,9 +1,8 @@
 import { createStore, applyMiddleware } from 'redux'
-import thunk from 'redux-thunk'
+import thunk, { ThunkDispatch } from 'redux-thunk'
 import { composeWithDevTools } from '@redux-devtools/extension'
 import createSagaMiddleware from 'redux-saga'
 import rootSaga from './rootSaga'
-
 import rootReducer from './rootReducer'
 
 const sagaMiddleware = createSagaMiddleware()
@@ -16,11 +15,7 @@ const configureStore = () => {
     composeWithDevTools
   const store = createStore(
     rootReducer,
-    composeEnhancers(
-      applyMiddleware(thunk),
-      applyMiddleware(sagaMiddleware),
-      applyMiddleware(thunk),
-    ),
+    composeEnhancers(applyMiddleware(thunk, sagaMiddleware)),
   )
 
   sagaMiddleware.run(rootSaga)
@@ -33,4 +28,5 @@ const store = configureStore()
 export default store
 
 export type IRootState = ReturnType<typeof store.getState>
-export type IDispatch = typeof store.dispatch
+export type IDispatch =
+  ThunkDispatch<IRootState, null, Parameters<typeof store.dispatch>[0]>

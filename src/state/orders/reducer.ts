@@ -1,8 +1,11 @@
-import { Record as ImmutableRecord, Map as ImmutableMap } from 'immutable'
+import {
+  Record as ImmutableRecord,
+  List as ImmutableList,
+  Map as ImmutableMap,
+} from 'immutable'
 import _ from 'lodash'
 import { TAction } from '../../types'
 import { IOrder } from '../../types/types'
-import { calculateDistance } from '../../tools/maps'
 import { ActionTypes, IOrderState, IOrdersState } from './constants'
 
 const OrderRecord = ImmutableRecord<IOrderState>({
@@ -18,9 +21,6 @@ const defaultRecord: IOrdersState = {
   activeOrders: null,
   readyOrders: null,
   historyOrders: null,
-  activeOrdersTakerGeolocation: undefined,
-  readyOrdersTakerGeolocation: undefined,
-  historyOrdersTakerGeolocation: undefined,
 }
 
 export const ReducerRecord = ImmutableRecord<IOrdersState>(defaultRecord)
@@ -32,28 +32,33 @@ export default function(
   switch (type) {
 
     case ActionTypes.WATCH_ORDER:
-    case ActionTypes.START_MUTATION: {
+    case ActionTypes.MUTATION_START: {
       return state
         .set('orders', state.orders
           .update(payload, new OrderRecord(), value => value
             .update(
-              type === ActionTypes.START_MUTATION ? 'mutations' : 'listeners',
+              type === ActionTypes.MUTATION_START ? 'mutations' : 'listeners',
               value => value + 1,
-            )
-            .set(
-              'stale',
-              type === ActionTypes.START_MUTATION ? true : value.stale,
             ),
           ),
         )
     }
     case ActionTypes.UNWATCH_ORDER:
-    case ActionTypes.END_MUTATION: {
-      const orderData = state.orders.get(payload)!
+    case ActionTypes.MUTATION_FAIL:
+    case ActionTypes.UPDATE_SUCCESS:
+    case ActionTypes.DELETE_SUCCESS: {
+      let orderData = state.orders.get(payload)!
         .update(
-          type === ActionTypes.END_MUTATION ? 'mutations' : 'listeners',
+          type === ActionTypes.UNWATCH_ORDER ? 'listeners' : 'mutations',
           value => value - 1,
         )
+      if (type === ActionTypes.UPDATE_SUCCESS)
+        orderData = orderData
+          .set('stale', true)
+      if (type === ActionTypes.DELETE_SUCCESS)
+        orderData = orderData
+          .set('value', null)
+          .set('partial', null)
       return state
         .set('orders', orderData.listeners > 0 || orderData.mutations > 0 ?
           state.orders
@@ -84,7 +89,7 @@ export default function(
         [ActionTypes.GET_HISTORY_ORDERS_SUCCESS]: 'historyOrders',
       } as const)[type]
 
-      const toUnwatch = new Set(state[key]?.map(order => order.b_id))
+      const toUnwatch = new Set(state[key])
       const toWatch: Record<IOrder['b_id'], number> = {}
       let changed = false
       const value: IOrder[] = []
@@ -109,9 +114,9 @@ export default function(
           toWatch[id] = -1
         }
 
-      return changed || state[key]?.length !== value.length ?
+      return changed || state[key]?.size !== value.length ?
         state
-          .set(key, value)
+          .set(key, ImmutableList(value.map(order => order.b_id)))
           .set('orders', state.orders
             .deleteAll(toUnwatch)
             .mergeWith(
@@ -127,30 +132,11 @@ export default function(
         state
     }
 
-    case ActionTypes.GET_ACTIVE_ORDERS_TAKER_GEOLOCATION_SUCCESS: {
-      return geolocationEqual(state.activeOrdersTakerGeolocation, payload) ?
-        state :
-        state.set('activeOrdersTakerGeolocation', payload)
-    }
-    case ActionTypes.GET_READY_ORDERS_TAKER_GEOLOCATION_SUCCESS: {
-      return geolocationEqual(state.readyOrdersTakerGeolocation, payload) ?
-        state :
-        state.set('readyOrdersTakerGeolocation', payload)
-    }
-    case ActionTypes.GET_HISTORY_ORDERS_TAKER_GEOLOCATION_SUCCESS: {
-      return geolocationEqual(state.historyOrdersTakerGeolocation, payload) ?
-        state :
-        state.set('historyOrdersTakerGeolocation', payload)
-    }
-
     case ActionTypes.CLEAR: {
       const keys: (keyof IOrdersState)[] = [
         'activeOrders',
-        'activeOrdersTakerGeolocation',
         'readyOrders',
-        'readyOrdersTakerGeolocation',
         'historyOrders',
-        'historyOrdersTakerGeolocation',
       ]
       for (const key of keys)
         state = state.set(key, defaultRecord[key])
@@ -168,14 +154,3 @@ export default function(
 
   }
 }
-
-const GEOLOCATION_CHANGE_THRESHOLD = 100
-const geolocationEqual = (
-  a?: [lat: number, lng: number],
-  b?: [lat: number, lng: number],
-): boolean => !!(
-  a === b || (a && b && (
-    (a[0] === b[0] && a[1] === b[1]) ||
-    calculateDistance(a, b) < GEOLOCATION_CHANGE_THRESHOLD
-  ))
-)

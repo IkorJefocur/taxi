@@ -1,9 +1,11 @@
+import { ParametersExceptFirst, TAction } from '../../types'
 import { ICar } from '../../types/types'
 import * as API from '../../API'
 import { IDispatch } from '..'
 import { ActionTypes } from './constants'
 
-export const getUserCars = () => ({ type: ActionTypes.GET_USER_CARS_REQUEST })
+export const getUserCars = (): TAction =>
+  ({ type: ActionTypes.GET_USER_CARS_REQUEST })
 
 export const createUserCar = (
   ...params: Parameters<typeof API.createUserCar>
@@ -19,9 +21,7 @@ export const createUserCar = (
 
 export const edit = (
   id: ICar['c_id'],
-  ...params: Parameters<
-    typeof API.editCar
-  > extends [any, ...infer Rest] ? Rest : never
+  ...params: ParametersExceptFirst<typeof API.editCar>
 ) => mutationThunk(() => API.editCar(id, ...params), id)
 export const drive = (car: ICar) =>
   mutationThunk(() => API.driveCar(car), car.c_id)

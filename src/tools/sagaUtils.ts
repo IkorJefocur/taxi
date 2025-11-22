@@ -1,9 +1,9 @@
-import { Action, Task, channel } from 'redux-saga'
+import { Action, Task, SagaIterator, channel } from 'redux-saga'
 import {
   Tail, SagaReturnType, ActionPattern, ThunkAction,
   SelectEffect, CallEffect, PutEffect,
   select as sagaSelect, call as sagaCall, putResolve as sagaPutResolve,
-  race, take, fork, put, cancel,
+  all, race, take, takeEvery, fork, put, cancel,
 } from 'redux-saga/effects'
 import { firstItem } from './utils'
 
@@ -154,4 +154,35 @@ export function* concurrency<TAction>(...sagas: IConcurrentSaga<TAction>[]) {
 
     queue.splice(0, processedQueueItems)
   }
+}
+
+interface WatchState {
+  listeners: number
+}
+
+export function* whileWatching(
+  watchAction: ActionPattern,
+  unwatchAction: ActionPattern,
+  loop: (state: WatchState) => SagaIterator<void> | Promise<void>,
+) {
+  const state: WatchState = { listeners: 0 }
+  const listenersChangeChannel = yield* call(channel)
+  yield all([
+    call(function*() {
+      while (true) {
+        if (state.listeners > 0)
+          yield* call(loop, state)
+        else
+          yield take(listenersChangeChannel)
+      }
+    }),
+    takeEvery(watchAction, function*() {
+      state.listeners++
+      yield put(listenersChangeChannel, {})
+    }),
+    takeEvery(unwatchAction, function*() {
+      state.listeners--
+      yield put(listenersChangeChannel, {})
+    }),
+  ])
 }

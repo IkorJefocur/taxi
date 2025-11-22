@@ -23,6 +23,13 @@ export function toRadians(degrees: number): number {
   return degrees * Math.PI / 180
 }
 
+export function geopositionToPoint(
+  geoposition: GeolocationPosition,
+): [lat: number, lng: number] {
+  const { latitude, longitude } = geoposition.coords
+  return [latitude, longitude]
+}
+
 export interface IWayGraph extends Iterable<IWayGraphNode> {
   getNode(id: number): IWayGraphNode | undefined
   findShortestPath(
