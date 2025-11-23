@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { connect, ConnectedProps } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import L from 'leaflet'
@@ -101,14 +101,28 @@ function DriverOrderMapModeContent({
   const map = useMap()
 
   const [lastPositions, setLastPositions] = useState<[number, number][]>([])
-  const [arrowIcon, setArrowIcon] = useState(new L.DivIcon({
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -35],
-    iconSize: [40, 40],
-    shadowSize: [29, 40],
-    shadowAnchor: [7, 40],
-    html: `<img src='${images.mapArrow}'>`,
-  }))
+  // Заместо useState используем useRef чтобы не пересоздавать иконку каждый раз
+  const arrowIconRef = useRef(
+    new L.DivIcon({
+      className: 'driver-arrow-divicon',
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -35],
+      iconSize: [40, 40],
+      // TODO: Убрать id, сделать стили через класс
+      html: `
+        <img
+          id="driver-arrow"
+          src="${images.mapArrow}"
+          style="
+            transition: transform 0.15s linear;
+            display: block;
+            width: 100%;
+            height: auto;
+          "
+        />
+      `,
+    }),
+  )
 
   useEffect(() => {
     if (map) {
@@ -166,14 +180,10 @@ function DriverOrderMapModeContent({
                 longitude: p2[1],
               },
             )
-            setArrowIcon(new L.DivIcon({
-              iconSize: [40, 40],
-              html: `
-                <img
-                  style="transform: rotate(${angle}deg)"
-                  src='${images.mapArrow}'/>
-              `,
-            }))
+            // Обновляем только transform, а не пересоздаем иконку каждый раз
+            const img = document.getElementById('driver-arrow') as HTMLImageElement | null
+            if (img)
+              img.style.transform = `rotate(${angle}deg)`
             return newPositions as typeof prev
           }
           return [[coords.latitude, coords.longitude]] as typeof prev
@@ -211,6 +221,14 @@ function DriverOrderMapModeContent({
       })
   }
 
+  // Мемоизируем текущую позицию маркера (чтобы React не пересоздавал <Marker> из-за новой ссылки на массив)
+  const currentPosition = useMemo(() => {
+    if (!lastPositions || !lastPositions.length) return null
+    const last = lastPositions[lastPositions.length - 1]
+    return [last[0], last[1]] as L.LatLngExpression
+  }, [lastPositions])
+
+
   return (
     <>
       <TileLayer
@@ -218,10 +236,13 @@ function DriverOrderMapModeContent({
         url={getTileServerUrl()}
       />
       {
-        lastPositions.length &&
-        lastPositions.map((item, index) => index === lastPositions.length - 1 ?
-          <Marker position={item} icon={arrowIcon} key={index} /> :
-          null,
+        // Заменяем lastPositions.map() на одиночный <Marker> с мемоизированной позицией и arrowIconRef.current
+        currentPosition && (
+          <Marker
+            position={currentPosition}
+            icon={arrowIconRef.current}
+            key="driver-arrow"
+          />
         )
       }
       {

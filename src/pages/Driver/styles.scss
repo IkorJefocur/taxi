@@ -118,6 +118,15 @@
   }
 }
 
+// Стиль для стрелки (фиксируем размер и делаем pointer-events: none, чтобы клики шли на Marker)
+.order-marker > img,
+.driver-arrow-divicon img {
+  display: block !important;
+  width: 40px !important; /* match iconSize */
+  height: auto !important;
+  pointer-events: none;
+}
+
 .driver-order-map-mode {
   position: relative;
   height: 100vh;
@@ -126,6 +135,9 @@
   .leaflet-div-icon {
     background: none;
     border: none;
+    padding: 0;
+    width: auto;
+    height: auto;
   }
 
   .leaflet-top.leaflet-left {
@@ -150,10 +162,11 @@
     border: none;
   }
 
+  // inline-block чтобы сохранять элемент как единый блок размеров и не меняет центр/anchor
   .order-marker {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: inline-block;
+    width: auto;
+    height: auto;
     position: relative;
     cursor: pointer;
 
@@ -216,16 +229,21 @@
     z-index: 3;
   }
 
+  // Позиционируется absolute внутри иконки, для того чтобы не влиять на геометрию иконки(Leaflet позиционирует иконку корректно)
   .order-marker-hint {
-    display: flex;
-    flex-direction: column;
+    display: block;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     border-radius: 4px;
     box-shadow: 0px 2px 6px 0px rgba(0, 0, 0, 0.24);
     background: rgba(255, 255, 255, 1);
     width: auto;
-    max-width: 30vw;
-    padding: 5px;
-    margin-bottom: 3px;
+    max-width: 220px;
+    z-index: 10;
+    margin-bottom: 8px;
+    box-sizing: border-box;
 
     .row-info {
       display: flex;
@@ -278,7 +296,7 @@
   }
 
   img {
-    z-index: 3;
+    z-index: auto;
   }
 
   hr {
