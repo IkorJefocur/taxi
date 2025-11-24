@@ -27,15 +27,15 @@ function* geolocationSaga() {
           yield take(intervalChangeChannel)
           continue
         }
+        const [timePassed] = yield race([
+          delay(Math.max(latestGet + pollInterval - Date.now(), 0), true),
+          take(intervalChangeChannel),
+        ])
+        if (!timePassed)
+          continue
 
         yield* getGeopositionSaga()
         latestGet = Date.now()
-
-        for (let timePassed = false; !timePassed;)
-          [timePassed] = yield race([
-            delay(pollInterval + latestGet - Date.now(), true),
-            take(intervalChangeChannel),
-          ])
       }
     }),
 
