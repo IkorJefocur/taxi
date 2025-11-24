@@ -21,6 +21,7 @@ const defaultRecord: IOrdersState = {
   activeOrders: null,
   readyOrders: null,
   historyOrders: null,
+  debug: [],
 }
 
 export const ReducerRecord = ImmutableRecord<IOrdersState>(defaultRecord)
@@ -30,6 +31,11 @@ export default function(
   { type, payload }: TAction,
 ) {
   switch (type) {
+
+    case ActionTypes.GET_ORDER_FAIL: {
+      return state
+        .set('debug', [...state.debug, payload.error])
+    }
 
     case ActionTypes.WATCH_ORDER:
     case ActionTypes.MUTATION_START: {

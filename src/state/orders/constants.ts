@@ -52,4 +52,5 @@ export interface IOrdersState {
   activeOrders: ImmutableList<IOrder['b_id']> | null
   readyOrders: ImmutableList<IOrder['b_id']> | null
   historyOrders: ImmutableList<IOrder['b_id']> | null
+  debug: string[]
 }

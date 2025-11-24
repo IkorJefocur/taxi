@@ -561,6 +561,21 @@ function CardModalContent({
               {getButtons()}
             </div>
           </form>
+
+          <code
+            style={{
+              maxWidth: '500px',
+            } as any}
+          >
+            {useSelector(state =>
+              JSON.stringify({
+                listeners: state.orders.orders.get(orderId)?.listeners,
+                mutations: state.orders.orders.get(orderId)?.mutations,
+                stale: state.orders.orders.get(orderId)?.stale,
+              }, undefined, '\t') + '\n' +
+              state.orders.debug.join(' | '),
+            )}
+          </code>
         </div>
 
       </div>
